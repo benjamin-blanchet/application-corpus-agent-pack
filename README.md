@@ -528,3 +528,9 @@ doc/_meta/deep-analysis-plan.md
 ```
 
 The source-code lane is the P1 → P9 pipeline. The squad cannot mark the source-code lane covered until `code_analysis_status: covered` in `corpus-state.yaml`, and it cannot claim adoption readiness until `actionable_readiness_status: covered` and roadmap state is honestly represented.
+
+## License
+
+MIT — see [LICENSE.md](LICENSE.md). Free to use, copy, modify and redistribute, including commercially; keep the copyright notice.
+
+**Content note:** the pack ships generic templates, agents and skills only — no application secrets and no proprietary application knowledge. That knowledge is added **locally** once the pack is copied into a target repository and enriched there. Keep any enriched corpus out of shared/public copies of the pack.
