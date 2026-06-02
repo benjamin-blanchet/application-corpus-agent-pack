@@ -1624,7 +1624,6 @@ const corpus = {
     baselines: readFileSafe('prod/BASELINES.md'),
     runtime: readFileSafe('prod/RUNTIME_ARCHITECTURE.md'),
     infra: readFileSafe('prod/INFRA_STATE.md'),
-    patch: readFileSafe('prod/PATCH_STATE.md'),
     batch_health: readFileSafe('prod/BATCH_HEALTH.md'),
   },
   project: {
@@ -2115,7 +2114,7 @@ function renderApplication() {
   const lastUpgrade = cs.last_pack_upgrade;
   const standardsChips = [
     cacheDiscipline ? { icon: '⌗', label: 'Cache-friendly reads', sub: 'doc/_meta/agent-cache-discipline.md', tone: 'good' } : null,
-    { icon: '✦', label: 'Token-efficient amorçage', sub: 'progressive disclosure, slim personas', tone: 'good' },
+    { icon: '✦', label: 'Token-efficient bootstrap', sub: 'progressive disclosure, slim personas', tone: 'good' },
     { icon: '◰', label: 'Sub-agent delegation', sub: 'specialized roles, bounded scope', tone: 'good' },
     { icon: '⟿', label: 'MCP-first source discovery', sub: 'Jira / Confluence / Dynatrace / GitHub', tone: 'good' },
     { icon: '⌖', label: 'Evidence-anchored claims', sub: 'every fact traces to a source', tone: 'good' },
@@ -3889,7 +3888,6 @@ function renderProduction() {
     ${proseCard('Runtime architecture', corpus.prod.runtime, 'hosts, processes, observability mapping')}
     ${proseCard('Infrastructure state', corpus.prod.infra, 'capacity, disks, memory, pressure')}
     ${proseCard('Batch health', corpus.prod.batch_health, 'batch jobs, schedules, outcomes')}
-    ${proseCard('Patch state', corpus.prod.patch, 'pending patches, last patching window')}
   `;
 }
 
@@ -8047,3 +8045,30 @@ fs.mkdirSync(path.dirname(outPath), { recursive: true });
 fs.writeFileSync(outPath, html, 'utf8');
 console.log(`Dashboard written: ${outPath}`);
 console.log(`  ${corpus.features.length} features · ${corpus.prod.bugs.length} bugs · ${corpus.prod.risks.length} risks · ${Object.keys(corpus.indexes).length} indexes`);
+
+// Manifest-driven surface report. schemas/corpus-paths.yaml is the single source
+// of truth for canonical paths; this surfaces which `surfaced` sections will render
+// empty because their canonical file is absent (drift / not-yet-produced).
+(function reportCanonicalSurface() {
+  const manifestAbs = path.join(docRoot, '..', 'schemas', 'corpus-paths.yaml');
+  if (!fs.existsSync(manifestAbs)) return;
+  const lines = fs.readFileSync(manifestAbs, 'utf8').split(/\r?\n/);
+  let cur = null, inPaths = false; const paths = [];
+  for (const raw of lines) {
+    if (!raw.trim() || raw.trim().startsWith('#')) continue;
+    if (/^paths:\s*$/.test(raw)) { inPaths = true; continue; }
+    if (/^[A-Za-z0-9_]+:/.test(raw)) { inPaths = false; continue; }
+    if (!inPaths) continue;
+    const item = raw.match(/^\s*-\s*path:\s*(.*)$/);
+    if (item) { cur = { path: item[1].trim() }; paths.push(cur); continue; }
+    const kv = raw.match(/^\s+([A-Za-z0-9_]+):\s*(.*)$/);
+    if (kv && cur) cur[kv[1]] = kv[2].replace(/\s+#.*$/, '').trim();
+  }
+  const missing = paths
+    .filter((p) => p.surfaced === 'true' && p.requirement !== 'conditional')
+    .map((p) => p.path)
+    .filter((rel) => !fs.existsSync(path.join(docRoot, '..', rel)));
+  if (missing.length) {
+    console.log(`  ⚠ ${missing.length} canonical surfaced file(s) absent (sections will be empty): ${missing.slice(0, 8).join(', ')}${missing.length > 8 ? ' …' : ''}`);
+  }
+})();

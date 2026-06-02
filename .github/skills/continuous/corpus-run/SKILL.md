@@ -106,15 +106,15 @@ Update on every run:
 - `doc/_runs/RUN_LEDGER.md` and `doc/_runs/YYYY-MM-DD-<run-id>.md`.
 - `doc/_graph/nodes.yaml`, `doc/_graph/edges.yaml`, `doc/_graph/evidence.yaml` — append/patch only the entries the run actually touched.
 
-**`corpus-state.yaml` n'est jamais "read-only".** Même un run purement
-lectures avance au minimum `corpus.last_continuous_run`. Laisser ce
-fichier en arrière du réel (indexes existants mais `indexes_initialized: false`,
-P9 covered mais `code_analysis_status: not_started`, 20 runs faits mais
-`last_continuous_run: null`, des bugs sous `doc/prod/known-bugs/` mais
-`corpus_inventory.bugs: {}`) est le pattern de drift observé en réel sur
-plusieurs corpora. Le validator (`scripts/validate-corpus.mjs`) détecte
-maintenant ce drift dans le sens "artefact présent mais state en
-retard" en plus du sens "state dit oui mais artefact absent".
+**`corpus-state.yaml` is never "read-only".** Even a purely read run
+advances at minimum `corpus.last_continuous_run`. Leaving this file behind
+on-disk reality (indexes present but `indexes_initialized: false`, P9
+covered but `code_analysis_status: not_started`, 20 runs done but
+`last_continuous_run: null`, bugs under `doc/prod/known-bugs/` but
+`corpus_inventory.bugs: {}`) is the drift pattern observed on real corpora.
+The validator (`scripts/validate-corpus.mjs`) now detects this drift in the
+"artifact present but state behind" direction in addition to the "state
+says yes but artifact absent" direction.
 
 ### Major pass (explicit, after a milestone)
 
@@ -176,13 +176,13 @@ Every run ends with **two blocks, in this order**:
 The recap is a very rough, plain-language sketch of the run. Its declared purpose is to **open a confirmation/enrichment conversation with the operator** on what was just done — do not leave that purpose implicit, state it in the closing invitation.
 
 ```text
-Récap du run (haute maille)
-- 3 à 6 phrases courtes, langage naturel, sans jargon de pipeline ni liste de fichiers.
-- Dire ce qui a été regardé, ce qui est retenu comme acquis, ce qui surprend ou semble fragile.
-- Nommer les zones du corpus touchées (features, prod, specs, indexes, roadmap…) sans tout citer.
-- Si la validation a relevé du P0 ou des P1 nouveaux, le dire en clair (zone touchée, type de drift), pas seulement dans le bloc structuré.
-- Terminer par une invitation explicite à confirmer ou enrichir, du type :
-  "Dis-moi si ça colle à ta vision, ce qu'il faut corriger, et sur quel point tu veux qu'on creuse ensuite."
+Run recap (high level)
+- 3 to 6 short sentences, plain language, no pipeline jargon, no file list.
+- Say what was looked at, what is retained as established, what surprises or feels fragile.
+- Name the corpus areas touched (features, prod, specs, indexes, roadmap…) without citing everything.
+- If validation raised new P0 or P1, say so plainly (area touched, drift type), not only in the structured block.
+- End with an explicit invitation to confirm or enrich, e.g.:
+  "Tell me if this matches your view, what to correct, and which point you want us to dig into next."
 ```
 
 The recap is required even when the run produced little or no durable update — in that case, say so plainly and ask the operator how to redirect. Use the operator's working language (French if the operator writes in French).
@@ -202,16 +202,14 @@ Run status
 - Recommended next:
 ```
 
-**`Recommended next` est toujours une prochaine action de corpus** —
-prochain nœud roadmap à approfondir, prochaine analyse à lancer,
-prochaine source à enrichir, prochaine question opérateur. Ce n'est
-**jamais** un hand-off d'implémentation, de spec, de ticketing ou de
-remédiation, ni un bug "à corriger". Un bug capturé dans
-`doc/prod/known-bugs/` est du travail terminé côté corpus ; il n'a pas
-sa place dans cette ligne. Ne nomme jamais un autre agent du pack ni
-un skill `authoring/*` / `development/*` dans cette ligne — ces zones
-sortent du scope corpus. Voir `corpus.agent.md` § Scope boundaries pour
-la liste des formulations interdites.
+**`Recommended next` is always a next corpus action** — next roadmap node
+to deepen, next analysis to launch, next source to enrich, next operator
+question. It is **never** an implementation, spec, ticketing or remediation
+hand-off, nor a bug "to fix". A bug captured under `doc/prod/known-bugs/`
+is finished work on the corpus side; it has no place in this line. Never
+name another pack agent nor an `authoring/*` / `development/*` skill in
+this line — those areas are outside corpus scope. See `corpus.agent.md`
+§ Scope boundaries for the list of forbidden phrasings.
 
 The `Validation` and `New top findings` lines are produced by the deterministic drift check in `continuous/corpus-run-audit` (the audit step runs `node scripts/validate-corpus.mjs --json` whenever the run wrote under `doc/`). They are mirrored into the high-level recap (block 1) whenever `P0 > 0` or new P1 findings appeared, so the operator notices drift in plain language without opening the run file.
 
@@ -247,6 +245,6 @@ and list a few active/recommended nodes from `ROADMAP_STATE.md` and `NEXT_BEST_A
   another role. A captured finding is corpus knowledge, not a backlog
   item to dispatch — the operator decides any downstream work, never
   the agent in the recap.
-- Nommer un autre agent du pack ou un skill `authoring/*` /
-  `development/*` dans la recap ou dans `Recommended next`. Ces zones
-  sortent du scope corpus ; les nommer ouvre la porte à les suggérer.
+- Naming another pack agent or an `authoring/*` / `development/*` skill in
+  the recap or in `Recommended next`. Those areas are outside corpus scope;
+  naming them opens the door to suggesting them.

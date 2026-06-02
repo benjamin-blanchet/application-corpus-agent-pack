@@ -101,8 +101,9 @@ If direct corpus editing is blocked, write precise updates to
 
 ## First run
 
-Invoke the `corpus` agent with any kickstart trigger ("init le corpus",
-"kickstart", "continue", "fais l'analyse complète du repo", etc.). The
+Invoke the `corpus` agent with any kickstart trigger, in any language
+("init the corpus" / "init le corpus", "kickstart", "continue", "run the
+full repo analysis" / "fais l'analyse complète du repo", etc.). The
 agent reads state first, produces a resume report, then proposes the next
 bounded action. The full kickstart procedure is owned by
 `modes/kickstart` (or the persona's "Operating modes § Kickstart"

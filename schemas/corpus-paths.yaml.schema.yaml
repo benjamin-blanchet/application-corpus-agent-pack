@@ -1,0 +1,47 @@
+# Schema for schemas/corpus-paths.yaml
+# Consumed by scripts/validate-corpus.mjs (gating + near-miss) and
+# scripts/build-corpus-site.mjs (which paths to surface).
+# This file is the SINGLE SOURCE OF TRUTH for canonical corpus file paths:
+# no other file may hardcode a corpus path that is not also listed here.
+
+file: schemas/corpus-paths.yaml
+written_by_skill: governance/corpus-canonicalization
+skill_anchor: SKILL.md governance/corpus-canonicalization § Canonical paths
+description: >
+  Canonical corpus file paths with their producing pass, requirement,
+  delivery mode, gating and dashboard-surfacing flags. Eliminates the
+  former triplication of hardcoded paths across skill prose, the validator
+  and the dashboard, which caused per-corpus filename drift.
+
+# Pure YAML, no `---` frontmatter.
+must_not_be_markdown: true
+
+# Top-level shape.
+root:
+  required_keys: [version, paths]
+  optional_keys: [patterns]
+
+# Each item inside `paths:`.
+item:
+  inside_block: paths
+  required_fields: [path, scope, produced_by, requirement, delivery, gated, surfaced, scaffold]
+  enums:
+    requirement: [required, conditional]
+    delivery: [skeleton, llm-created, generated]
+    gated: [true, false, conditional]
+    surfaced: [true, false]
+    scaffold: [true, false]
+  rules:
+    # A scaffolded file is one the agent fills rather than names; it must be
+    # llm-created (shipping a stub for a skeleton/generated file is contradictory).
+    - if scaffold true then delivery must be llm-created
+    # A conditional path is gated only when its subject exists.
+    - if requirement conditional then gated must be conditional or false
+
+# Each item inside `patterns:` (dynamic-name files validated by regex).
+pattern_item:
+  inside_block: patterns
+  required_fields: [id, glob, regex, produced_by]
+
+# `path` values are repo-relative and must start with `doc/`.
+path_regex: '^doc/[A-Za-z0-9/_.-]+\.(md|yaml)$'

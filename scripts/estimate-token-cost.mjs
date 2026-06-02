@@ -16,7 +16,7 @@
  *   node scripts/estimate-token-cost.mjs --json        # machine output
  *   node scripts/estimate-token-cost.mjs --baseline    # write current to .baseline
  *   node scripts/estimate-token-cost.mjs --compare     # compare to .baseline
- *   node scripts/estimate-token-cost.mjs --check       # exit non-zero if amorçage
+ *   node scripts/estimate-token-cost.mjs --check       # exit non-zero if bootstrap
  *                                                       drifted > +5% vs .baseline
  *                                                       (override with --threshold=N)
  *
@@ -121,16 +121,16 @@ function buildReport() {
   sections.push({ name: 'Skills full body (loaded only when invoked)', ...skillsFull });
 
   // Totals
-  const amorcage = alwaysOn.tokens + personas.tokens + skillsMeta.tokens;
-  const worstCase = amorcage + skillsFull.tokens;
+  const bootstrap = alwaysOn.tokens + personas.tokens + skillsMeta.tokens;
+  const worstCase = bootstrap + skillsFull.tokens;
 
   return {
     chars_per_token_assumption: CHARS_PER_TOKEN,
     timestamp: new Date().toISOString(),
     sections,
     totals: {
-      amorcage_tokens: amorcage,
-      amorcage_chars: alwaysOn.chars + personas.chars + skillsMeta.chars,
+      bootstrap_tokens: bootstrap,
+      bootstrap_chars: alwaysOn.chars + personas.chars + skillsMeta.chars,
       worst_case_all_skills_loaded_tokens: worstCase,
     },
   };
@@ -168,20 +168,20 @@ function printHuman(report, baseline) {
   console.log('================================================================');
   console.log(`  Amorçage (every session, before any tool call):`);
   console.log(`    = top-level + personas + skills metadata`);
-  console.log(`    = ${fmt(report.totals.amorcage_tokens)} tokens`);
+  console.log(`    = ${fmt(report.totals.bootstrap_tokens)} tokens`);
   console.log('');
   console.log(`  Worst case (all skill bodies loaded):`);
   console.log(`    = ${fmt(report.totals.worst_case_all_skills_loaded_tokens)} tokens`);
   console.log('');
 
   if (baseline) {
-    const delta = report.totals.amorcage_tokens - baseline.totals.amorcage_tokens;
-    const pct = baseline.totals.amorcage_tokens
-      ? ((delta / baseline.totals.amorcage_tokens) * 100).toFixed(1)
+    const delta = report.totals.bootstrap_tokens - baseline.totals.bootstrap_tokens;
+    const pct = baseline.totals.bootstrap_tokens
+      ? ((delta / baseline.totals.bootstrap_tokens) * 100).toFixed(1)
       : '0';
     console.log('  vs. baseline:');
-    console.log(`    baseline amorçage = ${fmt(baseline.totals.amorcage_tokens)} tokens (${baseline.timestamp})`);
-    console.log(`    current  amorçage = ${fmt(report.totals.amorcage_tokens)} tokens`);
+    console.log(`    baseline bootstrap = ${fmt(baseline.totals.bootstrap_tokens)} tokens (${baseline.timestamp})`);
+    console.log(`    current  bootstrap = ${fmt(report.totals.bootstrap_tokens)} tokens`);
     const sign = delta >= 0 ? '+' : '';
     console.log(`    delta             = ${sign}${fmt(delta)} tokens (${sign}${pct}%)`);
     console.log('');
@@ -216,8 +216,8 @@ function main() {
   if (args.includes('--check')) {
     const thresholdArg = args.find((a) => a.startsWith('--threshold='));
     const thresholdPct = thresholdArg ? Number(thresholdArg.split('=')[1]) : 5;
-    const base = baseline.totals.amorcage_tokens;
-    const cur = report.totals.amorcage_tokens;
+    const base = baseline.totals.bootstrap_tokens;
+    const cur = report.totals.bootstrap_tokens;
     const delta = cur - base;
     const pct = base ? (delta / base) * 100 : 0;
     const sign = delta >= 0 ? '+' : '';

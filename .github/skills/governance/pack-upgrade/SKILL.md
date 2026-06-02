@@ -201,16 +201,16 @@ status: complete | incomplete-with-P0-findings | needs-operator-input
 End the run with a concise high-level recap (per `continuous/corpus-run` style):
 
 ```text
-Migration corpus → pack <to_version>
+Corpus migration → pack <to_version>
 
-- <count> champs schéma ajoutés (<n> en confidence: confirmed, <m> en confidence: unknown)
-- <count> nouvelles skills disponibles, leurs artefacts seront créés au prochain run pipeline
-- <count> skills orphelines détectées (liste dans le rapport)
-- Validator: P0=<n> (doit être 0 pour committer) P1=<n> P2=<n>
-- Dashboard reconstruit
-- Rapport: doc/_meta/pack-upgrade-<from>-to-<to>.md
+- <count> schema fields added (<n> at confidence: confirmed, <m> at confidence: unknown)
+- <count> new skills available, their artifacts will be created on the next pipeline run
+- <count> orphaned skills detected (list in the report)
+- Validator: P0=<n> (must be 0 to commit) P1=<n> P2=<n>
+- Dashboard rebuilt
+- Report: doc/_meta/pack-upgrade-<from>-to-<to>.md
 
-Prochaine action conseillée : <one sentence>
+Recommended next action: <one sentence>
 ```
 
 If `P0 > 0`, do **not** mark the migration as complete in the report; status: `incomplete-with-P0-findings`. The operator fixes P0 findings before committing.

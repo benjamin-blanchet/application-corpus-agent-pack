@@ -11,7 +11,7 @@ Maintain practical guidance for what the operator and Corpus agent should do nex
 
 This skill does not force a single path. It recommends the most valuable next **corpus action** — next roadmap node to deepen, next analysis to run, next source to enrich, next operator interview — based on roadmap interest, production signals, code risk, source gaps, operator input and current context.
 
-**Scope, non-negotiable.** Recommendations are always corpus actions, never delivery work (implémentation, spec, ticketing, remédiation, incident triage). The "Reliability risk" and "Production criticality" factors below weight **which corpus node deserves the next analysis pass**, not which bug to dispatch ailleurs. A captured bug, risk or drift is corpus knowledge already complete — it never appears here as a "to fix" item or as a hand-off. Ne nomme jamais un autre agent du pack ni un skill `authoring/*` / `development/*` dans une recommandation : ces zones sortent du scope corpus et tu n'as pas à les connaître. See `corpus.agent.md` § Scope boundaries for the prohibited wording list.
+**Scope, non-negotiable.** Recommendations are always corpus actions, never delivery work (implementation, spec, ticketing, remediation, incident triage). The "Reliability risk" and "Production criticality" factors below weight **which corpus node deserves the next analysis pass**, not which bug to dispatch elsewhere. A captured bug, risk or drift is corpus knowledge already complete — it never appears here as a "to fix" item or as a hand-off. Never name another pack agent nor an `authoring/*` / `development/*` skill in a recommendation: those areas fall outside the corpus scope and you have no business knowing them. See `corpus.agent.md` § Scope boundaries for the prohibited wording list.
 
 ## When to use
 
@@ -120,7 +120,7 @@ If the operator asks for choices, provide up to 3.
 
 Before writing any entry in `NEXT_BEST_ACTIONS.md` (or stating it in chat), cross-check `doc/_meta/corpus-state.yaml` and `doc/_meta/actionable-readiness.md`. The wording must match the current readiness label exactly.
 
-Forbidden wording — `all gates passed`, `corpus ready for team onboarding`, `corpus is adoption ready`, `ready for handover`, `team can adopt`, `tous les gates sont passés`, `prêt pour l'adoption`, or any equivalent phrasing that implies broad team adoption — is only permitted when **all** of the following hold:
+Forbidden wording — `all gates passed`, `corpus ready for team onboarding`, `corpus is adoption ready`, `ready for handover`, `team can adopt`, or any equivalent phrasing that implies broad team adoption — is only permitted when **all** of the following hold:
 
 - `corpus.actionable_readiness_status: covered` in `corpus-state.yaml`
 - `adoption.readiness_status: adoption_candidate` (or stronger) in `corpus-state.yaml`
@@ -150,18 +150,18 @@ When this skill runs as a reconciliation pass over an existing `NEXT_BEST_ACTION
 - Ignore the operator's current line of thought.
 - Write "all gates passed" or "ready for team onboarding" without verifying both `corpus-state.yaml` flags and the `actionable-readiness.md` label above.
 - Reconcile only the entries you plan to change and leave older optimistic wording untouched on adoption / handover entries.
-- Recommend "fix BUG-…", "invoke … on …", "hand off to …", "écrire la
-  spec", "ouvrir un ticket", "préparer la PR" — toute action
-  d'implémentation, de spec, de ticketing ou de triage est hors scope
-  corpus. Recommendations are corpus actions only. A captured bug, risk
+- Recommend "fix BUG-…", "invoke … on …", "hand off to …", "write the
+  spec", "open a ticket", "prepare the PR" — any implementation, spec,
+  ticketing or triage action is outside the corpus scope.
+  Recommendations are corpus actions only. A captured bug, risk
   or drift is knowledge already capitalized, not a backlog item waiting
   in this file.
-- Nommer un autre agent du pack ou un skill `authoring/*` /
-  `development/*` dans une recommandation, même pour pré-formater la
-  suite côté delivery. Le nommer = ouvrir la porte à le suggérer ; la
-  bonne formulation rend la main à l'opérateur sans pré-formater :
-  "BUG-014 capturé sous `doc/prod/known-bugs/`. À toi de dire si on
-  creuse une autre zone du corpus ou si tu enchaînes ailleurs."
+- Name another pack agent or an `authoring/*` /
+  `development/*` skill in a recommendation, even to pre-format the
+  delivery-side follow-up. Naming it = opening the door to suggesting it; the
+  right phrasing hands control back to the operator without pre-formatting:
+  "BUG-014 captured under `doc/prod/known-bugs/`. It's up to you to say whether we
+  dig into another area of the corpus or whether you move on elsewhere."
 - Recommend a prod / Jira / Confluence / dashboard action as the top
   recommendation while `corpus.code_analysis_status != covered`. The
   code-baseline progress factor is dominant — when the spine is

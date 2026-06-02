@@ -1,0 +1,880 @@
+# corpus-paths.yaml — SINGLE SOURCE OF TRUTH for canonical corpus file paths.
+# Consumers MUST read this instead of hardcoding paths:
+#   scripts/validate-corpus.mjs   -> hard-gate `gated: true`; near-miss detect deviations
+#   scripts/build-corpus-site.mjs -> read `surfaced: true`
+#   pipeline/authoring skills      -> cross-reference the canonical path (never invent variants)
+# Fields:
+#   requirement: required | conditional   (conditional = only when that subject exists)
+#   delivery:    skeleton (shipped) | llm-created (agent writes it) | generated (produced at handover)
+#   gated:       true | false | conditional   (validator presence gate)
+#   surfaced:    dashboard reads it
+#   scaffold:    ship an empty stub so the agent fills, never names
+version: 1
+paths:
+  - path: doc/_graph/edges.yaml
+    scope: graph
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/_graph/evidence.yaml
+    scope: graph
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/_graph/nodes.yaml
+    scope: graph
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/_handover/AI_CHAMPION_GUIDE.md
+    scope: handover
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/_handover/HANDOVER_SUMMARY.md
+    scope: handover
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/_handover/KICKSTART_CLOSEOUT_CHECKLIST.md
+    scope: handover
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/_handover/NEXT_30_DAYS.md
+    scope: handover
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/_handover/OPEN_DECISIONS.md
+    scope: handover
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/_handover/RAPPORT_ETONNEMENT.md
+    scope: handover
+    produced_by: governance/team-handover
+    requirement: conditional
+    delivery: generated
+    gated: conditional
+    surfaced: true
+    scaffold: false
+  - path: doc/_handover/TEAM_USAGE_GUIDE.md
+    scope: handover
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/_indexes/by-api.md
+    scope: index
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: false
+    scaffold: false
+  - path: doc/_indexes/by-batch.md
+    scope: index
+    produced_by: various
+    requirement: conditional
+    delivery: skeleton
+    gated: conditional
+    surfaced: false
+    scaffold: false
+  - path: doc/_indexes/by-brick.md
+    scope: index
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: false
+    scaffold: false
+  - path: doc/_indexes/by-bug.md
+    scope: index
+    produced_by: various
+    requirement: conditional
+    delivery: skeleton
+    gated: conditional
+    surfaced: false
+    scaffold: false
+  - path: doc/_indexes/by-business-entity.md
+    scope: index
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: false
+    scaffold: false
+  - path: doc/_indexes/by-component.md
+    scope: index
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: false
+    scaffold: false
+  - path: doc/_indexes/by-feature.md
+    scope: index
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: false
+    scaffold: false
+  - path: doc/_indexes/by-production-signal.md
+    scope: index
+    produced_by: various
+    requirement: conditional
+    delivery: skeleton
+    gated: conditional
+    surfaced: false
+    scaffold: false
+  - path: doc/_indexes/by-project-signal.md
+    scope: index
+    produced_by: various
+    requirement: conditional
+    delivery: skeleton
+    gated: conditional
+    surfaced: false
+    scaffold: false
+  - path: doc/_indexes/by-risk.md
+    scope: index
+    produced_by: various
+    requirement: conditional
+    delivery: skeleton
+    gated: conditional
+    surfaced: false
+    scaffold: false
+  - path: doc/_indexes/by-screen.md
+    scope: index
+    produced_by: various
+    requirement: conditional
+    delivery: skeleton
+    gated: conditional
+    surfaced: false
+    scaffold: false
+  - path: doc/_indexes/by-source.md
+    scope: index
+    produced_by: various
+    requirement: conditional
+    delivery: skeleton
+    gated: conditional
+    surfaced: false
+    scaffold: false
+  - path: doc/_indexes/by-technical-component.md
+    scope: index
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: false
+    scaffold: false
+  - path: doc/_meta/actionable-readiness.md
+    scope: meta-state
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/_meta/agent-cache-discipline.md
+    scope: meta-state
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/_meta/app-profile.yaml
+    scope: meta-state
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/_meta/blocking-questions.md
+    scope: meta-state
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/_meta/brick-inventory.yaml
+    scope: meta-state
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/_meta/code-activity-signals.yaml
+    scope: meta-state
+    produced_by: various
+    requirement: required
+    delivery: llm-created
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/_meta/code-inventory.md
+    scope: meta-state
+    produced_by: various
+    requirement: required
+    delivery: llm-created
+    gated: true
+    surfaced: false
+    scaffold: false
+  - path: doc/_meta/code-inventory.yaml
+    scope: meta-state
+    produced_by: various
+    requirement: required
+    delivery: llm-created
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/_meta/code-maturity.md
+    scope: meta-state
+    produced_by: various
+    requirement: required
+    delivery: llm-created
+    gated: true
+    surfaced: false
+    scaffold: false
+  - path: doc/_meta/code-maturity.yaml
+    scope: meta-state
+    produced_by: various
+    requirement: required
+    delivery: llm-created
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/_meta/code-pipeline-state.yaml
+    scope: meta-state
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/_meta/code-style-state.yaml
+    scope: meta-state
+    produced_by: various
+    requirement: required
+    delivery: llm-created
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/_meta/corpus-changelog.md
+    scope: meta-state
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/_meta/corpus-state.yaml
+    scope: meta-state
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/_meta/coverage-matrix.md
+    scope: meta-state
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: false
+    scaffold: false
+  - path: doc/_meta/cross-cutting-state.yaml
+    scope: meta-state
+    produced_by: various
+    requirement: required
+    delivery: llm-created
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/_meta/deep-analysis-plan.md
+    scope: meta-state
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: false
+    scaffold: false
+  - path: doc/_meta/discovery-coverage.md
+    scope: meta-state
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: false
+    scaffold: false
+  - path: doc/_meta/feature-candidates.yaml
+    scope: meta-state
+    produced_by: various
+    requirement: required
+    delivery: llm-created
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/_meta/generation-log.md
+    scope: meta-state
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: false
+    scaffold: false
+  - path: doc/_meta/information-sources.yaml
+    scope: meta-state
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/_meta/interaction-history/patterns/friction-points.md
+    scope: meta-state
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: false
+    scaffold: false
+  - path: doc/_meta/interaction-history/patterns/prompt-improvements.md
+    scope: meta-state
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: false
+    scaffold: false
+  - path: doc/_meta/kickstart-progress.md
+    scope: meta-state
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: false
+    scaffold: false
+  - path: doc/_meta/kickstart-report.md
+    scope: meta-state
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: false
+    scaffold: false
+  - path: doc/_meta/logical-boundaries.yaml
+    scope: meta-state
+    produced_by: various
+    requirement: required
+    delivery: llm-created
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/_meta/mcp-readiness.md
+    scope: meta-state
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/_meta/mcp-source-wizard.md
+    scope: meta-state
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: false
+    scaffold: false
+  - path: doc/_meta/open-questions.md
+    scope: meta-state
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/_meta/reconciliation-ledger.yaml
+    scope: meta-state
+    produced_by: pipeline/p9-code-reconciliation-gate
+    requirement: required
+    delivery: llm-created
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/_meta/reconciliation-ledger.md
+    scope: meta-state
+    produced_by: pipeline/p9-code-reconciliation-gate
+    requirement: required
+    delivery: llm-created
+    gated: true
+    surfaced: false
+    scaffold: false   # human-readable companion to reconciliation-ledger.yaml
+  - path: doc/_meta/repository-map.yaml
+    scope: meta-state
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/_meta/source-inventory.md
+    scope: meta-state
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: false
+    scaffold: false
+  - path: doc/_meta/structural-issues.yaml
+    scope: meta-state
+    produced_by: various
+    requirement: required
+    delivery: llm-created
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/_meta/update-candidates.md
+    scope: meta-state
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/_meta/validation-checklist.md
+    scope: meta-state
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: false
+    scaffold: false
+  - path: doc/_roadmap/CORPUS_ROADMAP.md
+    scope: roadmap
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: false
+    scaffold: false
+  - path: doc/_roadmap/CORPUS_ROADMAP.yaml
+    scope: roadmap
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: false
+    scaffold: false
+  - path: doc/_roadmap/NEXT_BEST_ACTIONS.md
+    scope: roadmap
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/_roadmap/ROADMAP_DECISIONS.md
+    scope: roadmap
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: false
+    scaffold: false
+  - path: doc/_roadmap/ROADMAP_STATE.md
+    scope: roadmap
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: false
+    scaffold: false
+  - path: doc/_runs/RUN_LEDGER.md
+    scope: runs
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/_runs/RUN_TEMPLATE.md
+    scope: runs
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: false
+    scaffold: false
+  - path: doc/mcp/MCP_READINESS.md
+    scope: mcp
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: false
+    scaffold: false
+  - path: doc/mcp/atlassian-query-catalog.md
+    scope: mcp
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: false
+    scaffold: false
+  - path: doc/mcp/atlassian.md
+    scope: mcp
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: false
+    scaffold: false
+  - path: doc/mcp/custom-sources.md
+    scope: mcp
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: false
+    scaffold: false
+  - path: doc/mcp/dynatrace-query-catalog.md
+    scope: mcp
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: false
+    scaffold: false
+  - path: doc/mcp/dynatrace.md
+    scope: mcp
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: false
+    scaffold: false
+  - path: doc/mcp/github.md
+    scope: mcp
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: false
+    scaffold: false
+  - path: doc/mcp/servicenow.md
+    scope: mcp
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: false
+    scaffold: false
+  - path: doc/prod/BASELINES.md
+    scope: prod
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/prod/BATCH_HEALTH.md
+    scope: prod
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/prod/COMPONENT_MAP.md
+    scope: prod
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: false
+    scaffold: false
+  - path: doc/prod/INFRA_STATE.md
+    scope: prod
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/prod/RUNTIME_ARCHITECTURE.md
+    scope: prod
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/prod/SERVICE_FLOWS.md
+    scope: prod
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: false
+    scaffold: false
+  - path: doc/project/activity/CROSS_ATLASSIAN_REFERENCES.md
+    scope: activity
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/project/activity/PROJECT_TRAJECTORY.md
+    scope: activity
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/project/apis/CATALOG.md
+    scope: apis
+    produced_by: pipeline/p5-cross-cutting-extraction
+    requirement: required
+    delivery: llm-created
+    gated: true
+    surfaced: true
+    scaffold: true
+  - path: doc/project/architecture/ARCH_STYLE.md
+    scope: architecture
+    produced_by: pipeline/p2-logical-boundaries
+    requirement: required
+    delivery: llm-created
+    gated: true
+    surfaced: true
+    scaffold: true
+  - path: doc/project/architecture/INTEGRATION_MAP.md
+    scope: architecture
+    produced_by: pipeline/p5-cross-cutting-extraction
+    requirement: required
+    delivery: llm-created
+    gated: true
+    surfaced: true
+    scaffold: true
+  - path: doc/project/architecture/LAYERS.md
+    scope: architecture
+    produced_by: pipeline/p2-logical-boundaries
+    requirement: conditional
+    delivery: llm-created
+    gated: conditional
+    surfaced: true
+    scaffold: false
+  - path: doc/project/architecture/MODULES.md
+    scope: architecture
+    produced_by: pipeline/p2-logical-boundaries
+    requirement: required
+    delivery: llm-created
+    gated: true
+    surfaced: true
+    scaffold: true
+  - path: doc/project/architecture/PERSISTENCE.md
+    scope: architecture
+    produced_by: pipeline/p5-cross-cutting-extraction
+    requirement: required
+    delivery: llm-created
+    gated: true
+    surfaced: true
+    scaffold: true
+  - path: doc/project/architecture/diagrams/arch-style.md
+    scope: architecture-diagram
+    produced_by: pipeline/p2-logical-boundaries
+    requirement: required
+    delivery: llm-created
+    gated: true
+    surfaced: true
+    scaffold: true
+  - path: doc/project/architecture/diagrams/domain-er.md
+    scope: architecture-diagram
+    produced_by: pipeline/p5-cross-cutting-extraction
+    requirement: required
+    delivery: llm-created
+    gated: true
+    surfaced: true
+    scaffold: true
+  - path: doc/project/architecture/diagrams/integration-context.md
+    scope: architecture-diagram
+    produced_by: pipeline/p5-cross-cutting-extraction
+    requirement: required
+    delivery: llm-created
+    gated: true
+    surfaced: true
+    scaffold: true
+  - path: doc/project/architecture/diagrams/integration-flow.md
+    scope: architecture-diagram
+    produced_by: pipeline/p5-cross-cutting-extraction
+    requirement: required
+    delivery: llm-created
+    gated: true
+    surfaced: true
+    scaffold: true
+  - path: doc/project/architecture/diagrams/layers.md
+    scope: architecture-diagram
+    produced_by: pipeline/p2-logical-boundaries
+    requirement: required
+    delivery: llm-created
+    gated: true
+    surfaced: true
+    scaffold: true
+  - path: doc/project/architecture/diagrams/messaging-topology.md
+    scope: architecture-diagram
+    produced_by: pipeline/p5-cross-cutting-extraction
+    requirement: required
+    delivery: llm-created
+    gated: true
+    surfaced: true
+    scaffold: true
+  - path: doc/project/architecture/diagrams/modules-deps.md
+    scope: architecture-diagram
+    produced_by: pipeline/p2-logical-boundaries
+    requirement: required
+    delivery: llm-created
+    gated: true
+    surfaced: true
+    scaffold: true
+  - path: doc/project/architecture/diagrams/persistence.md
+    scope: architecture-diagram
+    produced_by: pipeline/p5-cross-cutting-extraction
+    requirement: required
+    delivery: llm-created
+    gated: true
+    surfaced: true
+    scaffold: true
+  - path: doc/project/cicd/PIPELINES.md
+    scope: cicd
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/project/cicd/RECENT_ACTIVITY.md
+    scope: cicd
+    produced_by: various
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: false
+    scaffold: false
+  - path: doc/project/domain/ENTITIES.md
+    scope: domain
+    produced_by: pipeline/p5-cross-cutting-extraction
+    requirement: required
+    delivery: llm-created
+    gated: true
+    surfaced: true
+    scaffold: true
+  - path: doc/project/services/MESSAGING.md
+    scope: services
+    produced_by: pipeline/p5-cross-cutting-extraction
+    requirement: required
+    delivery: llm-created
+    gated: true
+    surfaced: false
+    scaffold: true
+  - path: doc/project/technical/CODE_STYLE.md
+    scope: technical
+    produced_by: pipeline/p6-code-style-naming
+    requirement: required
+    delivery: llm-created
+    gated: true
+    surfaced: false
+    scaffold: true
+  - path: doc/project/technical/CROSS_CUTTING.md
+    scope: technical
+    produced_by: pipeline/p5-cross-cutting-extraction
+    requirement: required
+    delivery: llm-created
+    gated: true
+    surfaced: false
+    scaffold: true
+  - path: doc/project/technical/NAMING_CONVENTIONS.md
+    scope: technical
+    produced_by: pipeline/p6-code-style-naming
+    requirement: required
+    delivery: llm-created
+    gated: true
+    surfaced: false
+    scaffold: true
+  - path: doc/project/technical/STRUCTURAL_ISSUES.md
+    scope: technical
+    produced_by: pipeline/p7-structural-issues
+    requirement: required
+    delivery: llm-created
+    gated: true
+    surfaced: false
+    scaffold: true
+  - path: doc/project/technical/style-by-layer.md
+    scope: technical
+    produced_by: pipeline/p6-code-style-naming
+    requirement: conditional
+    delivery: llm-created
+    gated: conditional
+    surfaced: false
+    scaffold: false
+
+# Dynamic-name files: validated by pattern, not exact path.
+patterns:
+  - id: known-bug
+    glob: doc/prod/known-bugs/BUG-<id>-<slug>.md
+    regex: '^doc/prod/known-bugs/BUG-[0-9]{3}-[a-z0-9-]+\.md$'
+    produced_by: authoring/knowledge-capture
+  - id: structural-risk
+    glob: doc/prod/structural-risks/RISK-<id>-<slug>.md
+    regex: '^doc/prod/structural-risks/RISK-[0-9]{3}-[a-z0-9-]+\.md$'
+    produced_by: pipeline/p7-structural-issues
+  - id: root-cause-playbook
+    glob: doc/prod/root-cause-playbooks/PLAYBOOK-<slug>.md
+    regex: '^doc/prod/root-cause-playbooks/PLAYBOOK-[a-z0-9-]+\.md$'
+    produced_by: authoring/analyze-incident
+  - id: watchlist
+    glob: doc/prod/watchlist/WATCH-<slug>.md
+    regex: '^doc/prod/watchlist/WATCH-[a-z0-9-]+\.md$'
+    produced_by: reliability
+  - id: feature-folder
+    glob: doc/project/features/<slug>/{README,ARCHITECTURE,WORKFLOWS,BUSINESS_RULES,OPERATIONS,AI_AGENT_GUIDE}.md
+    regex: '^doc/project/features/[a-z0-9-]+/(README|ARCHITECTURE|WORKFLOWS|BUSINESS_RULES|OPERATIONS|AI_AGENT_GUIDE)\.md$'
+    produced_by: pipeline/p4-feature-silo-deep-dive
+  - id: code-interview
+    glob: doc/_meta/code-interview/<slug>.md
+    regex: '^doc/_meta/code-interview/[a-z0-9-]+\.md$'
+    produced_by: pipeline/per-brick-interview

@@ -154,7 +154,7 @@ For each duplicate-key finding, ask the operator which value to keep. **Never pi
 
 For each missing field on BUG / RISK / WATCH frontmatter, ask the operator for the value. The agent may propose a candidate by reading the file body (e.g. severity often appears as `**Sévérité** : HIGH` in the body table), but the operator confirms.
 
-### I. Status hors enum
+### I. Status outside enum
 
 When a status value isn't in the canonical enum (e.g. BUG with `status: active`), propose a mapping:
 

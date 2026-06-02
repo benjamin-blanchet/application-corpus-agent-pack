@@ -6,8 +6,8 @@ source: pack
 last_validated:
 ---
 
-# Corpusure
+# Architecture
 
-Corpusure notes, diagrams and decision records.
+Architecture notes, diagrams and decision records.
 
 Fill this section from repository evidence and team validation.

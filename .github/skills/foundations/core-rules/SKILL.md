@@ -89,6 +89,31 @@ Look for package/build/config files and entry points such as:
 
 Prefer small canonical files and indexes over large monolithic documents.
 
+## Language policy
+
+The pack separates three language tiers — keep them distinct so the
+machinery stays portable while team deliverables stay localizable:
+
+1. **Pack machinery — English.** Agent personas (`.github/agents/**`),
+   skills (`.github/skills/**`), schemas, scripts and structural templates
+   are written in English. This is a shareable, stack-agnostic, Agent-Skills
+   standard pack; its instructions must read in one language.
+2. **Runtime conversation — the operator's language.** When responding to
+   the operator (recaps, questions, status), reply in the language the
+   operator writes in (e.g. French if they write in French). This is runtime
+   behavior, not pack content. Kickstart trigger phrases and confirmation
+   signals are recognized in any language — the examples kept in skills are
+   illustrative, not exhaustive.
+3. **Team deliverables — configurable, per `app-profile.yaml`
+   `language_policy.team_outputs` (default `fr`).** Specs, handover material
+   (`doc/_handover/**`, incl. `RAPPORT_ETONNEMENT.md`), and team-facing
+   guides are produced in the team's language. The corpus knowledge body
+   itself follows `language_policy.corpus` (default `en`).
+
+Do not mix tier 1 with tier 2/3: never embed operator-language prose in a
+skill or persona instruction — show an English reference and localize at
+runtime.
+
 ## Source consumption
 
 Do not rely only on predefined tools. Teams may expose logs, metrics, tickets, exports or business data through SQL, APIs, files or manual evidence. Register each source in `doc/_meta/information-sources.yaml`, document usage in `doc/mcp/custom-sources.md`, and route findings through the corpus with evidence and confidence.

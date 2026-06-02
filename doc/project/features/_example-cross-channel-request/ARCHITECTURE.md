@@ -10,7 +10,7 @@ related_risks: []
 related_bugs: []
 ---
 
-# Cross-channel Request Handling — Corpusure
+# Cross-channel Request Handling — Architecture
 
 ## Logical components
 
@@ -38,7 +38,7 @@ related_bugs: []
 | External notification system | outbound | Retry and duplicate emission. |
 | Processing queue/job | internal | Backlog and stuck processing. |
 
-## Corpusure notes for agents
+## Architecture notes for agents
 
 - Look for routes, controllers, handlers, consumers or CLI commands to find entry points.
 - Look for tests to confirm expected transitions.

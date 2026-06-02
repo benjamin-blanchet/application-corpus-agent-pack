@@ -55,7 +55,7 @@ related_bugs: []
 | Signal | Evidence / query | Severity | Confidence | Follow-up |
 |---|---|---|---|---|
 
-## Surprises / rapport d'étonnement
+## Surprises / fresh-eyes notes
 
 | Observation | Why it is surprising | Evidence | Impact | Next action |
 |---|---|---|---|---|
