@@ -1711,7 +1711,96 @@ function checkSecrets() {
   }
 }
 
+// Parse schemas/corpus-paths.yaml (the single source of truth for canonical
+// corpus file paths). Returns { paths: [{path, scope, delivery, gated, ...}], patterns: [{id, regex}] }.
+function loadCorpusPathsManifest() {
+  const file = 'schemas/corpus-paths.yaml';
+  if (!exists(file)) return null;
+  const lines = read(file).split(/\r?\n/);
+  const out = { paths: [], patterns: [] };
+  let section = null;
+  let current = null;
+  for (const raw of lines) {
+    if (!raw.trim() || raw.trim().startsWith('#')) continue;
+    if (/^paths:\s*$/.test(raw)) { section = 'paths'; continue; }
+    if (/^patterns:\s*$/.test(raw)) { section = 'patterns'; continue; }
+    if (/^[A-Za-z0-9_]+:/.test(raw)) { section = null; continue; } // top-level scalar (version)
+    if (!section) continue;
+    const item = raw.match(/^\s*-\s*([A-Za-z0-9_]+):\s*(.*)$/);
+    if (item) {
+      current = {};
+      out[section].push(current);
+      current[item[1]] = stripScalar(item[2]);
+      continue;
+    }
+    const kv = raw.match(/^\s+([A-Za-z0-9_]+):\s*(.*)$/);
+    if (kv && current) current[kv[1]] = stripScalar(kv[2]);
+  }
+  return out;
+}
+
+function stripScalar(v) {
+  const s = v.replace(/\s+#.*$/, '').trim().replace(/^['"]|['"]$/g, '');
+  if (s === 'true') return true;
+  if (s === 'false') return false;
+  return s;
+}
+
+// Enforce the canonical-path contract:
+//  - every shipped (skeleton) gated path must exist on disk (catches pack regressions);
+//  - any file whose name closely resembles a canonical sibling but is not exact is
+//    flagged as drift ("did you mean X?") — the root cause of per-corpus filename divergence.
+function checkCanonicalPaths() {
+  const manifest = loadCorpusPathsManifest();
+  if (!manifest) {
+    add('P1', 'corpus-paths-manifest-missing', 'schemas/corpus-paths.yaml (canonical path manifest) is missing — validator cannot enforce canonical filenames', 'schemas/corpus-paths.yaml');
+    return;
+  }
+
+  const canonical = manifest.paths.map((p) => p.path).filter(Boolean);
+  const canonicalSet = new Set(canonical);
+
+  // 1. Shipped skeleton files that must be present in the pack.
+  for (const p of manifest.paths) {
+    if (p.delivery === 'skeleton' && p.gated === true && !exists(p.path)) {
+      add('P1', 'canonical-skeleton-missing', `Canonical skeleton file declared in corpus-paths.yaml is missing: ${p.path}`, p.path);
+    }
+  }
+
+  // 2. Near-miss detection. Build dir -> canonical basenames.
+  const byDir = new Map();
+  for (const full of canonical) {
+    const dir = full.slice(0, full.lastIndexOf('/'));
+    if (!byDir.has(dir)) byDir.set(dir, []);
+    byDir.get(dir).push(full.slice(full.lastIndexOf('/') + 1));
+  }
+  const core = (base) => base.replace(/\.[^.]+$/, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const ext = (base) => base.slice(base.lastIndexOf('.'));
+  const stem = (c) => (c.endsWith('s') ? c.slice(0, -1) : c);
+
+  for (const abs of walk(docRoot)) {
+    const r = rel(abs);
+    if (!/\.(md|yaml)$/.test(r)) continue;
+    if (canonicalSet.has(r)) continue; // exact canonical -> fine
+    const dir = r.slice(0, r.lastIndexOf('/'));
+    const base = r.slice(r.lastIndexOf('/') + 1);
+    const siblings = byDir.get(dir);
+    if (!siblings) continue; // dir has no canonical files -> nothing to drift from
+    const c = core(base);
+    for (const canon of siblings) {
+      if (canon === base) continue;
+      if (ext(canon) !== ext(base)) continue;
+      const cc = core(canon);
+      if (c === cc || stem(c) === stem(cc)) {
+        add('P1', 'noncanonical-filename', `Non-canonical filename "${base}" — did you mean "${canon}"? Canonical path is pinned in schemas/corpus-paths.yaml; rename to avoid per-corpus drift`, r, `canonical: ${dir}/${canon}`);
+        break;
+      }
+    }
+  }
+}
+
 checkRequiredStructure();
+checkCanonicalPaths();
 checkMarkdownLinks();
 checkFrontmatter();
 checkFeatureFolders();

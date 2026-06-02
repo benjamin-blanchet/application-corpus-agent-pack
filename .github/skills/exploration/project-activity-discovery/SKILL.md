@@ -9,7 +9,7 @@ description: "Run an initial, time-boxed project activity discovery pass during 
 
 Run an initial, time-boxed project activity discovery pass during or just after corpus kickstart when Jira/work tracking, Git/source control, PR or CI sources are available.
 
-The goal is to produce a grounded "rapport d'étonnement" on the current life of the project: active work, recurring problems, delivery pressure, changed areas, project trajectory, cross-project dependencies and knowledge distribution.
+The goal is to produce a grounded "fresh-eyes report" on the current life of the project: active work, recurring problems, delivery pressure, changed areas, project trajectory, cross-project dependencies and knowledge distribution.
 
 This skill does not evaluate individual performance. Contributor information may be used only to understand code ownership, adoption needs and collaboration paths.
 
@@ -148,7 +148,7 @@ Look for:
 
 For serious/full kickstarts, scan at minimum the last 100 commits and/or last 90 days when available. Use the results to identify active bricks and changed areas, not to rank individuals.
 
-## Rapport d'étonnement questions
+## Fresh-eyes report questions
 
 Answer questions such as:
 
@@ -179,7 +179,7 @@ Required sections:
 6. Git / source control signals
 7. CI/CD and recent repository activity
 8. Contributors and knowledge distribution
-9. Surprises / rapport d'étonnement
+9. Surprises / fresh-eyes report
 10. Candidate durable knowledge
 11. Open questions
 12. Limitations

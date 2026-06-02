@@ -24,16 +24,16 @@ concatenated in this order at every tour:
 ```
 
 Any change to a slice on the **left** invalidates all caches to its right.
-The pack's amorçage (always-on surface) sits in the leftmost slices — so
+The pack's bootstrap (always-on surface) sits in the leftmost slices — so
 every byte there is multiplied by every tour, every session, every consumer.
 
-The pack measures its amorçage with `scripts/estimate-token-cost.mjs`:
+The pack measures its bootstrap with `scripts/estimate-token-cost.mjs`:
 
-- `--baseline` once after install — captures the current amorçage as the
+- `--baseline` once after install — captures the current bootstrap as the
   reference point.
 - `--compare` after any change to personas or top-level files — prints the
   delta vs. baseline so the operator sees what the change cost.
-- `--check` in a pre-commit hook or CI step — exits non-zero if amorçage
+- `--check` in a pre-commit hook or CI step — exits non-zero if bootstrap
   drifted more than +5 % (override with `--threshold=N`). Locks in token
   savings so future edits cannot quietly re-bloat the always-on surface.
 
@@ -155,7 +155,7 @@ Run this once before starting `corpus`, `developer` or `reliability-analyst`:
 Measured impact ranges from public state-of-the-art (mai 2026):
 
 - Staying on one model: −15 to −30 % vs. switching mid-session
-- Pre-staging MCPs vs. attaching during: −30 to −50 % on the kickstart amorçage
+- Pre-staging MCPs vs. attaching during: −30 to −50 % on the kickstart bootstrap
 - Stable `AGENTS.md` + persona: +++ cache-hit rate (cumulative across all
   subsequent tours)
 - `.claudeignore` properly tuned: −15 to −25 % on consumer-side exploration

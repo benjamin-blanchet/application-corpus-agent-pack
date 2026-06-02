@@ -133,7 +133,7 @@ Do not run package scripts blindly when they may deploy, publish, migrate, seed 
 
 ## Agent-specific application
 
-- `Corpus`: **never** edits application source code, in any mode. Write surface is strictly `doc/**`, `.github/agents/**`, `.github/skills/**` and pack-shipped `scripts/` files. Everything else in the repo (production code, configs, manifests, migrations, tests, CI/CD, IaC) is read-only. When a code change is needed, write it to `doc/_meta/update-candidates.md` — la suite est hors scope corpus, l'opérateur décide. See `AGENTS.md` § "Write boundaries — hard rule" and the corpus agent definition.
+- `Corpus`: **never** edits application source code, in any mode. Write surface is strictly `doc/**`, `.github/agents/**`, `.github/skills/**` and pack-shipped `scripts/` files. Everything else in the repo (production code, configs, manifests, migrations, tests, CI/CD, IaC) is read-only. When a code change is needed, write it to `doc/_meta/update-candidates.md` — the follow-up is outside the corpus scope, the operator decides. See `AGENTS.md` § "Write boundaries — hard rule" and the corpus agent definition.
 - `Functional Analyst`: may create/update `doc/spec/`; must not change application source.
 - `Developer`: may edit application source only after corpus-first lifecycle and spec gate; must update/reconcile corpus after implementation.
 - `Reliability Analyst`: read-only by default; may produce incident analysis, playbooks, risks and watchlist entries; must not restart, deploy, purge, write DB state or close incidents.
@@ -146,7 +146,7 @@ If you are running as `corpus` (or one of its subagents) and you find yourself a
 - run a code-modifying command (`sed -i`, `mv`, `rm`, `git mv`, formatter with `--write` on app sources, codemod, refactoring tool),
 - accept an operator request phrased as "fix the code", "apply this patch", "rename this function", "remove that import",
 
-stop and reroute. Decline plainly: "Je n'édite jamais le code source. Je peux écrire le candidat de mise à jour sous `doc/_meta/update-candidates.md` ; la suite est ta décision." Write the suggestion into `doc/_meta/update-candidates.md` and surface it in the run recap. Never edit "just this once".
+stop and reroute. Decline plainly: "I never edit the source code. I can write the update candidate under `doc/_meta/update-candidates.md`; the follow-up is your decision." Write the suggestion into `doc/_meta/update-candidates.md` and surface it in the run recap. Never edit "just this once".
 
 ## Safe fallback
 

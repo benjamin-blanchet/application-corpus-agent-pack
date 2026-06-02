@@ -71,7 +71,7 @@ Reading `doc/mcp/<tool>.md` before a session is necessary but not sufficient. Th
 
 2. **`Common pitfalls` section** — every "I tried X and it returned 0 results / wrong shape / silent failure". These are the single highest-leverage entries — they save the *next* agent from rediscovering by trial and error. Be specific: not "filtering by host doesn't work" but "`dt.host_group.id` does not filter logs in Grail (returns 0); use `host.name` or `container.name`".
 
-3. **`Useful queries or lookup patterns` / `Filtres DQL vérifiés`** — verified, runnable queries with the filters actually needed for *this* team's data. Do not paste invented or example queries — only what was executed and returned data.
+3. **`Useful queries or lookup patterns` / `Verified DQL filters`** — verified, runnable queries with the filters actually needed for *this* team's data. Do not paste invented or example queries — only what was executed and returned data.
 
 4. **`Discovery limitations`** — what is impossible or blocked (missing permissions, deprecated fields, quota walls, naming mismatches, fields always `null`). Distinguish "not available for this tenant" from "not yet tried".
 

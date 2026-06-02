@@ -72,9 +72,12 @@ doc/_handover/TEAM_USAGE_GUIDE.md
 doc/_handover/NEXT_30_DAYS.md
 doc/_handover/OPEN_DECISIONS.md
 doc/_handover/KICKSTART_CLOSEOUT_CHECKLIST.md
+doc/_handover/RAPPORT_ETONNEMENT.md           # fresh-eyes report: what surprised the corpus operator, generated at handover close
 ```
 
 All files are written with `status: active` only after the gate passes.
+
+`RAPPORT_ETONNEMENT.md` is generated last, from `.github/templates/handover/RAPPORT_ETONNEMENT.md.template`. It is a deliberate "fresh-eyes" deliverable: the surprises, smells, fragile spots and surface-level oddities the operator noticed while building the corpus — captured before the operator's eyes acclimatize. Ground each observation in a corpus location (feature folder, risk, bug, reconciliation row); do not invent.
 
 ## Required behavior
 

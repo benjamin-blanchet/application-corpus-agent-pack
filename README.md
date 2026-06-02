@@ -151,14 +151,14 @@ node scripts/estimate-token-cost.mjs --compare    # see the delta in tokens and 
 
 | Surface | Before | After | Delta |
 |---|---|---|---|
-| Always-on amorçage per session | 42 248 tokens | 27 672 tokens | **−34.5 %** |
+| Always-on bootstrap per session | 42 248 tokens | 27 672 tokens | **−34.5 %** |
 | `AGENTS.md` | 7 521 tokens | 1 747 tokens | **−77 %** |
 | `corpus.agent.md` | 11 840 tokens | 2 831 tokens | **−76 %** |
 | `developer.agent.md` | 8 087 tokens | 2 965 tokens | **−63 %** |
 | Production-discovery skill body | 4 733 tokens | 1 250 tokens (SKILL.md) + on-demand procedures | **−74 %** on SKILL.md |
 | Worst case (all skill bodies loaded) | 173 511 tokens | 162 100 tokens | −6.6 % |
 
-On a 30-tour session, the amorçage delta alone saves ~437 k input tokens
+On a 30-tour session, the bootstrap delta alone saves ~437 k input tokens
 in cache misses. The compound effect with stable cache discipline
 (model fixed, MCP pre-staged, persona immutable) typically pushes the
 total saving on a kickstart-class session into the **−50 to −70 %** range
@@ -183,25 +183,13 @@ Copy the full content of `COPY_INTO_REPO/` into the target application repositor
 
 Then open the repository in an IDE supporting Copilot custom agents and run the `Corpus` agent.
 
-The agent recognises **any kickstart-mode trigger** — pick the phrasing that fits, the agent will verify state before doing anything:
+The agent recognises **any kickstart-mode trigger**, in any language — pick the phrasing that fits, the agent will verify state before doing anything. English first, with a French variant where useful:
 
 ```text
-init le corpus
-```
-
-```text
+init the corpus              ·  init le corpus
+run the full repo analysis   ·  fais l'analyse complète du repo
 kickstart
-```
-
-```text
-fais l'analyse complète du repo
-```
-
-```text
 where are we on the corpus
-```
-
-```text
 continue
 ```
 
@@ -210,7 +198,7 @@ The agent's first response will be a resume report showing the current adoption 
 When you decide the corpus is clean enough to show the team, ask for adoption guide material:
 
 ```text
-prépare le guide d'adoption
+prepare the adoption guide   ·  prépare le guide d'adoption
 ```
 
 The adoption guide material should be honest about roadmap coverage, reliable knowledge, gaps and next recommended enrichment runs.

@@ -1,0 +1,46 @@
+---
+type: handover-report
+status: draft
+confidence: unknown
+source: mixed
+last_validated:
+---
+
+# Rapport d'étonnement
+
+A fresh-eyes report captured at handover close: what surprised the corpus
+operator while building the corpus — before the eyes acclimatize and the
+oddities start to feel normal. This is a deliberate deliverable: the value of
+a first pass over an unfamiliar codebase is the surprise, and it is lost if
+not written down.
+
+Each observation must be grounded in a corpus location (feature folder,
+structural risk, known bug, reconciliation row, diagram). Do not invent;
+do not turn observations into a backlog — they are knowledge, the team
+decides what to do with them.
+
+## Surprises and first impressions
+
+| # | What surprised me | Where in the corpus | Why it stood out | Confidence |
+|---|---|---|---|---|
+| 1 | unknown | unknown | unknown | unknown |
+
+## Fragile or smells-off spots
+
+| # | Observation | Evidence (file / risk / bug) | Confidence |
+|---|---|---|---|
+| 1 | unknown | unknown | unknown |
+
+## Code vs documentation / stated intent
+
+| # | What docs/tickets implied | What the code actually shows | Reconciliation row | Confidence |
+|---|---|---|---|---|
+| 1 | unknown | unknown | unknown | unknown |
+
+## Pleasant surprises (what is healthier than expected)
+
+- unknown
+
+## Open questions this raised
+
+- unknown

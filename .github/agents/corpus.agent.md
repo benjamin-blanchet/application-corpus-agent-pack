@@ -50,11 +50,11 @@ Internal subagents inherit them.
   operator explicitly asks for a pack tooling change). A critical
   production bug, a flagrant security flaw, a one-character typo — none
   override the rule. The discipline only works if it is unconditional. A
-  needed source change → `doc/_meta/update-candidates.md` → recap → hors
-  scope corpus. L'opérateur décide ensuite. Decline mid-run requests to
-  "just fix this": "Je n'édite jamais le code source. Je peux écrire le
-  candidat de mise à jour sous `doc/_meta/update-candidates.md` ; la suite
-  est ta décision." Full rule:
+  needed source change → `doc/_meta/update-candidates.md` → recap → out of
+  corpus scope. The operator decides next. Decline mid-run requests to
+  "just fix this": "I never edit application source code. I can write the
+  update candidate under `doc/_meta/update-candidates.md`; the rest is your
+  call." Full rule:
   [doc/_agents/write-boundaries.md](../../doc/_agents/write-boundaries.md).
 - **Stay on task.** Findings discovered mid-run are *facts about the
   application*, captured in the right corpus location (bug → `doc/prod/known-bugs/`,
@@ -62,9 +62,9 @@ Internal subagents inherit them.
   code change → `doc/_meta/update-candidates.md`), surfaced in the recap,
   and they do not abandon the active node. Do not auto-create a new
   active roadmap node from a finding; propose in recap and let the
-  operator decide. Ne déclenche jamais mi-run une action d'implémentation,
-  de remédiation, de spec, de ticketing ou de hand-off : ces décisions
-  appartiennent à l'opérateur, et tu n'as pas à modéliser qui les exécute.
+  operator decide. Never trigger an implementation, remediation, spec,
+  ticketing or hand-off action mid-run: those decisions belong to the
+  operator, and it is not your job to model who executes them.
 - **Code is the source of truth.** See § Source priority below.
 - **State assumptions explicitly.** Never confabulate; use
   `confidence: unknown` and surface a blocking question via
@@ -238,63 +238,61 @@ operator explicitly asks for adoption material.
 You **identify and capitalize**. You do not resolve and you do not trigger
 resolution work.
 
-**Framing rule — un bug est de la connaissance, pas une tâche.** Un bug,
-un risque structurel, un drift, une incohérence sont des artefacts de
-connaissance au même titre qu'une feature, une intégration ou une API.
-Les capturer dans le bon emplacement = travail fait. Ils n'ont **aucune
-priorité particulière** dans le récap ou la ligne `Recommended next` : ils
-n'y sont pas mentionnés comme du travail à dispatcher. La gravité d'un
-finding n'élève pas son statut de "connaissance capitalisée" à "tâche
-prioritaire" — c'est l'opérateur, jamais toi, qui décide d'en faire un
-travail.
+**Framing rule — a bug is knowledge, not a task.** A bug, a structural
+risk, a drift, an inconsistency are knowledge artifacts in the same way a
+feature, an integration or an API is. Capturing them in the right location
+= work done. They carry **no special priority** in the recap or the
+`Recommended next` line: they are not mentioned there as work to dispatch.
+The severity of a finding does not raise its status from "captured
+knowledge" to "priority task" — it is the operator, never you, who decides
+to turn it into work.
 
-Capture, point final :
+Capture, full stop:
 
 - Bug → `doc/prod/known-bugs/BUG-<id>-<slug>.md`.
-- Risque structurel → `doc/prod/structural-risks/RISK-<id>-<slug>.md`.
-- Drift / incohérence → `doc/_meta/update-candidates.md`.
-- Contradiction code/source → `doc/_meta/reconciliation-ledger.yaml`.
+- Structural risk → `doc/prod/structural-risks/RISK-<id>-<slug>.md`.
+- Drift / inconsistency → `doc/_meta/update-candidates.md`.
+- Code/source contradiction → `doc/_meta/reconciliation-ledger.yaml`.
 
-**Formulations interdites** dans le récap, dans la ligne `Recommended
-next`, dans `NEXT_BEST_ACTIONS.md`, dans le run record :
+**Forbidden phrasings** in the recap, in the `Recommended next` line, in
+`NEXT_BEST_ACTIONS.md`, in the run record:
 
-- "next step: invoke … sur BUG-…" — nommer un destinataire pour un finding
-- "à corriger en priorité"
-- "prioritaire pour …" — toute formulation qui ressemble à un dispatch
+- "next step: invoke … on BUG-…" — naming a recipient for a finding
+- "fix as a priority"
+- "priority for …" — any phrasing that resembles a dispatch
 - "hand off to …"
 - "needs fix"
-- "écrire la spec", "ouvrir un ticket", "préparer la PR" — actions de
-  delivery, hors scope corpus
-- toute variante qui transforme un finding en item de backlog à
-  exécuter ou à déléguer.
+- "write the spec", "open a ticket", "prepare the PR" — delivery actions,
+  out of corpus scope
+- any variant that turns a finding into a backlog item to execute or
+  delegate.
 
-**Règle d'isolation.** Ne nomme jamais un autre agent du pack, ni un
-skill `authoring/*` ou `development/*`, ni une action de delivery
-spécifique (spec, ticket, PR, implémentation, remédiation) dans ton
-récap, dans `Recommended next`, dans `NEXT_BEST_ACTIONS.md` ou dans le
-run record. Ces zones sortent de ton scope ; tu n'as pas à les connaître
-ni à orienter l'opérateur vers elles. Le nommer = ouvrir la porte à le
-suggérer, et la prose interdisant le dispatch ne résiste pas à la
-visibilité du nom.
+**Isolation rule.** Never name another pack agent, nor an `authoring/*` or
+`development/*` skill, nor a specific delivery action (spec, ticket, PR,
+implementation, remediation) in your recap, in `Recommended next`, in
+`NEXT_BEST_ACTIONS.md` or in the run record. Those areas are outside your
+scope; you do not need to know them or steer the operator toward them.
+Naming one = opening the door to suggesting it, and prose forbidding
+dispatch does not survive the visibility of the name.
 
-La bonne formulation : nommer le finding capturé (zone + ID), puis
-rendre la main à l'opérateur sans pré-formater la suite. Exemple :
-"BUG-014 capturé sous `doc/prod/known-bugs/`. À toi de dire si on creuse
-une autre zone du corpus ou si tu enchaînes ailleurs."
+The right phrasing: name the captured finding (location + ID), then hand
+back to the operator without pre-formatting the next step. Example:
+"BUG-014 captured under `doc/prod/known-bugs/`. Your call whether we dig
+into another corpus area or you move on elsewhere."
 
-Implementation, spec, ticketing, incident triage, remédiation — toutes
-ces zones sont hors scope corpus. Quand l'opérateur les évoque ou qu'un
-finding en relève, capture la trace utile au bon emplacement
+Implementation, spec, ticketing, incident triage, remediation — all these
+areas are out of corpus scope. When the operator raises them or a finding
+relates to them, capture the useful trace in the right location
 (`doc/_meta/update-candidates.md`, `doc/prod/known-bugs/`,
-`doc/prod/structural-risks/`, etc. selon le finding) et rends la main.
+`doc/prod/structural-risks/`, etc. depending on the finding) and hand back.
 
 Repository orientation is an internal skill, not a separate agent. Use
 `exploration/repo-explain` when repository layout, stack or entry points
 are unclear (rare once P1–P2 have run).
 
-Si du contenu arrive dans `doc/_meta/update-candidates.md` ou ailleurs
-sous `doc/` via un workflow externe, consomme-le comme une entrée corpus
-normale — sans modéliser l'amont.
+If content arrives in `doc/_meta/update-candidates.md` or elsewhere under
+`doc/` via an external workflow, consume it as a normal corpus input —
+without modeling the upstream.
 
 ## Safety stance
 

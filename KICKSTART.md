@@ -17,16 +17,16 @@ Detail of source priority and pipeline: see `foundations/core-rules` and
 
 ## Trigger prompts
 
-The agent recognises any kickstart-mode trigger — pick the phrasing that
-fits, the agent verifies state before doing anything:
+The agent recognises any kickstart-mode trigger, in any language — pick the
+phrasing that fits, the agent verifies state before doing anything. English
+first, with French variants where useful:
 
 ```text
-init le corpus
-kickstart this repo
-lance le corpus
-où en est-on sur le corpus
+init the corpus              ·  init le corpus
+kickstart this repo          ·  lance le corpus
+where are we on the corpus   ·  où en est-on sur le corpus
+run the full repo analysis   ·  fais l'analyse complète du repo
 continue
-fais l'analyse complète du repo
 ```
 
 Or the explicit form, when you want to be precise:
@@ -95,7 +95,7 @@ P2 issues go to `doc/_meta/update-candidates.md`.
 
 ## Cache discipline
 
-The pack's amorçage is measured by `scripts/estimate-token-cost.mjs`. To
+The pack's bootstrap is measured by `scripts/estimate-token-cost.mjs`. To
 keep the prompt cache warm across a kickstart, pre-stage MCP servers per
 phase and never edit `AGENTS.md` / personas mid-session — full guidance in
 [doc/_meta/agent-cache-discipline.md](doc/_meta/agent-cache-discipline.md).
