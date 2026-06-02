@@ -1,0 +1,39 @@
+---
+type: source-query-template
+status: active
+confidence: confirmed
+source: pack
+last_validated:
+---
+
+# SQL Read-only Query Template
+
+## Source
+
+- Source id:
+- Environment:
+- Engine:
+- Purpose:
+- Time window:
+- Row limit:
+
+## Query
+
+```sql
+SELECT
+  <columns>
+FROM <table>
+WHERE <timestamp_column> >= :start_time
+  AND <timestamp_column> < :end_time
+ORDER BY <timestamp_column> DESC
+LIMIT 500;
+```
+
+## Result summary
+
+| Observation | Evidence | Confidence | Destination |
+|---|---|---|---|
+
+## Limitations
+
+- 

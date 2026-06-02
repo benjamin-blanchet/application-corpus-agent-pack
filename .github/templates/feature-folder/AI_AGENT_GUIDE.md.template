@@ -1,0 +1,38 @@
+---
+type: agent-guide
+status: draft
+confidence: unknown
+source: unknown
+last_validated:
+related_features: []
+related_components: []
+related_risks: []
+related_bugs: []
+---
+
+# <Feature Name> — AI Agent Guide
+
+
+## Safe operations
+
+- `<safe operation>`
+
+## Dangerous operations
+
+- `<dangerous operation>`
+
+## Common traps
+
+| Trap | Consequence | How to avoid |
+|---|---|---|
+
+## Agent decision tree
+
+```text
+Need to change this feature?
+  -> Read README.md
+  -> Read BUSINESS_RULES.md
+  -> Read WORKFLOWS.md
+  -> Read OPERATIONS.md
+  -> Check related prod bugs/risks
+```

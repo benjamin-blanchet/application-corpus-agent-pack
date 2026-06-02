@@ -1,0 +1,21 @@
+# Schema for doc/_meta/feature-candidates.yaml
+# Consumed by scripts/validate-corpus.mjs. Source of truth in SKILL.md.
+
+file: doc/_meta/feature-candidates.yaml
+written_by_skill: pipeline/p3-feature-candidates
+skill_anchor: SKILL.md pipeline/p3-feature-candidates § Output schema
+description: P3 feature candidates extracted from code inventory. Each candidate is a P4 deep-dive target.
+
+# Pure YAML, no `---` frontmatter. Optional leading `#` comments allowed.
+must_not_be_markdown: true
+
+# Items inside the top-level `candidates:` list.
+item:
+  inside_block: candidates
+  forbidden_aliases:
+    name: title           # field-name drift: `name` → canonical `title`
+    feature: slug         # field-name drift
+    criticality: priority # canonical here is `priority` (matches the P3 SKILL)
+  enums:
+    priority: [critical, high, medium, low]
+    status: [candidate, p4_documented, deferred, dropped]

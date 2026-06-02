@@ -1,0 +1,20 @@
+---
+type: project-section
+status: draft
+confidence: unknown
+source: pack
+last_validated:
+---
+
+# CI/CD
+
+This section documents delivery automation, pipeline status and recent repository activity.
+
+Use `exploration/ci-cd-activity-discovery` to distinguish active pipelines from legacy or stale automation.
+
+## Files
+
+| File | Purpose |
+|---|---|
+| `PIPELINES.md` | CI/CD systems, jobs, triggers, active delivery path, legacy/stale candidates and risks. |
+| `RECENT_ACTIVITY.md` | Recent commits, changed areas and active bricks suggested by repository activity. |

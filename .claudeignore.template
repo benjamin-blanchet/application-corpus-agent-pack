@@ -1,0 +1,111 @@
+# .claudeignore — corpus-pack baseline (rename to .claudeignore)
+#
+# Goal: keep Claude Code's auto-scan / Grep / Glob away from files that cost
+# tokens and never carry corpus-relevant signal. Adapt to your stack.
+#
+# Doctrine: anything Claude doesn't need to see in order to do its job should
+# not be visible to it. Each ignored category preserves tokens AND reduces the
+# risk that a 30k-line lockfile gets dragged into context by mistake.
+#
+# Measured impact on a typical Java + Node repo: -15 to -30% tokens on
+# exploration sessions. Re-measure with `scripts/estimate-token-cost.mjs`
+# before and after customizing.
+
+# -----------------------------------------------------------------------------
+# Build artifacts (multi-stack)
+# -----------------------------------------------------------------------------
+node_modules/
+.next/
+.nuxt/
+.svelte-kit/
+dist/
+build/
+out/
+target/
+.gradle/
+.mvn/
+__pycache__/
+*.pyc
+*.pyo
+*.class
+*.o
+*.so
+*.dll
+*.exe
+bin/
+obj/
+
+# -----------------------------------------------------------------------------
+# Lock files (huge, machine-generated, no human-relevant signal)
+# -----------------------------------------------------------------------------
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+poetry.lock
+Pipfile.lock
+Gemfile.lock
+composer.lock
+go.sum
+Cargo.lock
+
+# -----------------------------------------------------------------------------
+# Logs, coverage, generated reports
+# -----------------------------------------------------------------------------
+*.log
+logs/
+coverage/
+.nyc_output/
+htmlcov/
+.coverage
+junit.xml
+test-results/
+
+# -----------------------------------------------------------------------------
+# Minified / source-map noise
+# -----------------------------------------------------------------------------
+*.min.js
+*.min.css
+*.map
+
+# -----------------------------------------------------------------------------
+# Secrets and env (also a safety hedge against accidental disclosure)
+# -----------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+credentials.json
+.aws/
+
+# -----------------------------------------------------------------------------
+# IDE / OS local caches
+# -----------------------------------------------------------------------------
+.idea/
+.vscode/settings.json
+.DS_Store
+.cache/
+.parcel-cache/
+
+# -----------------------------------------------------------------------------
+# Vendored / third-party
+# -----------------------------------------------------------------------------
+vendor/
+third_party/
+
+# -----------------------------------------------------------------------------
+# Corpus-pack convention: the corpus itself is read on-demand by skills.
+# Do NOT ignore doc/ globally — agents need it. But you may ignore the
+# generated dashboard output to avoid Claude re-reading 6000+ lines of HTML.
+# -----------------------------------------------------------------------------
+doc/_site/
+
+# -----------------------------------------------------------------------------
+# OPTIONAL — uncomment if your repo has very large fixtures or test data
+# that you never want Claude to load into context.
+# -----------------------------------------------------------------------------
+# test/fixtures/large/
+# data/raw/
+# *.sqlite
+# *.db

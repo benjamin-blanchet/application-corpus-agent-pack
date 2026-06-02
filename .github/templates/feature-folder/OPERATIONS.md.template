@@ -1,0 +1,34 @@
+---
+type: operations
+status: draft
+confidence: unknown
+source: unknown
+last_validated:
+related_features: []
+related_components: []
+related_risks: []
+related_bugs: []
+---
+
+# <Feature Name> — Operations
+
+
+## Production behavior
+
+| Behavior | Signal | Evidence | Confidence |
+|---|---|---|---|
+
+## Logs, metrics and traces
+
+| Signal | Location/query | Meaning | Notes |
+|---|---|---|---|
+
+## Known bugs and risks
+
+| ID | Link | Impact |
+|---|---|---|
+
+## Incident references
+
+| Incident | Link | Lesson |
+|---|---|---|

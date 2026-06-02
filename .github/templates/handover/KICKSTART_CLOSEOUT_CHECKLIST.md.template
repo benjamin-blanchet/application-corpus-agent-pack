@@ -1,0 +1,54 @@
+---
+type: closeout-checklist
+status: draft
+confidence: confirmed
+source: pack
+last_validated:
+---
+
+# Kickstart Closeout Checklist
+
+Use this checklist before transferring ownership to the team.
+
+## Corpus baseline
+
+- [ ] `doc/_meta/app-profile.yaml` reviewed or explicitly marked as incomplete.
+- [ ] `doc/_meta/source-inventory.md` created.
+- [ ] `doc/_meta/kickstart-report.md` created.
+- [ ] `doc/CORPUS_MAP.md` still matches the actual corpus structure.
+- [ ] Main indexes under `doc/_indexes/` initialized.
+- [ ] Open questions recorded in `doc/_meta/open-questions.md`.
+
+## Application understanding
+
+- [ ] Main repository role identified: primary, secondary, library or unknown.
+- [ ] Stack detected from evidence or marked as unknown.
+- [ ] Main entry points identified when possible.
+- [ ] At least the top application areas/features are listed.
+- [ ] High-risk unknowns are visible.
+
+## Production and operations
+
+- [ ] Production knowledge status is explicit, even if empty.
+- [ ] Known bugs, risks or incidents are captured when evidence exists.
+- [ ] Observability sources are listed or marked unavailable.
+- [ ] No production claim is presented as confirmed without evidence.
+
+## Handover
+
+- [ ] `HANDOVER_SUMMARY.md` completed.
+- [ ] AI champion identified or explicitly unknown.
+- [ ] `AI_CHAMPION_GUIDE.md` reviewed with the champion.
+- [ ] `TEAM_USAGE_GUIDE.md` reviewed with the team.
+- [ ] `NEXT_30_DAYS.md` adapted to the team context.
+- [ ] `OPEN_DECISIONS.md` reviewed.
+- [ ] `corpus-state.yaml` handover status updated.
+
+## Exit criteria
+
+The kickstart is complete when the team can explain:
+
+- what the corpus currently knows;
+- what remains uncertain;
+- which agent to use for each common workflow;
+- how to capture durable knowledge after real work.

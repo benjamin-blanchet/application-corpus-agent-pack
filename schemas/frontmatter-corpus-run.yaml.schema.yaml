@@ -1,0 +1,28 @@
+# Frontmatter contract for doc/_runs/<date>-<topic>-NN.md
+# Consumed by scripts/validate-corpus.mjs.
+
+file_glob: doc/_runs/2*.md
+file_kind: markdown-frontmatter
+written_by_skill: continuous/corpus-run
+skill_anchor: SKILL.md continuous/corpus-run § Run record frontmatter
+description: One file per continuous-enrichment run. Drives RUN_LEDGER.md, trajectory tab on the dashboard, and recompute-corpus-state.
+
+frontmatter:
+  required_fields: [type, run_id, roadmap_node, date, operator, confidence, source]
+  optional_fields: [duration_estimate, status, last_validated, run_started, run_finished]
+  forbidden_aliases:
+    run_started: date
+    run_date: date
+  enums:
+    type: [corpus-run]
+    confidence: [confirmed, probable, hypothesis]
+    duration_estimate: [short, medium, long]
+    status: [completed, in_progress, aborted]
+  # `run_id:` must match the suffix of the filename. We don't enforce a regex
+  # here — the filename_regex below carries the discipline.
+
+# Filename: YYYY-MM-DD-<topic>.md where <topic> is a kebab slug. Both the
+# `<topic>-NN` form (MyApp, more navigable) and the older `run-NNN` form
+# (canonical) pass — the convention pressure lives in the frontmatter contract
+# above (run_id, roadmap_node, …), not at the filename regex level.
+filename_regex: '^\d{4}-\d{2}-\d{2}-[a-z][a-z0-9-]*\.md$'

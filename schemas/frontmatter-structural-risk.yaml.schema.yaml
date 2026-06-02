@@ -1,0 +1,28 @@
+# Frontmatter contract for doc/prod/structural-risks/RISK-*.md
+# Consumed by scripts/validate-corpus.mjs.
+
+file_glob: doc/prod/structural-risks/RISK-*.md
+file_kind: markdown-frontmatter
+written_by_skill: prod/structural-risk-authoring
+skill_anchor: CORPUS_MANIFEST.md § structural-risks frontmatter
+description: One file per structural risk. Drives by-risk index, dashboard hotspots, brick-inventory cross-refs.
+
+frontmatter:
+  required_fields: [type, id, slug, status, severity, confidence, source, last_validated]
+  optional_fields: [jira_key, owner, target_resolution]
+  forbidden_aliases:
+    last_observed: last_validated
+    last_seen: last_validated
+    title: slug
+    priority: severity
+  enums:
+    type: [structural-risk]
+    status: [open, in_progress, resolved, mitigated, accepted, monitoring]
+    severity: [critical, high, medium, low]
+    confidence: [confirmed, probable, hypothesis]
+    source: [code, jira, confluence, dynatrace, incident, operator, prod, audit, mixed]
+  # Category is mandatory in the RISK id. e.g. RISK-CODE-001, RISK-INFRA-002,
+  # RISK-SEC-003, RISK-DEP-001, RISK-BRIDGE-001. A flat `RISK-001` is drift.
+  id_regex: '^RISK-[A-Z]+-\d{3}$'
+
+filename_regex: '^RISK-[A-Z]+-\d{3}(-[a-z][a-z0-9-]+)?\.md$'

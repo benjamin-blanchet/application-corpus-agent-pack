@@ -1,0 +1,19 @@
+# Schema for doc/_meta/reconciliation-ledger.yaml
+# Consumed by scripts/validate-corpus.mjs. Source of truth in SKILL.md.
+
+file: doc/_meta/reconciliation-ledger.yaml
+written_by_skill: pipeline/p9-code-reconciliation-gate
+skill_anchor: SKILL.md pipeline/p9-code-reconciliation-gate § Anti-patterns
+description: Contradictions surfaced by P1-P8 and their resolution. Closes the gate before code analysis can be marked covered.
+
+# Items inside the top-level `contradictions:` list. Drift lives in the nested
+# `resolution:` map, so we lint that path directly.
+item:
+  inside_block: contradictions
+  nested_path: resolution
+  forbidden_aliases:
+    # `winner:` (free text) is the legacy drift. Canonical: `winner_rank:`
+    # (int, only when method=source_priority_rank) plus the narrative inside
+    # `result:`. We only flag `winner:` when it carries a quoted string value
+    # (free text) — `winner_rank:` is a different field name and is fine.
+    winner: result

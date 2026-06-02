@@ -1,0 +1,22 @@
+# Schema for doc/_meta/cross-cutting-state.yaml
+# Consumed by scripts/validate-corpus.mjs. Source of truth in SKILL.md.
+
+file: doc/_meta/cross-cutting-state.yaml
+written_by_skill: pipeline/p5-cross-cutting-extraction
+skill_anchor: SKILL.md pipeline/p5-cross-cutting-extraction § Output schema
+description: P5 cross-cutting concerns extraction state — flat key map per aspect (apis, integrations, domain, persistence, messaging, security, observability, cicd).
+
+# Pure YAML, no `---` frontmatter, no markdown body.
+must_not_be_markdown: true
+
+# This file is a flat key-value document (no list items). The drift seen in real
+# corpora is the file being written as markdown-with-frontmatter (canonical) vs
+# pure YAML (MyApp). The forbidden_aliases below catch field-name variants
+# observed in the wild. No `inside_block` because keys live at root.
+item:
+  forbidden_aliases:
+    api_catalog_status: apis_catalog_status
+    integration_status: integrations_status
+    domain_status: domain_er_status
+    persistence_engine: persistence_engines
+  enums: {}

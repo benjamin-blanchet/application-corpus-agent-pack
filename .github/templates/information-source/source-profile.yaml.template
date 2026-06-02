@@ -1,0 +1,25 @@
+- id: <stable-source-id>
+  name: <human-readable-name>
+  category: <code|production-logs|metrics|traces|project-activity|documentation|business-data|ci-cd|manual-evidence|other>
+  status: <available|partial|unavailable|template|deprecated>
+  consumption:
+    method: <mcp|sql|api|file-export|cli|local-filesystem|manual>
+    engine: <optional-engine-or-platform>
+    connection: <do-not-store-secret>
+    access_mode: read-only
+  allowed_uses:
+    - <allowed-use>
+  restrictions:
+    - <restriction>
+  safety:
+    require_limit: true
+    require_time_window: true
+    max_rows_default: 500
+    destructive_actions_allowed: false
+  evidence_rules:
+    record_queries: true
+    record_time_window: true
+    record_filters: true
+    record_limitations: true
+  owner: unknown
+  notes: <notes>

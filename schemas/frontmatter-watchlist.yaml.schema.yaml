@@ -1,0 +1,27 @@
+# Frontmatter contract for doc/prod/watchlist/WATCH-*.md
+# Consumed by scripts/validate-corpus.mjs.
+
+file_glob: doc/prod/watchlist/WATCH-*.md
+file_kind: markdown-frontmatter
+written_by_skill: prod/watchlist-authoring
+skill_anchor: CORPUS_MANIFEST.md § watchlist frontmatter
+description: One file per signal worth watching but not yet a confirmed bug or risk.
+
+frontmatter:
+  required_fields: [type, id, slug, status, severity, confidence, source, last_validated]
+  optional_fields: [jira_key, escalation_threshold, owner]
+  forbidden_aliases:
+    last_observed: last_validated
+    last_seen: last_validated
+    title: slug
+    priority: severity
+  enums:
+    type: [watchlist, watch-item]
+    status: [active, monitoring, resolved, escalated, dismissed]
+    severity: [critical, high, medium, low, info]
+    confidence: [confirmed, probable, hypothesis]
+    source: [code, jira, confluence, dynatrace, incident, operator, prod, mixed]
+  # Optional category, mandatory 3-digit counter.
+  id_regex: '^WATCH(-[A-Z][A-Z0-9]*)?-\d{3}$'
+
+filename_regex: '^WATCH(-[A-Z][A-Z0-9]*)?-\d{3}(-[a-z][a-z0-9-]+)?\.md$'

@@ -1,0 +1,25 @@
+---
+type: domain-entity
+status: draft
+confidence: unknown
+source: unknown
+last_validated:
+---
+
+# Entity: <ENTITY_NAME>
+
+## Meaning
+
+## Lifecycle
+
+| State | Meaning | Transitions |
+|---|---|---|
+
+## Fields / attributes
+
+| Field | Meaning | Source |
+|---|---|---|
+
+## Related features
+
+## Operational notes

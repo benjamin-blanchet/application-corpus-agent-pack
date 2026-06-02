@@ -1,0 +1,132 @@
+# Procedure — kickstart steps 0 → 11
+
+Loaded by `modes/corpus-kickstart` on every kickstart run. Kickstart is
+**resumable, not restartable**.
+
+## Step 0 — State verification (always run, never skipped)
+
+Before any write:
+
+1. Read `doc/_meta/corpus-state.yaml` and `doc/_meta/code-pipeline-state.yaml`.
+2. Determine the current adoption stage and the highest covered pass (P1–P9).
+3. Determine the current coverage status of each lane (repository, Jira, Confluence, Dynatrace, custom) from `doc/_meta/discovery-coverage.md`.
+4. Read `doc/_meta/blocking-questions.md`. If active questions exist, surface them before continuing.
+5. Produce a **resume report** to the operator:
+
+```text
+Corpus resume
+- Adoption stage: <0–5> <label>
+- Code analysis pipeline: P1=<status> P2=<status> ... P9=<status>
+- Repository coverage: <status>
+- Jira coverage: <status>
+- Confluence coverage: <status>
+- Dynatrace coverage: <status>
+- Custom sources: <status>
+- Actionable readiness: <status>
+- Active blocking questions: <count> (list ids)
+- Next bounded action: <single sentence>
+```
+
+6. Wait for the operator to confirm or redirect, OR proceed with the next
+   bounded action if the request is unambiguous (e.g. "continue").
+
+## Step 1 — Verify pack structure
+
+Confirm that the expected pack files exist (`.github/skills/`,
+`scripts/validate-corpus.mjs`, `doc/CORPUS_MAP.md`, etc.). If anything is
+missing, stop and report.
+
+## Step 2 — Initialize / refresh meta files
+
+If they do not exist or are stale:
+
+- `doc/_meta/kickstart-progress.md` (operator cockpit) via `governance/corpus-interaction-history`
+- `doc/_meta/discovery-coverage.md` via `governance/discovery-coverage-contract`
+- `doc/_meta/code-pipeline-state.yaml` (all 9 passes set to `not_started` if absent)
+- The active interaction history session under `doc/_meta/interaction-history/`
+- `doc/_roadmap/*` via `continuous/roadmap-graph`
+- `doc/_graph/*` via `continuous/roadmap-graph`
+- `doc/_runs/*` via `continuous/corpus-run`
+
+## Step 2 bis — Multi-repo workspace detection (before Step 3)
+
+Run `foundations/multi-repo-workspace-detection`. Must execute **before**
+repository role is set — role is itself a multi-repo concept. Detail in
+`procedure-multi-repo.md`.
+
+## Step 3 — Detect repository role and initial profile
+
+When `application.multi_repo.status == declared`, take the role from
+`application.multi_repo.role` — the interview is authoritative. Otherwise
+detect from evidence. Fill `doc/_meta/app-profile.yaml` with evidence-backed
+fields only. Use `unknown` rather than guessing.
+
+The kickstart scope of P1→P9 and downstream lanes depends on `multi_repo.role`:
+
+| `multi_repo.role` | Pipeline scope | Lanes |
+|---|---|---|
+| `primary` or `standalone` | Full P1→P9 | All lanes per Step 7 |
+| `library` | P1, P2, P3, P5, P6 (partial); skip P4, P7–P9 unless requested | Skip prod/Jira/Confluence unless requested |
+| `secondary` | P1, P2; skip P3–P9 unless requested | `exploration/ci-cd-activity-discovery`, `exploration/dynatrace-runtime-architecture` if available |
+| `sibling-app` | Full P1→P9 (treated as its own primary) | All lanes per Step 7 |
+
+Library and secondary kickstarts honestly land at
+`code_analysis_status: partial`. That is correct — do not force `covered`.
+
+## Step 4 — MCP source wizard + readiness
+
+- Run `sources/mcp-source-wizard` early to inventory standard MCP, custom MCP and non-MCP sources.
+- Before consuming Jira, Confluence, Dynatrace or any custom MCP, run `sources/mcp-readiness-check` and update `doc/_meta/mcp-readiness.md`.
+- Register custom sources via `sources/information-source-onboarding`.
+- If an expected source is unavailable, use `governance/blocking-question-loop` before parking. Never silently fall back.
+
+## Step 5 — Run the deep code analysis pipeline P1 → P9
+
+Detail in `procedure-pipeline.md`. Mandatory for any primary application
+repository. Each pass blocks the next via `doc/_meta/code-pipeline-state.yaml`.
+
+## Step 6 — Refresh indexes
+
+After P3–P5, refresh `doc/_indexes/*.md` from the verified catalogs.
+Never put speculative entries in indexes.
+
+## Step 7 — Other discovery lanes
+
+When sources are available:
+
+- **Jira**: cover the contract from `governance/discovery-coverage-contract`. Tie issues to feature slugs from P3. When available, also run `exploration/atlassian-project-trajectory` for cross-project app mentions, blockers, incidents, migration signals.
+- **Confluence**: walk the relevant page tree (not snippets) using feature/component names from P3–P5. Apply trust scoring per `exploration/confluence-exploration`. **When code and Confluence disagree, code wins**; preserve the Confluence claim under "Confluence-stated, does not match code".
+- **Production observability**: run `exploration/production-discovery`. When Dynatrace is available, also run `exploration/dynatrace-runtime-architecture`. When signals warrant cross-window analysis, run `exploration/production-temporal-correlation`.
+- **Project activity and delivery**: run `exploration/project-activity-discovery` if Jira/Git/PR/CI is available, enriched by `exploration/atlassian-project-trajectory`. Run `exploration/ci-cd-activity-discovery` when CI/CD files, local Git history, PR checks or workflow-run evidence are available.
+
+## Step 8 — Maturity progression
+
+Update `doc/_meta/corpus-state.yaml`:
+
+- `maturity_level: 1` — P1–P3 covered
+- `maturity_level: 2` — P1–P9 covered
+- `maturity_level: 3` — `maturity_level: 2` AND production/project/source discovery covered or explicitly blocked
+- `maturity_level: 4` — `actionable/readiness-gate` covered
+- `maturity_level: 5` — adoption-guide material generated and reviewed
+
+The roadmap can remain open at every maturity level. Maturity is not corpus
+completion.
+
+## Step 9 — Actionable brick readiness
+
+After P1→P9 and source discovery, see `procedure-readiness.md`.
+
+## Step 10 — Validation
+
+Run `governance/post-kickstart-completeness-audit`, then
+`node scripts/validate-corpus.mjs`. Fix P0 immediately. Address P1 before
+any broad adoption claim. Record P2 hygiene work in
+`doc/_meta/update-candidates.md`.
+
+## Step 11 — Handover (only when gates pass)
+
+Do **not** prepare handover/adoption-guide material until the operator
+asks for it or an adoption readiness review. When used,
+`governance/team-handover` is an adoption-guide generator. It must
+present the roadmap state, what is reliable, what is still partial, and
+how the team should use the corpus.

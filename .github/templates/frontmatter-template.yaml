@@ -1,0 +1,11 @@
+---
+type: feature | architecture | workflow | business-rules | operations | agent-guide | incident | bug | risk | playbook | spec | mcp-reference | index | meta
+status: draft | active | validated | deprecated | superseded
+confidence: unknown | suspected | probable | confirmed
+source: code | prod | jira | confluence | human | mixed | pack | unknown
+last_validated:
+related_features: []
+related_components: []
+related_risks: []
+related_bugs: []
+---

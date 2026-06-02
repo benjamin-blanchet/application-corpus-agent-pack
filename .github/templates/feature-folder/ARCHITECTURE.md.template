@@ -1,0 +1,30 @@
+---
+type: architecture
+status: draft
+confidence: unknown
+source: unknown
+last_validated:
+related_features: []
+related_components: []
+related_risks: []
+related_bugs: []
+---
+
+# <Feature Name> — Corpusure
+
+
+## Components
+
+| Component | Responsibility | Evidence | Confidence |
+|---|---|---|---|
+| `<component>` | `<responsibility>` | `<path or source>` | unknown |
+
+## Data
+
+| Entity / object | Role | Evidence | Notes |
+|---|---|---|---|
+
+## Dependencies
+
+| Dependency | Direction | Purpose | Risk |
+|---|---|---|---|

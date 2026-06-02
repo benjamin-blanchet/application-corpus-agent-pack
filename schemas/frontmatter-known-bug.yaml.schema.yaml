@@ -1,0 +1,26 @@
+# Frontmatter contract for doc/prod/known-bugs/BUG-*.md
+# Consumed by scripts/validate-corpus.mjs.
+
+file_glob: doc/prod/known-bugs/BUG-*.md
+file_kind: markdown-frontmatter
+written_by_skill: prod/known-bug-authoring
+skill_anchor: CORPUS_MANIFEST.md § known-bugs frontmatter
+description: One file per known production bug. Drives by-bug index, dashboard hotspots, brick-inventory cross-refs.
+
+frontmatter:
+  required_fields: [type, id, slug, status, severity, confidence, source, last_validated]
+  optional_fields: [jira_key, incident_ref]
+  forbidden_aliases:
+    last_observed: last_validated
+    last_seen: last_validated
+    title: slug
+    priority: severity
+  enums:
+    type: [known-bug]
+    status: [open, in_progress, resolved, mitigated, accepted, wontfix]
+    severity: [critical, high, medium, low]
+    confidence: [confirmed, probable, hypothesis]
+    source: [code, jira, confluence, dynatrace, incident, operator, prod, mixed]
+  id_regex: '^BUG-\d{3}$'
+
+filename_regex: '^BUG-\d{3}(-[a-z][a-z0-9-]+)?\.md$'

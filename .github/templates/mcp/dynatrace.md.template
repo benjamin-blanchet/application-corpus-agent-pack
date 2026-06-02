@@ -1,0 +1,27 @@
+---
+type: mcp-reference
+status: draft
+confidence: unknown
+source: unknown
+last_validated:
+---
+
+# Dynatrace / APM
+
+## Availability
+
+Unknown until configured.
+
+## Local conventions
+
+| Item | Value | Source | Confidence |
+|---|---|---|---|
+
+## Reusable queries / lookups
+
+Record only verified queries or lookup patterns.
+
+## Pitfalls
+
+- Do not invent project keys, spaces, service names or dashboards.
+- Record unsupported fields and query limits.

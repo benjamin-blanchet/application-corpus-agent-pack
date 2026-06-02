@@ -1,0 +1,32 @@
+---
+type: batch-or-job
+status: draft
+confidence: unknown
+source: unknown
+last_validated:
+---
+
+# <Batch / Job / Worker Name>
+
+## Purpose
+
+## Trigger
+
+| Trigger type | Details | Evidence |
+|---|---|---|
+| schedule / queue / manual / event / startup | `<details>` | `<source>` |
+
+## Inputs
+
+## Processing steps
+
+## Outputs
+
+## Failure behavior
+
+## Observability
+
+| Signal | Location/query | Meaning |
+|---|---|---|
+
+## Related feature / risks

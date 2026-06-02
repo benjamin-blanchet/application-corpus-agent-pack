@@ -1,0 +1,26 @@
+# Schema for doc/_meta/brick-inventory.yaml
+# Consumed by scripts/validate-corpus.mjs. Source of truth in SKILL.md.
+#
+# Format note: list values use the inline `[a, b, c]` form so the home-grown
+# parser in validate-corpus.mjs can read them without a YAML dependency.
+
+file: doc/_meta/brick-inventory.yaml
+written_by_skill: actionable/brick-inventory
+skill_anchor: SKILL.md actionable/brick-inventory § Anti-patterns
+description: Work-brick inventory driving the actionable-readiness gate and the dashboard Application tab.
+
+# Items inside the top-level `bricks:` list. Each brick is a map.
+item:
+  inside_block: bricks
+  forbidden_aliases:
+    type: kind
+    priority: criticality
+    title: label
+    slug: id
+    corpus_path: canonical_file
+  # Closed value vocabularies. Anchor `forbidden_aliases` matches so
+  # `priority: critical` is distinguished from any unrelated `priority:` line.
+  enums:
+    kind: [feature, api, screen, batch_or_job, consumer_or_listener, integration, domain_entity, technical_mechanism, reliability_scenario, risk, spec_or_change_axis]
+    criticality: [critical, high, medium, low]
+    status: [identified, partial, actionable, deferred, not_applicable]

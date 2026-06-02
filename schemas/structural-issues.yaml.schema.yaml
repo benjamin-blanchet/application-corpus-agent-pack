@@ -1,0 +1,36 @@
+# Schema for doc/_meta/structural-issues.yaml
+# Consumed by scripts/validate-corpus.mjs. Source of truth in SKILL.md.
+
+file: doc/_meta/structural-issues.yaml
+written_by_skill: pipeline/p7-structural-issues
+skill_anchor: SKILL.md pipeline/p7-structural-issues § Output schema
+description: P7 structural issues found by code analysis. Drives risk-file creation and brick-inventory criticality.
+
+# Pure YAML, no `---` frontmatter.
+must_not_be_markdown: true
+
+# Top-level shape: `generator`, `date`, `status`, `summary: {}`, `issues: [items]`.
+# (`findings:` is the observed drift in older corpora and is forbidden.)
+# Canonical list key is `issues:`. Totals belong inside `summary:`, not at root.
+root:
+  forbidden_aliases:
+    findings: issues
+    total: summary
+    generated_by: generator
+    last_run: date
+
+# Items inside `issues:` list.
+item:
+  inside_block: issues
+  forbidden_aliases:
+    name: title
+    description_text: description
+  # Severity must be lowercase; the linter normalizes via case-insensitive
+  # match in the enum check. ID regex is enforced separately in checkSchemaDrift.
+  enums:
+    severity: [critical, high, medium, low]
+    category: [coupling, infinite_recursion, god_class, god_service, eol_dependency, layering_violation, security_misconfiguration, dead_code, missing_error_handling, transaction_management, scope_violation, sql_native, jpa_misuse, dependency_split, hardcoded_secret, async_unsafe]
+
+# Required ID shape for items: `STRUCT-\d{3}` (canonical convention, more
+# explicit than `S-\d{3}` and less likely to collide with other ID schemes).
+id_regex: '^STRUCT-\d{3}$'

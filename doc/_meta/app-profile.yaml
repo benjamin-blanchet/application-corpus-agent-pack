@@ -1,0 +1,79 @@
+application:
+  name: unknown
+  description: unknown
+  business_domain: unknown
+  repository:
+    name: unknown
+    role: primary
+    url: unknown
+    primary_repository: unknown
+  multi_repo:
+    status: not_started
+    role: unknown
+    workspace_root: unknown
+    last_interview: null
+    read_sibling_code: false
+    read_sibling_corpus: false
+    sync_policy: agent-suggested
+    adjacent_repos: []
+    consumed_by: []
+  languages: []
+  frameworks: []
+  runtimes: []
+  build_tools: []
+  package_managers: []
+  deployment:
+    type: unknown
+    environments: []
+  data_stores: []
+  external_systems: []
+  observability:
+    logs: unknown
+    metrics: unknown
+    traces: unknown
+    apm: []
+  source_control:
+    provider: unknown
+    default_branch: unknown
+  work_tracking:
+    provider: unknown
+    project_keys: []
+  documentation_sources:
+    confluence_spaces: []
+    other: []
+  language_policy:
+    corpus: en
+    team_outputs: fr
+notes:
+- This file must be filled from repository evidence, connected sources, or human confirmation.
+  Do not assume a stack.
+- The `application.multi_repo` block is populated by skill `foundations/multi-repo-workspace-detection`
+  at the very start of the kickstart. Do not edit it by hand — re-run the skill instead
+  so corpus-state.yaml stays in sync.
+- `adjacent_repos` is non-empty only when `multi_repo.role` is `primary` or `sibling-app`.
+- `consumed_by` is non-empty only when `multi_repo.role` is `library` or `secondary`.
+- Each `adjacent_repos[]` / `consumed_by[]` entry uses the shape:
+  `{name, role, relative_path, corpus_path, has_pack, consumed_for: []}`.
+  Set `corpus_path: null` (not omitted) when `has_pack: false`.
+source_control:
+  provider: unknown
+  default_branch: unknown
+  repository_url: unknown
+  ticket_key_patterns: []
+work_tracking:
+  provider: unknown
+  project_keys: []
+  boards: []
+  active_versions: []
+  issue_types: []
+ci_cd:
+  provider: unknown
+  pipelines: []
+information_sources:
+  registry: doc/_meta/information-sources.yaml
+  custom_sources_enabled: true
+  default_access_mode: read-only
+safety_policy:
+  default_mode: read-only
+  destructive_actions_allowed: false
+  require_explicit_human_approval_for_high_risk_actions: true

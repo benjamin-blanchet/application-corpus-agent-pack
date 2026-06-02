@@ -1,0 +1,30 @@
+---
+type: api
+status: draft
+confidence: unknown
+source: unknown
+last_validated:
+---
+
+# <API Name>
+
+## Purpose
+
+## API style
+
+REST / GraphQL / SOAP / RPC / event / file / other.
+
+## Consumers
+
+## Operations
+
+| Operation | Method/topic/action | Path/contract | Purpose | Evidence |
+|---|---|---|---|---|
+
+## Payloads / mapping
+
+## Errors
+
+## Security / authorization
+
+## Operational notes
