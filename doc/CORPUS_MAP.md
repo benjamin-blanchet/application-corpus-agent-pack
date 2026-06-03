@@ -16,6 +16,7 @@ last_validated:
 | `_indexes/` | Cross-corpus indexes by feature, component, API, batch, risk, bug and production signal. |
 | `_roadmap/` | Continuous enrichment roadmap, active node, next best actions and roadmap decisions. |
 | `_graph/` | Repo-native knowledge graph nodes, edges and evidence. |
+| `architecture/` | **Sanctuarized boundary contract** — the machine-readable inbound/outbound integration surface (`boundary.yaml`) and its derived views. |
 | `_runs/` | Continuous run ledger and per-run records. |
 | `_handover/` | Adoption guide material for the AI champion and broader team. |
 | `project/` | Stable application knowledge extracted from code, repo layout, team input and architecture material. |
@@ -38,6 +39,9 @@ last_validated:
 | Continuous run ledger | `_runs/RUN_LEDGER.md` |
 | Feature architecture | `project/features/<feature>/ARCHITECTURE.md` (mandatory mermaid component diagram) |
 | Feature workflows | `project/features/<feature>/WORKFLOWS.md` (mandatory mermaid sequence diagram) |
+| Inbound/outbound integration contract (source of truth) | `architecture/boundary.yaml` (machine-readable, sanctuarized; via `governance/boundary-contract`) |
+| Boundary contract human view + ecosystem topology | `architecture/BOUNDARY.md`, `architecture/ECOSYSTEM.md`, `_graph/ecosystem.yaml` (derived, regenerated) |
+| Ecosystem app-identity registry | `_meta/ecosystem-map.yaml` (via `sources/ecosystem-corpus-discovery`) |
 | Application-level architecture diagrams | `project/architecture/diagrams/{modules-deps,layers,arch-style,integration-context,integration-flow,messaging-topology,domain-er,persistence}.md` |
 | Feature business rules | `project/features/<feature>/BUSINESS_RULES.md` |
 | Feature production behavior | `project/features/<feature>/OPERATIONS.md` |

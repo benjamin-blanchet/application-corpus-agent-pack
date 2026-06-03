@@ -72,6 +72,7 @@ const BUCKET_A_FILES = new Set([
 const BUCKET_A_PREFIXES = [
   '.github/agents/',
   '.github/skills/',
+  'scripts/',          // all pack scripts (incl. scripts/lib/**) are pack-owned — never operator-customized; replace wholesale on upgrade
 ];
 
 function isBucketA(rel) {

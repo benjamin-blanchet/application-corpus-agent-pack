@@ -40,6 +40,26 @@ This matters because P5 catalogs are large and read often — the operator and d
 
 Produce six canonical catalogs from the union of P4 evidence + the schema/migration/config files. Each catalog must be **exhaustive over the inventory of P1**, not just the union of what P4 happened to read.
 
+## Sanctuarized output — the boundary contract
+
+The API surface, integration map and messaging topology you extract here are
+**also** emitted as the machine-readable, sanctuarized boundary contract at
+`doc/architecture/boundary.yaml` — the single source of truth for the
+application's inbound/outbound surface and the join target for ecosystem-graph
+recomposition. This is a **first-class P5 output**, not optional: a P5 marked
+`covered` with `boundary.yaml` still the empty skeleton is flagged by the
+validator.
+
+Follow `governance/boundary-contract` for the schema, the channel-normalization
+conventions (so one app's `outbound` joins another's `inbound`), counterparty
+identity, and the two-tier validation. Scope is **boundary-crossing only**
+(exposed/called APIs, produced/consumed events, shared datastores, external
+systems, file exchanges) — not internal calls. Inbound API edges are seeded in
+P3; P5 completes them and adds outbound calls, events, datastores and external
+systems. Regenerate `BOUNDARY.md` from the YAML; reconcile `by-api.md`,
+`INTEGRATION_MAP.md`, the diagrams and (when runtime evidence exists)
+`doc/prod/SERVICE_FLOWS.md` against it — code wins.
+
 ## Catalog 1 — API surface
 
 Every inbound contract the application exposes:

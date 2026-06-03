@@ -1,0 +1,34 @@
+# boundary.yaml — SANCTUARIZED inbound/outbound integration contract.
+#
+# Single machine-readable source of truth for this application's boundary
+# surface. Code-derived (P3/P5), reconciled against doc/prod/SERVICE_FLOWS.md.
+# Conventions + schema + validation: governance/boundary-contract and
+# schemas/boundary.yaml.schema.yaml. Derived views (BOUNDARY.md, ECOSYSTEM.md)
+# are regenerated from this file — never hand-edited.
+#
+# Scope = boundary-crossing only (exposed/called APIs, produced/consumed events,
+# shared datastores, external systems, file exchanges). Not internal calls/UI/batches.
+#
+# Fill app.id with the canonical ecosystem slug (register it in
+# doc/_meta/ecosystem-map.yaml). Do not invent counterparties — use
+# external:<slug> / any / unknown. See SKILL.md governance/boundary-contract.
+version: 1
+app:
+  id: unknown            # canonical ecosystem app_id (kebab slug) — the join identity
+  name: unknown
+  repo: unknown          # owner/name
+interfaces:
+  # Entry shape (see schemas/boundary.yaml.schema.yaml):
+  #   - id: <stable-slug>
+  #     kind: <enum>          # inbound: sync-api|async-consume|webhook|file-ingest
+  #     protocol: <enum>      # rest|grpc|graphql|soap|kafka|amqp|sqs|pubsub|webhook|sftp|s3|jdbc|other
+  #     channel: "<normalized join key>"
+  #     from: [<app_id|external:slug|any|unknown>]   # inbound only
+  #     to:   [<app_id|external:slug|any|unknown>]   # outbound only
+  #     entities: [<business entity>]
+  #     criticality: critical|high|medium|low
+  #     confidence: suspected|probable|confirmed|unknown
+  #     source: code|prod|jira|confluence|human|mixed|unknown
+  #     evidence: ["<path:line>"]
+  inbound: []
+  outbound: []

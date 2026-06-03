@@ -14,6 +14,7 @@ application:
     last_interview: null
     read_sibling_code: false
     read_sibling_corpus: false
+    read_external_corpus: false
     sync_policy: agent-suggested
     adjacent_repos: []
     consumed_by: []
@@ -52,9 +53,21 @@ notes:
   so corpus-state.yaml stays in sync.
 - `adjacent_repos` is non-empty only when `multi_repo.role` is `primary` or `sibling-app`.
 - `consumed_by` is non-empty only when `multi_repo.role` is `library` or `secondary`.
-- Each `adjacent_repos[]` / `consumed_by[]` entry uses the shape:
-  `{name, role, relative_path, corpus_path, has_pack, consumed_for: []}`.
+- Each `adjacent_repos[]` / `consumed_by[]` entry carries a `source:` block:
+  `{type: path, path}` for a workspace sibling, or
+  `{type: git, host, url, owner, repo, ref, surface, cache_path, last_synced_sha, last_synced_at}`
+  for a remote peer (the agent fills `cache_path`/`last_synced_*` after each sync).
+  Other fields: `{name, app_id, role, access, corpus_path, has_pack, refresh_policy, consumed_for: []}`.
   Set `corpus_path: null` (not omitted) when `has_pack: false`.
+- `name` is the local `.corpus-cache/` slug; `app_id` is the CANONICAL ecosystem
+  identity (== the peer's `architecture/boundary.yaml` `app.id` == its
+  `ecosystem-map.yaml` `id`). `app_id` is the cross-app join key; keep it in sync
+  with the registry. This app's own canonical id lives in `architecture/boundary.yaml`.
+- `access` (default `auto`) selects how a peer is reached:
+  `auto | workspace | github-mcp | clone`. Actual access is performed by skill
+  `sources/peer-corpus-access`; reading peers via the GitHub MCP requires the
+  `read_external_corpus` consent flag above and GitHub MCP readiness
+  (`doc/_meta/mcp-readiness.md`). Never store tokens/credentials here.
 source_control:
   provider: unknown
   default_branch: unknown

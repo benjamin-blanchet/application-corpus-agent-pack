@@ -13,7 +13,7 @@ This directory documents how agents should use connected sources and tools for t
 | Source | File | Purpose |
 |---|---|---|
 | MCP readiness | [MCP_READINESS.md](./MCP_READINESS.md) | IDE/server/tool attachment checks before consuming MCP evidence. |
-| GitHub / source control | [github.md](./github.md) | Repository, PR, issue and code search conventions. |
+| GitHub / source control | [github.md](./github.md) | Repository, PR, issue and code search conventions, **plus the GitHub MCP read-only tools used to read other apps' corpora** (cross-application, via `sources/peer-corpus-access`). |
 | Jira / Confluence | [atlassian.md](./atlassian.md) | Work tracking and knowledge-base conventions. |
 | Atlassian query catalog | [atlassian-query-catalog.md](./atlassian-query-catalog.md) | Bounded Jira/Confluence query bundle, including cross-project and cross-space trajectory discovery. |
 | Dynatrace / APM | [dynatrace.md](./dynatrace.md) | Logs, metrics, traces and DQL conventions when available. |

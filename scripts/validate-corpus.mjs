@@ -2,6 +2,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { parseBoundary, KINDS_INBOUND, KINDS_OUTBOUND, PROTOCOLS, CRITICALITY, CONFIDENCE, SOURCE, CONFIRMED_SOURCES } from './lib/boundary.mjs';
 
 const root = process.cwd();
 const docRoot = path.join(root, 'doc');
@@ -123,6 +124,8 @@ function checkRequiredStructure() {
     'doc/_runs/RUN_LEDGER.md',
     'doc/_runs/RUN_TEMPLATE.md',
     'doc/mcp/MCP_READINESS.md',
+    'doc/architecture/README.md',
+    'doc/architecture/boundary.yaml',
     'doc/project/cicd/README.md',
     'doc/project/cicd/PIPELINES.md',
     'doc/project/cicd/RECENT_ACTIVITY.md',
@@ -132,6 +135,8 @@ function checkRequiredStructure() {
     '.github/templates/prod-knowledge/production-temporal-correlation-template.md',
     'scripts/inventory-repo.mjs',
     'scripts/export-graph-json.mjs',
+    'scripts/sync-peer-corpus.mjs',
+    'scripts/recompose-ecosystem.mjs',
   ];
   const requiredDirs = [
     'doc/_meta',
@@ -145,6 +150,7 @@ function checkRequiredStructure() {
     'doc/prod',
     'doc/spec',
     'doc/mcp',
+    'doc/architecture',
   ];
   for (const file of requiredFiles) {
     if (!exists(file)) add('P0', 'missing-required-file', `Missing required corpus file: ${file}`, file);
@@ -652,7 +658,7 @@ const PIPELINE_PASSES = [
   {
     key: 'p5_cross_cutting_extraction',
     label: 'P5 cross-cutting-extraction',
-    artifacts: ['doc/_meta/cross-cutting-state.yaml', 'doc/project/apis/CATALOG.md', 'doc/project/domain/ENTITIES.md', 'doc/project/architecture/INTEGRATION_MAP.md', 'doc/project/services/MESSAGING.md', 'doc/project/architecture/PERSISTENCE.md', 'doc/project/technical/CROSS_CUTTING.md'],
+    artifacts: ['doc/_meta/cross-cutting-state.yaml', 'doc/architecture/boundary.yaml', 'doc/project/apis/CATALOG.md', 'doc/project/domain/ENTITIES.md', 'doc/project/architecture/INTEGRATION_MAP.md', 'doc/project/services/MESSAGING.md', 'doc/project/architecture/PERSISTENCE.md', 'doc/project/technical/CROSS_CUTTING.md'],
     diagrams: ['doc/project/architecture/diagrams/integration-context.md', 'doc/project/architecture/diagrams/integration-flow.md', 'doc/project/architecture/diagrams/messaging-topology.md', 'doc/project/architecture/diagrams/domain-er.md', 'doc/project/architecture/diagrams/persistence.md'],
   },
   { key: 'p6_code_style_naming', label: 'P6 code-style-naming', artifacts: ['doc/_meta/code-style-state.yaml', 'doc/project/technical/CODE_STYLE.md', 'doc/project/technical/NAMING_CONVENTIONS.md'] },
@@ -1212,6 +1218,108 @@ function lintAgainstSchema(schema) {
       }
     }
   }
+}
+
+// ============================================================================
+// Boundary contract (doc/architecture/boundary.yaml) — sanctuarized inbound/
+// outbound integration contract. Local validation tier; cross-app recomposition
+// findings are produced by sources/ecosystem-corpus-discovery, not here.
+// Source of truth: schemas/boundary.yaml.schema.yaml + governance/boundary-contract.
+// The parser + vocabularies + channel normalization are shared with
+// scripts/recompose-ecosystem.mjs via scripts/lib/boundary.mjs (single source of
+// truth — so validation and recomposition read the format identically).
+// ============================================================================
+
+function readEcosystemAppIds(rel) {
+  const ids = new Set();
+  for (const line of read(rel).split(/\r?\n/)) {
+    const m = line.match(/^\s*-?\s*id:\s*["']?([^"'\s]+)/);
+    if (m) ids.add(m[1]);
+  }
+  return ids;
+}
+
+function checkBoundaryContract() {
+  const rel = 'doc/architecture/boundary.yaml';
+  if (!exists(rel)) return; // absence handled by checkRequiredStructure
+  const b = parseBoundary(read(rel));
+  const pipeline = readPipelineState();
+  const p5 = pipeline && pipeline.p5_cross_cutting_extraction;
+  const p5Covered = p5 && (typeof p5 === 'object' ? p5.status : p5) === 'covered';
+  const populated = b.appId && b.appId !== 'unknown';
+  const edges = b.inbound.length + b.outbound.length;
+
+  // Role exemption: library/secondary repos scope P5 down (or out) and ship no
+  // boundary contract of their own — never nag them to populate it.
+  let role = null;
+  if (exists('doc/_meta/corpus-state.yaml')) {
+    const cs = parseSimpleYamlMap(read('doc/_meta/corpus-state.yaml'));
+    role = cs.corpus && cs.corpus.multi_repo_role;
+  }
+  const roleExempt = role === 'library' || role === 'secondary';
+
+  if (!populated && edges === 0) {
+    if (p5Covered && !roleExempt) {
+      add('P1', 'boundary-not-populated', 'doc/architecture/boundary.yaml is still the empty skeleton but P5 (cross-cutting) is covered — the boundary contract must be populated from code', rel);
+    }
+    return; // shipped skeleton, nothing to lint yet
+  }
+  if (!populated) {
+    add('P1', 'boundary-app-id-unknown', 'boundary.yaml has edges but app.id is still `unknown` — set the canonical ecosystem app_id (the join identity)', rel);
+  }
+
+  const registryRel = 'doc/_meta/ecosystem-map.yaml';
+  const registryIds = exists(registryRel) ? readEcosystemAppIds(registryRel) : null;
+  const byApi = exists('doc/_indexes/by-api.md') ? read('doc/_indexes/by-api.md') : '';
+  const byApiHasContent = countMarkdownTableRows(byApi) > 2;
+
+  const validate = (e, direction) => {
+    const where = `${rel}`;
+    const tag = e.id || `(line ${e._line})`;
+    const kinds = direction === 'inbound' ? KINDS_INBOUND : KINDS_OUTBOUND;
+    if (!e.id) add('P0', 'boundary-edge-missing-id', `${direction} edge at line ${e._line} has no id`, where);
+    if (!e.kind) add('P0', 'boundary-edge-missing-kind', `${direction} edge ${tag} has no kind`, where);
+    else if (!kinds.includes(e.kind)) add('P1', 'boundary-edge-bad-kind', `${direction} edge ${tag} kind \`${e.kind}\` is not a valid ${direction} kind (${kinds.join('|')})`, where);
+    if (!e.channel) add('P0', 'boundary-edge-missing-channel', `${direction} edge ${tag} has no channel (join key)`, where);
+    if (e.protocol && !PROTOCOLS.includes(e.protocol)) add('P2', 'boundary-edge-bad-protocol', `${direction} edge ${tag} protocol \`${e.protocol}\` not in vocabulary`, where);
+    if (!e.criticality) add('P1', 'boundary-edge-missing-criticality', `${direction} edge ${tag} has no criticality`, where);
+    else if (!CRITICALITY.includes(e.criticality)) add('P1', 'boundary-edge-bad-criticality', `${direction} edge ${tag} criticality \`${e.criticality}\` invalid`, where);
+    if (!e.confidence) add('P1', 'boundary-edge-missing-confidence', `${direction} edge ${tag} has no confidence`, where);
+    else if (!CONFIDENCE.includes(e.confidence)) add('P1', 'boundary-edge-bad-confidence', `${direction} edge ${tag} confidence \`${e.confidence}\` invalid`, where);
+    if (!e.source) add('P1', 'boundary-edge-missing-source', `${direction} edge ${tag} has no source`, where);
+    else if (!SOURCE.includes(e.source)) add('P1', 'boundary-edge-bad-source', `${direction} edge ${tag} source \`${e.source}\` invalid`, where);
+
+    if (e.confidence === 'confirmed') {
+      if (e.source && !CONFIRMED_SOURCES.includes(e.source)) {
+        add('P1', 'boundary-confirmed-weak-source', `${direction} edge ${tag} is confidence: confirmed but source is \`${e.source}\` (confirmed requires code/prod/mixed)`, where);
+      }
+      if (!e.evidence || e.evidence.length === 0) {
+        add('P1', 'boundary-confirmed-no-evidence', `${direction} edge ${tag} is confidence: confirmed but has no evidence`, where);
+      } else if (e.source === 'code') {
+        for (const ev of e.evidence) {
+          const file = ev.replace(/:\d+(-\d+)?$/, '');
+          if (file && !exists(file)) {
+            add('P1', 'boundary-evidence-unresolved', `${direction} edge ${tag} evidence path does not resolve: ${ev}`, where, file);
+          }
+        }
+      }
+    }
+
+    const counterparties = direction === 'inbound' ? e.from : e.to;
+    for (const cp of counterparties) {
+      if (cp === 'any' || cp === 'unknown' || cp.startsWith('external:')) continue;
+      if (registryIds && registryIds.size > 0 && !registryIds.has(cp)) {
+        add('P1', 'boundary-counterparty-unresolved', `${direction} edge ${tag} references counterparty \`${cp}\` not registered in doc/_meta/ecosystem-map.yaml`, where);
+      }
+    }
+
+    if (direction === 'inbound' && e.kind === 'sync-api' && e.channel && byApiHasContent && !byApi.includes(e.channel)) {
+      add('P2', 'boundary-inbound-not-in-by-api', `inbound sync-api edge ${tag} channel \`${e.channel}\` is not referenced in doc/_indexes/by-api.md (view should mirror the contract)`, 'doc/_indexes/by-api.md');
+    }
+  };
+
+  b.inbound.forEach((e) => validate(e, 'inbound'));
+  b.outbound.forEach((e) => validate(e, 'outbound'));
 }
 
 function checkSchemaDrift() {
@@ -1810,6 +1918,7 @@ checkCorpusState();
 checkCorpusStateBackwardDrift();
 checkRoadmapGraph();
 checkCodeAnalysisPipeline();
+checkBoundaryContract();
 checkFeatureCandidatesProcessed();
 checkActionableReadinessGate();
 checkHandoverGate();

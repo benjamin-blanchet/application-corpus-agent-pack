@@ -14,6 +14,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { parseBoundary } from './lib/boundary.mjs';
 
 // =====================================================================
 // Inlined dashboard theme — embedded at build time. Single self-contained script.
@@ -8070,5 +8071,76 @@ console.log(`  ${corpus.features.length} features · ${corpus.prod.bugs.length} 
     .filter((rel) => !fs.existsSync(path.join(docRoot, '..', rel)));
   if (missing.length) {
     console.log(`  ⚠ ${missing.length} canonical surfaced file(s) absent (sections will be empty): ${missing.slice(0, 8).join(', ')}${missing.length > 8 ? ' …' : ''}`);
+  }
+})();
+
+// =====================================================================
+// Derived-view generator: regenerate doc/architecture/BOUNDARY.md from the
+// sanctuarized boundary.yaml on every build, so the human view never drifts
+// from the source of truth (governance/boundary-contract). Single-app view;
+// the cross-app ECOSYSTEM.md is produced by scripts/recompose-ecosystem.mjs.
+// Best-effort: never breaks the dashboard build.
+// =====================================================================
+(function regenerateBoundaryView() {
+  try {
+    const text = readFileSafe('architecture/boundary.yaml');
+    if (!text) return;
+    const b = parseBoundary(text); // shared parser (scripts/lib/boundary.mjs)
+    const appId = b.appId;
+    const inbound = Array.isArray(b.inbound) ? b.inbound : [];
+    const outbound = Array.isArray(b.outbound) ? b.outbound : [];
+    const populated = appId && appId !== 'unknown';
+    if (!populated && inbound.length + outbound.length === 0) return; // leave the shipped stub
+
+    const list = (v) => Array.isArray(v) ? v.join(', ') : (v == null ? '' : String(v));
+    const mid = (s) => String(s || '').replace(/[^A-Za-z0-9_]/g, '_');
+    const selfNode = appId || 'app';
+    const L = [];
+    L.push('---');
+    L.push('type: architecture-boundary-view');
+    L.push('status: active');
+    L.push('confidence: probable');
+    L.push('source: code');
+    L.push('last_validated:');
+    L.push('---');
+    L.push('');
+    L.push('# Boundary — Inbound / Outbound');
+    L.push('');
+    L.push('> **Derived view.** Regenerated from [`boundary.yaml`](./boundary.yaml) by');
+    L.push('> `scripts/build-corpus-site.mjs` — do not hand-edit. Conventions:');
+    L.push('> [`governance/boundary-contract`](../../.github/skills/governance/boundary-contract/SKILL.md).');
+    L.push('');
+    L.push(`**App:** ${b.appName || appId || 'unknown'} (\`${appId || 'unknown'}\`) · repo \`${b.appRepo || 'unknown'}\``);
+    L.push('');
+    L.push('## Inbound');
+    L.push('');
+    L.push('| id | kind | protocol | channel | from | entities | criticality | confidence |');
+    L.push('|---|---|---|---|---|---|---|---|');
+    for (const e of inbound) L.push(`| ${e.id || ''} | ${e.kind || ''} | ${e.protocol || ''} | ${e.channel || ''} | ${list(e.from)} | ${list(e.entities)} | ${e.criticality || ''} | ${e.confidence || ''} |`);
+    if (inbound.length === 0) L.push('| | | | | | | | |');
+    L.push('');
+    L.push('## Outbound');
+    L.push('');
+    L.push('| id | kind | protocol | channel | to | entities | criticality | confidence |');
+    L.push('|---|---|---|---|---|---|---|---|');
+    for (const e of outbound) L.push(`| ${e.id || ''} | ${e.kind || ''} | ${e.protocol || ''} | ${e.channel || ''} | ${list(e.to)} | ${list(e.entities)} | ${e.criticality || ''} | ${e.confidence || ''} |`);
+    if (outbound.length === 0) L.push('| | | | | | | | |');
+    L.push('');
+    L.push('## Boundary diagram');
+    L.push('');
+    L.push('```mermaid');
+    L.push('flowchart LR');
+    L.push(`  ${mid(selfNode)}(["${selfNode}"])`);
+    let n = 0;
+    for (const e of inbound) for (const f of (Array.isArray(e.from) ? e.from : [])) { const id = `in${n++}`; L.push(`  ${id}["${f}"] -->|${e.channel || ''}| ${mid(selfNode)}`); }
+    for (const e of outbound) for (const tt of (Array.isArray(e.to) ? e.to : [])) { const id = `out${n++}`; L.push(`  ${mid(selfNode)} -->|${e.channel || ''}| ${id}["${tt}"]`); }
+    L.push('```');
+    L.push('');
+    const md = L.join('\n');
+    const outRel = path.join(docRoot, 'architecture/BOUNDARY.md');
+    const prev = fs.existsSync(outRel) ? fs.readFileSync(outRel, 'utf8') : null;
+    if (prev !== md) { fs.writeFileSync(outRel, md, 'utf8'); console.log('  ↻ regenerated doc/architecture/BOUNDARY.md from boundary.yaml'); }
+  } catch (e) {
+    console.warn(`  (boundary view regeneration skipped: ${e.message})`);
   }
 })();

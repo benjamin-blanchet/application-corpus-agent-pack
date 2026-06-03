@@ -62,6 +62,7 @@ Update `doc/_meta/mcp-readiness.md` with at least:
 | Jira | project activity discovery | Atlassian/Jira MCP tools | unknown | pending | verify IDE tools |
 | Confluence | documentation discovery | Atlassian/Confluence MCP tools | unknown | pending | verify IDE tools |
 | Dynatrace | production discovery | Dynatrace MCP tools | unknown | pending | verify IDE tools |
+| GitHub | reading peer corpora (cross-application) | GitHub MCP read tools (`get_file_contents`, `search_code`, …) | unknown | pending | verify IDE tools |
 
 ## Smoke test rules
 
@@ -105,6 +106,17 @@ If Confluence is unavailable, record that the corpus is code-first and may miss 
 Do not run `exploration/production-discovery` from Dynatrace unless Dynatrace status is `available` or a different registered production source is available.
 
 If Dynatrace is unavailable, mark production discovery as unavailable or partial. Do not infer production health from code.
+
+### GitHub / peer corpus access
+
+Required only when a declared peer corpus uses `access: github-mcp` (or `auto`
+falling through to it). Smoke test: `get_repository` on the peer, or
+`get_file_contents` of a small known file such as the peer's `doc/README.md`.
+If GitHub MCP is `not_attached_to_agent` / `permission_blocked`,
+`sources/peer-corpus-access` falls back to `clone` (loudly) — state the fallback
+rather than silently skipping the peer. Peer access also requires the
+`read_external_corpus` consent flag in `app-profile.yaml`; readiness is about
+the transport, consent is about the peer.
 
 ## Operator-facing response format
 

@@ -11,9 +11,11 @@ corpus:
   multi_repo_status: not_started
   multi_repo_role: unknown
   adjacent_repos_count: 0
+  external_peers_count: 0
   consumed_by_count: 0
   last_multi_repo_interview: null
   last_adjacent_sync_check: null
+  last_external_peer_pull: null
   source_inventory_done: false
   first_code_pass_done: false
   first_prod_pass_done: false

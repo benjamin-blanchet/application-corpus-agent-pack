@@ -113,6 +113,12 @@ If `yes`, ask in order:
    - `agent-driven` — agent opens sibling sessions automatically when an MCP/IDE-level tool allows it (only if such a tool is connected; otherwise downgrade to `agent-suggested`)
 5. **External corpora hosted in remote Git repositories** (ask every time, even when `standalone` or `monorepo`; remote peers are independent of multi-repo status):
 
+   For a **large ecosystem**, do not enumerate every peer by hand — point the
+   operator to `sources/ecosystem-corpus-discovery`, which scans the org via the
+   GitHub MCP, maintains the `doc/_meta/ecosystem-map.yaml` registry, and lets
+   them **promote** discovered peers into the declarations below. The questions
+   here remain the way to declare a specific known peer.
+
    Open with one yes/no:
 
    ```text
@@ -127,6 +133,14 @@ If `yes`, ask in order:
    - **Name** — short slug, used as cache directory name (`app-b`, `platform-kafka`, …)
    - **Git URL** — clone URL the operator can reach (`git@github.com:org/app-b-corpus.git` or `https://…`). Do not test credentials silently; just record.
    - **Ref** — branch/tag/commit (default `main`).
+   - **Access method** — how the agent should reach this peer (default `auto`):
+     `auto` (let `sources/peer-corpus-access` walk workspace → cache →
+     github-mcp → clone), `github-mcp` (prefer the GitHub MCP read tools, no
+     clone), `clone` (force clone even if the MCP is connected), or `workspace`
+     (local path only). For `github-mcp` on a GitHub/GHE repo, record the
+     `owner`/`org` and `repo` (parse them from the URL if obvious) so the MCP
+     calls do not have to guess. The actual access is performed by
+     `sources/peer-corpus-access`, not here.
    - **Relation** — one of: `upstream_event_source`, `downstream_consumer`, `shared_infrastructure_doc`, `peer_application`, `parent_domain`, `other` (free text follows for `other`).
    - **Surface** — the sub-paths inside the peer to read (default `doc/`). Restricting to `doc/spec/`, `doc/project/`, etc. keeps the agent's context clean.
    - **Consumed for** — free text, what this corpus brings (`ack-events`, `sap-integration`, `shared-types`, …).
@@ -175,16 +189,26 @@ application:
         has_pack: true
         refresh_policy: manual
         consumed_for: [ci-cd, runtime-topology, environments]
-      - name: app-b
+      - name: app-b                   # local cache slug (directory name under .corpus-cache/)
+        app_id: billing-service       # CANONICAL ecosystem identity — must equal the peer's
+                                      # boundary.yaml `app.id` and its doc/_meta/ecosystem-map.yaml `id`.
+                                      # `name` is local-only; `app_id` is the cross-app join key.
         role: peer_application        # see § External peer relations below
+        access: github-mcp            # auto | workspace | github-mcp | clone (see sources/peer-corpus-access)
         source:
           type: git
+          host: github               # github | gitlab | bitbucket | other (drives github-mcp eligibility)
           url: git@github.com:acme/app-b-corpus.git
+          owner: acme                # org/owner for GitHub MCP calls (parsed from url if obvious)
+          repo: app-b-corpus         # repo name for GitHub MCP calls
           ref: main
-          cache_path: .corpus-cache/app-b  # filled by the agent after first clone
+          surface: doc               # sub-path sparse-checked-out / hydrated (default doc)
+          cache_path: .corpus-cache/app-b  # filled after first sparse clone OR MCP hydration; null until then
+          last_synced_sha: null      # peer ref SHA at last successful sync (freshness diff baseline)
+          last_synced_at: null       # ISO timestamp of last successful sync
         corpus_path: doc
         has_pack: true
-        refresh_policy: on-demand     # on-demand | each-session | manual
+        refresh_policy: each-session  # each-session (recommended for actively consumed peers) | on-demand | manual
         consumed_for: [ack-events, sap-integration]
     consumed_by:                # filled when role in [library, secondary]
       - name: front
@@ -197,11 +221,17 @@ Rules:
 
 - `adjacent_repos` is non-empty only when `role` is `primary` or `sibling-app`, **or** when the operator declared remote `peer_application` / `parent_domain` corpora in interview Q5 (those land here regardless of workspace role — they are independent peer references).
 - `consumed_by` is non-empty only when `role` is `library` or `secondary`.
+- **Identity.** A peer carries both `name` (local `.corpus-cache/` slug) and
+  `app_id` (the **canonical ecosystem identity**). `app_id` is the single join
+  key shared by the peer's `boundary.yaml` `app.id`, its
+  `doc/_meta/ecosystem-map.yaml` registry `id`, and every `to`/`from`
+  counterparty referencing it. `name` may differ from `app_id`, but `app_id`
+  must not drift from the registry.
 - Every entry **must** have a `source:` block. Two types:
   - `source: { type: path, path: <relative path> }` — local sibling in the workspace.
   - `source: { type: git, url: <clone URL>, ref: <branch|tag|sha>, cache_path: <relative path under .corpus-cache/> }` — remote peer. `cache_path` is written by the agent after the first successful clone; it is `null` until then.
 - `corpus_path` is the path **within the resolved local directory** to the corpus root (typically `doc`). `null` when `has_pack: false`.
-- `refresh_policy` for `type: git` peers: `on-demand` (default — pull when the agent first reads the peer in a session), `each-session` (pull at session start), `manual` (operator pulls themselves). For `type: path` peers, `refresh_policy` is implicitly `manual` (the operator owns the checkout).
+- `refresh_policy` for `type: git` peers drives the SHA-gated freshness diff (see `sources/peer-corpus-access § Retrieval & freshness`): `each-session` (recommended for actively consumed peers — diff before first read), `on-demand` (diff the first time the peer is read in a session), `manual` (operator owns freshness; the cache is read as-is with its `last_synced_at` surfaced). The diff is incremental, not a re-clone, so `each-session` is near-free when the peer is unchanged. For `type: path` peers, `refresh_policy` is implicitly `manual` (the operator owns the checkout).
 - Never write a peer whose presence/identity was not confirmed by the operator in the interview. Filesystem proximity or a guessed URL is not consent.
 
 ### External peer relations
@@ -235,34 +265,37 @@ corpus:
 
 ## Source resolver — uniform access to peer corpora
 
-Every downstream skill that reads a peer corpus does so through a `resolve(peer)` step, never by reading `relative_path` directly. The resolver returns the local directory that holds the peer (workspace path for `type: path`, cache directory for `type: git`). The rest of the skill is identical from there.
+This skill **declares** peers and records consent. The actual *retrieval and
+access* — the graceful method chain (workspace → git sparse-clone cache →
+GitHub MCP), the SHA-gated freshness diff so every session consumes an
+up-to-date corpus, the uniform handle, and status recording — is owned by
+**`sources/peer-corpus-access`**. Every downstream skill reads a peer through
+that skill, never by touching a transport directly. The full retrieval
+mechanics (sparse-clone commands, incremental diff, MCP delta fetch) live
+there; this section only records the contract and the cache convention.
 
-Resolver behavior:
+The contract: a peer resolves to a local directory (workspace path, sparse
+clone, or MCP-hydrated cache) for tree-walking passes, with targeted MCP reads
+available without materializing anything.
 
-| `source.type` | Resolution | Failure modes |
+Resolution methods (executed by `sources/peer-corpus-access`):
+
+| Method | Resolution | Failure modes |
 |---|---|---|
-| `path` | Check the path exists relative to the current repo. Return absolute path. | Path missing → ask the operator to fix the workspace, or to migrate the entry to `type: git`. Do not silently skip. |
-| `git` | If `cache_path` exists and is a Git checkout of `source.url`, optionally pull per `refresh_policy`. Otherwise `git clone --depth 50 --filter=blob:none <url> <cache_path>` then `git -C <cache_path> checkout <ref>`. Return absolute `cache_path`. | Clone failure (auth, network, missing repo) → surface to operator, do not retry silently, do not fall back to skipping the peer. Record the failure in `doc/_meta/blocking-questions.md` under "external corpus unavailable". |
+| `workspace` (`type: path`) | Check the path exists relative to the current repo. Return absolute path. | Path missing → ask the operator to fix the workspace, or to migrate the entry to `type: git`. Do not silently skip. |
+| `git-sparse` (`type: git`, default) | Sparse clone of `source.surface` into `.corpus-cache/<name>/` (or SHA-gated incremental refresh if present). Return absolute `cache_path`. | Clone/fetch failure → surface, do not retry silently, do not skip the peer. Record in `doc/_meta/blocking-questions.md` under "external corpus unavailable". |
+| `github-mcp` (`type: git`, `host: github`, MCP available) | Targeted: read `<corpus_path>/<file>` via `get_file_contents`/`search_code`, no clone. Breadth: hydrate/delta-fetch `surface` into the cache. | MCP `not_attached`/`permission_blocked` → fall to `git-sparse` (loudly). |
 
-Cache convention:
+The method is chosen by the peer's `access` field (default `auto` walks the
+chain top-down). See `sources/peer-corpus-access § Access-method detection` and
+`§ Retrieval & freshness`.
 
-- Cached repos live under `.corpus-cache/<peer-name>/` at the **target repo root** (the repo that consumes them).
-- `.corpus-cache/` must be in `.gitignore` — the cache is per-developer, never committed. The kickstart adds the line if missing.
-- Shallow clones (`--depth 50 --filter=blob:none`) are the default; the corpus only needs `doc/` and a shallow history. Override to full clone only if a peer skill explicitly requires it.
-- Pull is opportunistic and best-effort. A stale cache is preferable to a noisy/broken session; surface the staleness in the run recap rather than blocking the run.
+Cache convention (detail in `sources/peer-corpus-access § Cache convention`):
 
-Concrete shell skeleton (the agent inlines these when needed; no helper script is shipped):
-
-```bash
-# Resolve a type: git peer named <name> with url <url> and ref <ref>
-mkdir -p .corpus-cache
-if [ ! -d ".corpus-cache/<name>/.git" ]; then
-  git clone --depth 50 --filter=blob:none <url> ".corpus-cache/<name>"
-fi
-git -C ".corpus-cache/<name>" fetch --depth 50 origin <ref>
-git -C ".corpus-cache/<name>" checkout <ref>
-git -C ".corpus-cache/<name>" pull --ff-only || true   # best effort
-```
+- Cached repos live under `.corpus-cache/<peer-name>/` at the **target repo root**.
+- `.corpus-cache/` must be in `.gitignore` — per-developer, never committed. The kickstart adds the line if missing.
+- **Sparse + shallow + partial** by default — only `surface` (e.g. `doc/`) is materialized, never the app source. The git transport is run deterministically by `scripts/sync-peer-corpus.mjs` (`--name --url --ref --surface --json`), not by hand-composed git commands.
+- Freshness is a **SHA-gated incremental diff at session start**, not a re-clone: the script fetches shallow, compares SHAs, advances only on change, and reports `changed_files`. A stale cache is preferable to a broken session; surface staleness rather than blocking.
 
 ## Kickstart scope per role
 
@@ -292,7 +325,7 @@ Multi-repo setup captured
 
 ## Behavior in subsequent passes
 
-Once `multi_repo_status: declared` **or** any `adjacent_repos` entry exists (external peers can be declared even on a standalone repo), downstream skills must use it. They always go through the resolver (§ Source resolver) — they never read `source.path` or `source.cache_path` directly.
+Once `multi_repo_status: declared` **or** any `adjacent_repos` entry exists (external peers can be declared even on a standalone repo), downstream skills must use it. They always read peers through `sources/peer-corpus-access` — they never read `source.path` or `source.cache_path` directly, and never call a clone URL or GitHub MCP tool outside that skill.
 
 - **`pipeline/p1-code-tree-inventory` (P1)**: when scanning the primary, also note imports/references to local sibling paths (`source.type == path` only). Do not deep-walk into siblings during P1; just note the boundary. External git peers are not in scope for code-tree inventory — they are documentation peers, not source-of-truth code peers.
 - **`pipeline/p3-feature-candidates` (P3)** and **`pipeline/p5-cross-cutting-extraction` (P5)**: when an API/entity/integration is implemented in a sibling, create the node in the primary's graph with a `cross_repo:` field pointing to the sibling. See `continuous/roadmap-graph` for the edge convention.
@@ -320,6 +353,6 @@ Re-run this skill (not just edit by hand) when:
 - Create cross-repo graph edges before `multi_repo_status` is `declared` (or before the relevant `type: git` peer is declared in `adjacent_repos`). The edges would be unverifiable.
 - Run the interview every session. Once `declared`, trust the captured state until a re-interview trigger fires.
 - Silently downgrade `sync_policy: agent-driven` to `agent-suggested` when no driver tool is available — say so out loud.
-- Read a `type: git` peer directly from a clone URL without going through the resolver and cache convention. The cache must be reusable across sessions, gitignored, and named by peer slug.
+- Read a `type: git` peer directly from a clone URL or a GitHub MCP tool without going through `sources/peer-corpus-access`. That skill owns the method chain, consent gate, cache convention and status recording. The cache must be reusable across sessions, gitignored, and named by peer slug.
 - Skip Q5 (external git peers) because the repo is `standalone`. Standalone vs multi-repo is about workspace layout; external peer corpora are independent of that and must always be asked.
 - Hardcode credentials, tokens or SSH keys in `app-profile.yaml`. The agent never stores secrets — auth is the operator's environment (SSH agent, credential helper). If a clone fails for auth, surface it to the operator.
