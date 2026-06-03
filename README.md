@@ -4,28 +4,47 @@
 
 Drop the pack into a repository and the `Corpus` agent retro-documents it from the code: features, APIs, batches, integrations, data model and production knowledge — every durable claim backed by evidence, with an explicit source-of-truth ranking (code wins). Stack-agnostic: Java, PHP, Angular, Node.js, Python, .NET, monoliths, backend APIs, batch projects, libraries, or multi-repo landscapes.
 
-### What you get
+See the [highlights](#highlights), [how it works](#how-it-works), or jump straight to [installation](#installation). Built on open standards (Agent Skills, MCP) and recognized 2026 agent-engineering references.
 
-- A durable corpus an agent reads instead of re-scanning the repository every session.
-- An exhaustive map of features, APIs, batches, integrations, persistence and messaging — with mermaid diagrams.
-- A sanctuarized inbound/outbound **boundary contract** per application…
-- …that **recomposes into a cross-application graph** across your ecosystem (peer corpora read via local workspace, sparse clone, or GitHub MCP).
-- Production knowledge, known bugs and structural risks captured reproducibly.
-- Specs, impact analyses and incident investigations grounded in the corpus rather than raw tickets.
+## Why this exists
 
-Built on open standards (Agent Skills, MCP) and recognized 2026 agent-engineering references — see [Standards & references](#standards--references). To set up, see [Installation](#installation).
+Agents are effective on a codebase they understand — and weak on one they must re-derive every session. The real behavior of an application lives in its code; written documentation drifts; and in a multi-application landscape, how services actually talk to each other is mostly tribal knowledge.
 
-## Goal
+This pack turns a repository into a **durable, code-true knowledge base that agents read instead of re-discovering** — and that **composes across applications** into a single ecosystem view. The corpus is owned by the team, lives alongside the code, and is built primarily from the code itself, so it stays true as the system evolves.
 
-Start from a repository with no agentic structure and create a durable, evidence-backed corpus that helps an application team work better with agents:
+- **From the code, not from tickets.** Every durable claim is evidence-backed, with an explicit source-of-truth ranking — code wins over docs that drift.
+- **A lasting asset, not a session.** The corpus is a versioned artefact maintained over many focused runs, not throwaway agent output.
+- **One app, then the whole landscape.** Each application documents its own boundary; those boundaries recompose into a cross-application graph.
 
-- understand the repository deeply (every directory walked, every entry point classified, every feature documented);
-- map features, APIs, batches, integrations, technical components, persistence, messaging — exhaustively, with mermaid diagrams;
-- capture production knowledge, known bugs, structural risks and code-level structural issues;
-- produce specs and impact analyses grounded in the existing system;
-- help developers implement changes from the corpus, not from raw tickets;
-- help reliability/support teams investigate incidents reproducibly;
-- maintain a roadmap of knowledge work so the corpus can improve over many focused sessions before team adoption.
+## Highlights
+
+| Capability | What it gives you |
+|---|---|
+| **Code-first retro-documentation** | A deterministic [P1→P9 pipeline](#deep-code-analysis-pipeline-p1--p9) walks every file and produces an exhaustive, evidence-backed map — features, APIs, batches, integrations, persistence, messaging. |
+| **Mandatory diagrams from code** | Module, layer, C4-context, sequence, messaging-topology and ER mermaid diagrams, sourced from code (rank 1), never from drifting docs. |
+| **Cross-application ecosystem graph** | A sanctuarized [boundary contract](#cross-application-corpus-and-ecosystem-graph) per app recomposes into an inbound/outbound graph across your landscape, flagging orphan events and contract drift. |
+| **Continuous enrichment** | A persistent [roadmap, graph and run ledger](#continuous-corpus-roadmap) lets the corpus deepen over many sessions, optionally parallelized by read-only subagents. |
+| **Deterministic quality gates** | [`validate-corpus.mjs`](#corpus-validation) hard-gates adoption claims — nothing is "done" until evidence, diagrams and state check out. |
+| **Token cost as a design constraint** | [Measured](#token-cost-discipline) progressive disclosure keeps the always-on surface small (−34% bootstrap, with figures). |
+| **Multi-source, no silent fallback** | [MCP wiring](#mcp-readiness) for Jira, Confluence, Dynatrace and custom sources, always reconciled against code. |
+| **Corpus-first delivery** | [Specs, impact analyses and incident investigations](#development-lifecycle) grounded in the corpus rather than raw tickets. |
+| **Stack-agnostic** | Detects the actual stack from the repository — no assumption about language or framework. |
+
+## What makes it different
+
+Beyond composing recognized agent-engineering primitives, the pack contributes:
+
+- An explicit, ranked **source-of-truth model** (8 levels) enforced by the validator and a reconciliation ledger (`pipeline/p9-code-reconciliation-gate`). The references describe agents; they do not impose a truth ranking — the pack does.
+- A deterministic **P1→P9 code analysis pipeline** with mandatory mermaid diagrams and hard gates — a fully specified pipeline, not just a pattern.
+- A **persistent corpus** as a durable organizational asset, not session-scoped output.
+- A **champion-mediated adoption model**: installed and kickstarted by an operator + AI champion who then design team-specific extensions on top of the generic baseline.
+
+## How it works
+
+1. **Install** — copy the pack into your repository ([installation](#installation)) and run the `Corpus` agent.
+2. **Kickstart** — the agent retro-documents the repo through the [P1→P9 pipeline](#deep-code-analysis-pipeline-p1--p9), wiring in production and project sources without silent fallback.
+3. **Enrich continuously** — focused runs deepen the corpus along a [persistent roadmap](#continuous-corpus-roadmap); peer corpora and the [ecosystem graph](#cross-application-corpus-and-ecosystem-graph) link it to neighboring applications.
+4. **Adopt** — when the corpus is ready (validated, honest about gaps), generate adoption material so the team's agents work from it.
 
 ## Core principle: code is the source of truth
 
@@ -89,19 +108,10 @@ The pack treats the context window as a budget. The five canonical strategies ar
 
 `sources/mcp-source-wizard`, `sources/mcp-readiness-check`, `doc/mcp/MCP_READINESS.md` and the bounded query catalogs (`doc/mcp/atlassian-query-catalog.md`, `doc/mcp/dynatrace-query-catalog.md`) wire the corpus to Jira, Confluence, Dynatrace and custom MCP servers without silent fallback when tools are unattached.
 
-### What is original to the pack (not borrowed)
-
-These do not come from the references above and are the pack's own contribution:
-
-- An explicit, ranked **source of truth model** (8-level priority) enforced by validator and reconciliation ledger (`pipeline/p9-code-reconciliation-gate`). The references do not impose a truth ranking; the pack does.
-- A deterministic **P1→P9 code analysis pipeline** with mandatory mermaid diagrams and hard gates. The references describe patterns; the pack provides a fully specified pipeline.
-- A **persistent corpus** as durable organizational asset, not session-scoped. The references describe agents; the pack produces a long-lived artefact maintained by the team.
-- A **champion-mediated adoption model**: the pack is installed and kickstarted by an operator + AI champion, who then designs team-specific agent extensions on top of the generic baseline.
-
-## Token-cost discipline (built-in, measured)
+## Token-cost discipline
 
 Most agentic packs treat token cost as a runtime concern. This one treats
-it as a **design constraint of the pack itself**. Every byte added to
+it as a **design constraint of the pack itself** — built in and measured. Every byte added to
 `AGENTS.md`, a persona or a SKILL.md is multiplied by `tours × sessions ×
 consumers` — so the pack is structured to keep that always-on surface as
 small as possible while preserving full functional depth via progressive
@@ -218,7 +228,7 @@ When VS Code opens several sibling repositories together (e.g. `front` + `lib` +
 
 The captured architecture is then used to scope work per repo role, link cross-repo nodes in `doc/_graph/edges.yaml`, and prevent silent desynchronization between sibling corpora.
 
-## Cross-application corpus & ecosystem graph
+## Cross-application corpus and ecosystem graph
 
 A corpus is not limited to its own repository. The pack can read the corpora of *other* applications and stitch them into a single integration picture:
 
