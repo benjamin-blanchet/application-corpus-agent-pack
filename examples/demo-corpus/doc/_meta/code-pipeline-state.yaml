@@ -1,86 +1,31 @@
-# Code Analysis Pipeline State
-#
-# Tracks the 9-pass deep code analysis pipeline (P1 → P9).
-# Each pass is owned by its skill (50 → 58) and must reach status: covered
-# in order. P9 final gate flips overall_status to covered, which is required
-# before adoption guide material.
-#
-# Status values (from governance/discovery-coverage-contract):
-#   not_started | inventory_only | started | partial | covered | deep | blocked | not_applicable
-
+# DEMO DATA — fictional pipeline state for dashboard showcase only.
 pipeline:
-  overall_status: not_started
-  last_run: null
+  overall_status: covered
+  last_run: 2026-05-29
   p1_tree_inventory:
-    status: not_started
-    last_run: null
-    files_inventoried: 0
-    unread_directories: 0
-    unknown_files: 0
-    blocks_next_pass: true
+    status: covered
+    last_run: 2026-05-29
   p2_logical_boundaries:
-    status: not_started
-    last_run: null
-    modules_mapped: 0
-    modules_unknown: 0
-    architectural_style_recorded: false
-    cycles_detected: 0
-    blocks_next_pass: true
+    status: covered
+    last_run: 2026-05-29
   p3_feature_candidates:
-    status: not_started
-    last_run: null
-    entry_points_found: 0
-    candidates_created: 0
-    cross_cutting_buckets: 0
-    unclassified_entry_points: 0
-    blocks_next_pass: true
+    status: covered
+    last_run: 2026-05-29
   p4_feature_silo_deep_dive:
-    status: not_started
-    last_run: null
-    candidates_total: 0
-    candidates_documented: 0
-    candidates_merged: 0
-    candidates_split: 0
-    candidates_rejected: 0
-    candidates_pending: 0
-    interviews_completed: 0
-    interviews_skipped: 0
-    blocks_next_pass: true
+    status: covered
+    last_run: 2026-05-29
   p5_cross_cutting_extraction:
-    status: not_started
-    last_run: null
-    catalogs_completed: []
-    discrepancies_recorded: 0
-    blocks_next_pass: true
+    status: covered
+    last_run: 2026-05-29
   p6_code_style_naming:
-    status: not_started
-    last_run: null
-    layers_covered: 0
-    discrepancies_recorded: 0
-    unwritten_rules_captured: 0
-    blocks_next_pass: true
+    status: covered
+    last_run: 2026-05-29
   p7_structural_issues:
-    status: not_started
-    last_run: null
-    findings_total: 0
-    critical: 0
-    high: 0
-    medium: 0
-    low: 0
-    risk_files_created: 0
-    blocks_next_pass: true
+    status: covered
+    last_run: 2026-05-29
   p8_code_maturity:
-    status: not_started
-    last_run: null
-    overall_score: null
-    weakest: []
-    strongest: []
-    blocks_next_pass: true
+    status: covered
+    last_run: 2026-05-29
   p9_code_reconciliation_gate:
-    status: not_started
-    last_run: null
-    contradictions_total: 0
-    resolved: 0
-    accepted_unresolved: 0
-    pending: 0
-    blocks_next_pass: true
+    status: covered
+    last_run: 2026-05-29

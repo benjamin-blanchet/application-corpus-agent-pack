@@ -2,6 +2,8 @@
 
 **Turn an existing codebase into an agent-readable knowledge base — built from the code itself, kept current, and linkable across your application ecosystem.**
 
+![Corpus dashboard — coverage, pipeline progress and maturity at a glance](docs/screenshots/overview.png)
+
 Drop the pack into a repository and the `Corpus` agent retro-documents it from the code: features, APIs, batches, integrations, data model and production knowledge — every durable claim backed by evidence, with an explicit source-of-truth ranking (code wins). Stack-agnostic: Java, PHP, Angular, Node.js, Python, .NET, monoliths, backend APIs, batch projects, libraries, or multi-repo landscapes.
 
 See the [highlights](#highlights), [how it works](#how-it-works), or jump straight to [installation](#installation). Built on open standards (Agent Skills, MCP) and recognized 2026 agent-engineering references.
@@ -48,7 +50,7 @@ Beyond composing recognized agent-engineering primitives, the pack contributes:
 
 ## See the dashboard
 
-`scripts/build-corpus-site.mjs` renders the corpus into a single self-contained HTML dashboard. Below are two views from a fictional demo corpus ([`examples/demo-corpus/`](examples/demo-corpus/)).
+`scripts/build-corpus-site.mjs` renders the corpus into a single self-contained HTML dashboard. The header view at the top of this page and the two views below all come from a fictional demo corpus ([`examples/demo-corpus/`](examples/demo-corpus/)).
 
 **Inbound / outbound — the application's place in the information system**, rendered from the integration data (no hand-drawn diagram):
 
