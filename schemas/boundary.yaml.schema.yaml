@@ -1,0 +1,66 @@
+# Schema for doc/architecture/boundary.yaml
+# Strict structural validation: scripts/validate-corpus.mjs § checkBoundaryContract
+# (two-tier — see SKILL.md). This file documents the canonical shape and feeds
+# the generic alias/enum drift lint; the dedicated check enforces required keys,
+# enums, evidence and cross-refs.
+
+file: doc/architecture/boundary.yaml
+written_by_skill: governance/boundary-contract
+skill_anchor: SKILL.md governance/boundary-contract § The schema
+description: |
+  Sanctuarized inbound/outbound integration contract — the machine-readable
+  source of truth for the application's boundary surface. One edge per
+  boundary crossing under interfaces.inbound / interfaces.outbound. Scope is
+  boundary-crossing only (APIs, async messages, shared datastores, external
+  systems, file exchanges) — not internal calls/UI/batches.
+
+# Pure YAML, no `---` frontmatter, no markdown body.
+must_not_be_markdown: true
+
+root:
+  required_keys: [version, app, interfaces]
+
+# app block
+app:
+  required_keys: [id, name, repo]
+
+# Each edge under interfaces.inbound / interfaces.outbound.
+item:
+  inside_block: interfaces
+  required_keys: [id, kind, channel, criticality, confidence, source, evidence]
+  optional_keys: [from, to, entities, protocol, version, schema_ref]
+  forbidden_aliases:        # legacy/variant field name -> canonical
+    type: kind
+    target: to
+    caller: from
+    endpoint: channel
+    topic: channel
+    priority: criticality
+    confidence_level: confidence
+  enums:
+    kind:
+      # inbound + outbound vocabularies (validator picks per section)
+      - sync-api
+      - async-consume
+      - webhook
+      - file-ingest
+      - sync-call
+      - async-produce
+      - db-write
+      - file-export
+      - notification
+    protocol: [rest, grpc, graphql, soap, kafka, amqp, sqs, pubsub, webhook, sftp, s3, jdbc, other]
+    criticality: [critical, high, medium, low]
+    confidence: [suspected, probable, confirmed, unknown]
+    source: [code, prod, jira, confluence, human, mixed, unknown]
+
+# Direction-specific kind vocabularies (enforced by checkBoundaryContract).
+kinds_inbound: [sync-api, async-consume, webhook, file-ingest]
+kinds_outbound: [sync-call, async-produce, db-write, file-export, notification]
+
+# Counterparty values allowed in from/to besides a registered app_id.
+counterparty_specials: [any, unknown]
+counterparty_external_prefix: "external:"
+
+# confidence: confirmed requires a rank 1-3 source.
+confirmed_requires_source_in: [code, prod, mixed]

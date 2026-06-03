@@ -58,3 +58,4 @@ item:
 
 - [brick-inventory.yaml.schema.yaml](brick-inventory.yaml.schema.yaml)
 - [reconciliation-ledger.yaml.schema.yaml](reconciliation-ledger.yaml.schema.yaml)
+- [boundary.yaml.schema.yaml](boundary.yaml.schema.yaml) — sanctuarized inbound/outbound integration contract (`doc/architecture/boundary.yaml`); enforced by `validate-corpus.mjs § checkBoundaryContract`.

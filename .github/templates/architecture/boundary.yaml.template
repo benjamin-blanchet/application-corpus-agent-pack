@@ -1,0 +1,31 @@
+# boundary.yaml — SANCTUARIZED inbound/outbound integration contract (template).
+# Copy to doc/architecture/boundary.yaml. Source of truth: governance/boundary-contract
+# and schemas/boundary.yaml.schema.yaml. Scope = boundary-crossing only.
+version: 1
+app:
+  id: unknown            # canonical ecosystem app_id (kebab slug) — the join identity
+  name: unknown
+  repo: unknown          # owner/name
+interfaces:
+  inbound:
+    # - id: in-rest-create-order
+    #   kind: sync-api          # sync-api | async-consume | webhook | file-ingest
+    #   protocol: rest
+    #   channel: "POST /v1/orders"
+    #   from: [external:web-bff]
+    #   entities: [Order]
+    #   criticality: high
+    #   confidence: confirmed
+    #   source: code
+    #   evidence: ["src/api/orders.controller.ts:42"]
+  outbound:
+    # - id: out-evt-order-created
+    #   kind: async-produce     # sync-call | async-produce | db-write | file-export | notification
+    #   protocol: kafka
+    #   channel: "orders.created"
+    #   to: [billing-service]
+    #   entities: [Order]
+    #   criticality: high
+    #   confidence: confirmed
+    #   source: code
+    #   evidence: ["src/events/order.publisher.ts:88"]

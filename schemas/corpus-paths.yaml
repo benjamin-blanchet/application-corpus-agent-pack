@@ -851,6 +851,54 @@ paths:
     gated: conditional
     surfaced: false
     scaffold: false
+  - path: doc/architecture/README.md
+    scope: architecture
+    produced_by: governance/boundary-contract
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/architecture/boundary.yaml
+    scope: architecture
+    produced_by: governance/boundary-contract
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/architecture/BOUNDARY.md
+    scope: architecture
+    produced_by: governance/boundary-contract
+    requirement: conditional
+    delivery: generated
+    gated: false
+    surfaced: true
+    scaffold: false
+  - path: doc/_meta/ecosystem-map.yaml
+    scope: meta
+    produced_by: sources/ecosystem-corpus-discovery
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: false
+    scaffold: false
+  - path: doc/_graph/ecosystem.yaml
+    scope: graph
+    produced_by: sources/ecosystem-corpus-discovery
+    requirement: conditional
+    delivery: generated
+    gated: false
+    surfaced: true
+    scaffold: false
+  - path: doc/architecture/ECOSYSTEM.md
+    scope: architecture
+    produced_by: sources/ecosystem-corpus-discovery
+    requirement: conditional
+    delivery: generated
+    gated: false
+    surfaced: true
+    scaffold: false
 
 # Dynamic-name files: validated by pattern, not exact path.
 patterns:

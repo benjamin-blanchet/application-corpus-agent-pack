@@ -38,6 +38,7 @@ The order matters because P4 iterates features one at a time. With activity-driv
 2. For each entry point, capture its file path, signature/route/topic/queue/job name and the module it belongs to.
 3. Group entry points into candidates using the grouping rules.
 4. For each candidate, create a feature folder skeleton in `doc/project/features/<slug>/` with placeholder companion files **and an explicit `status: candidate` in the README frontmatter** so it is clear P4 has not run yet.
+5. Seed the **boundary contract** (`doc/architecture/boundary.yaml`) with the **inbound** edges for the application's exposed entry points (APIs, consumed topics, webhooks, file ingests) discovered here — one edge per boundary crossing, channel normalized per `governance/boundary-contract`. P5 completes the contract (outbound calls/events, datastores, external systems). Scope is boundary-crossing only; internal entry points stay in feature folders.
 5. Update `doc/_indexes/by-feature.md` with all candidates.
 6. Record the entry-point evidence so P4 can start without re-walking the tree.
 
