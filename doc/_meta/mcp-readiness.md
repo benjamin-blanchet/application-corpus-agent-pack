@@ -25,6 +25,7 @@ doc/_meta/mcp-source-wizard.md
 | Jira | Project activity discovery | Atlassian/Jira MCP tools | unknown | pending | | Verify server is running and tools are attached to the agent. |
 | Confluence | Documentation discovery | Atlassian/Confluence MCP tools | unknown | pending | | Verify server is running and tools are attached to the agent. |
 | Dynatrace | Production discovery | Dynatrace MCP tools | unknown | pending | | Verify server is running and tools are attached to the agent. |
+| GitHub | Peer corpus access (cross-application, via `sources/peer-corpus-access`) | GitHub MCP read tools (`get_file_contents`, `search_code`) | unknown | pending | | Required only when a peer uses `access: github-mcp`/`auto`. Verify tools are attached; else `peer-corpus-access` falls back to clone. |
 
 Add custom MCP sources discovered by the wizard below.
 

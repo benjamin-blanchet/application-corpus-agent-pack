@@ -75,6 +75,7 @@ Record candidates in `doc/_meta/mcp-source-wizard.md`, then run readiness checks
 | Jira | List accessible projects or run a bounded JQL query after project key is known. | limit 10-50 |
 | Confluence | List spaces or search for the app name. | limit 10-20 |
 | Dynatrace | List entities/environments or run a tiny bounded query after entity mapping is known. | shortest useful time window |
+| GitHub (peer corpus) | `get_repository` on a declared peer, or `get_file_contents` of its `doc/README.md`. | single file / single repo |
 
 ## Decision rule
 
