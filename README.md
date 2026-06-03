@@ -1,10 +1,19 @@
 # Application Corpus Agent Pack
 
-A copy-into-repo **context engineering toolkit** for turning an existing application repository into an agent-readable, continuously enriched knowledge base built primarily from **code as the source of truth**.
+**Turn an existing codebase into an agent-readable knowledge base — built from the code itself, kept current, and linkable across your application ecosystem.**
 
-The pack is intentionally stack-agnostic. It can be used on Java, PHP, Angular, Node.js, Python, .NET, legacy monoliths, frontend repositories, backend APIs, batch projects, libraries, or multi-repo application landscapes.
+Drop the pack into a repository and the `Corpus` agent retro-documents it from the code: features, APIs, batches, integrations, data model and production knowledge — every durable claim backed by evidence, with an explicit source-of-truth ranking (code wins). Stack-agnostic: Java, PHP, Angular, Node.js, Python, .NET, monoliths, backend APIs, batch projects, libraries, or multi-repo landscapes.
 
-It is **Agent Skills compliant** (Anthropic's open standard, adopted by 30+ tools in 2026), **MCP-ready** (Model Context Protocol for Jira, Confluence, Dynatrace and custom sources), and aligned with the widely-recognized 2026 references for agentic work — Karpathy's CLAUDE.md, Anthropic's *Building Effective Agents* patterns, and the context engineering discipline.
+### What you get
+
+- A durable corpus an agent reads instead of re-scanning the repository every session.
+- An exhaustive map of features, APIs, batches, integrations, persistence and messaging — with mermaid diagrams.
+- A sanctuarized inbound/outbound **boundary contract** per application…
+- …that **recomposes into a cross-application graph** across your ecosystem (peer corpora read via local workspace, sparse clone, or GitHub MCP).
+- Production knowledge, known bugs and structural risks captured reproducibly.
+- Specs, impact analyses and incident investigations grounded in the corpus rather than raw tickets.
+
+Built on open standards (Agent Skills, MCP) and recognized 2026 agent-engineering references — see [Standards & references](#standards--references). To set up, see [Installation](#installation).
 
 ## Goal
 
@@ -208,6 +217,14 @@ The adoption guide material should be honest about roadmap coverage, reliable kn
 When VS Code opens several sibling repositories together (e.g. `front` + `lib` + `deploy`), `foundations/multi-repo-workspace-detection` runs at the very start of kickstart, before role detection. It disambiguates monorepo from multi-repo, probes the filesystem and any `*.code-workspace` file for siblings, and interviews the operator to capture the workspace architecture in `doc/_meta/app-profile.yaml` and `doc/_meta/corpus-state.yaml`.
 
 The captured architecture is then used to scope work per repo role, link cross-repo nodes in `doc/_graph/edges.yaml`, and prevent silent desynchronization between sibling corpora.
+
+## Cross-application corpus & ecosystem graph
+
+A corpus is not limited to its own repository. The pack can read the corpora of *other* applications and stitch them into a single integration picture:
+
+- **Read a peer corpus** — `sources/peer-corpus-access` reaches a declared peer application's corpus via a local workspace checkout, a sparse `doc/` git clone, or the GitHub MCP (no clone), with a SHA-gated freshness diff so each session consumes an up-to-date copy. `scripts/sync-peer-corpus.mjs` runs the deterministic git path.
+- **Boundary contract** — each application declares its inbound/outbound surface (exposed/called APIs, produced/consumed events, shared datastores, external systems, file exchanges) in `doc/architecture/boundary.yaml`, the sanctuarized machine-readable source of truth (schema in `schemas/boundary.yaml.schema.yaml`, conventions in `governance/boundary-contract`). It is a first-class P3/P5 output and is reconciled against runtime flows — code wins.
+- **Ecosystem graph** — `sources/ecosystem-corpus-discovery` discovers peer corpora across a Git org via the GitHub MCP and maintains the `doc/_meta/ecosystem-map.yaml` identity registry. `scripts/recompose-ecosystem.mjs` joins every app's `boundary.yaml` (one app's outbound to another's inbound) into `doc/_graph/ecosystem.yaml` + `doc/architecture/ECOSYSTEM.md`, surfacing orphan events, unknown producers and contract drift as captured knowledge.
 
 ## What gets copied
 
