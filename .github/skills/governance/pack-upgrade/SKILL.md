@@ -109,6 +109,8 @@ For each well-known meta file, compare its current shape against the schema docu
 | `doc/_meta/code-activity-signals.yaml` (new) | `pipeline/code-activity-signals` |
 | `doc/_meta/coverage-matrix.md` | `pipeline/p9-code-reconciliation-gate`, `governance/discovery-coverage-contract` |
 | `doc/_meta/source-inventory.md` | `sources/information-source-onboarding` |
+| `doc/architecture/boundary.yaml` (new) | `governance/boundary-contract` |
+| `doc/_meta/ecosystem-map.yaml` (new) | `sources/ecosystem-corpus-discovery` |
 
 For each missing field that the new pack expects:
 
@@ -117,6 +119,31 @@ For each missing field that the new pack expects:
 - **Never invent a value.** Use `unknown` over guessing.
 
 For files that the new pack expects but that don't exist at all yet (e.g. `code-activity-signals.yaml` on a corpus that was built before the skill existed): do **not** create them in this skill. Record in the report that they will be created on the next pipeline run.
+
+### Step 3b — Scaffold the boundary contract zone (pack-template)
+
+The `doc/architecture/` zone and the ecosystem registry are **pack-template
+skeletons** (bucket B), so this skill *may* create them when absent — but only
+the empty skeletons, never synthesized content:
+
+- If `doc/architecture/README.md`, `doc/architecture/boundary.yaml` or
+  `doc/_meta/ecosystem-map.yaml` is missing, copy the shipped skeleton from the
+  new pack (`.github/templates/architecture/boundary.yaml.template` for the
+  contract; the README/registry skeletons from the pack). Leave `app.id:
+  unknown` and `interfaces` empty — population is code-derived, not a migration
+  task.
+- **Do not** populate `boundary.yaml` from a code scan here (Hard constraint:
+  no re-scan). Instead, if `code-pipeline-state.yaml` shows
+  `p5_cross_cutting_extraction.status == covered`, the corpus already has the
+  raw material (`doc/project/architecture/INTEGRATION_MAP.md`,
+  `doc/project/services/MESSAGING.md`, `doc/_indexes/by-api.md`). Record a
+  migration item: *"populate `architecture/boundary.yaml` from existing P5
+  catalogs via `governance/boundary-contract`"* — a reconciliation pass over
+  already-captured knowledge, run after the upgrade, not a re-analysis.
+- The validator will emit `boundary-not-populated` (P1) while P5 is covered and
+  the contract is still empty. That P1 is expected post-upgrade and is the
+  operator's signal to run the population pass; surface it in the report rather
+  than letting it look like a regression.
 
 ### Step 4 — Stamp the upgrade
 

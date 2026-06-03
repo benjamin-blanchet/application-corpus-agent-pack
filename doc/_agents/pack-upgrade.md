@@ -36,7 +36,12 @@ have already built**.
 
 4. **Review** the migration report and the validator findings. P0 must be
    0 before you commit. New P1 findings introduced by stricter gates in
-   the new pack are normal — log them as known follow-ups.
+   the new pack are normal — log them as known follow-ups. In particular,
+   upgrading onto the **boundary contract** zone scaffolds an empty
+   `doc/architecture/boundary.yaml`; if your corpus already has P5 covered,
+   expect a `boundary-not-populated` P1 — that is your cue to run the
+   population pass (`governance/boundary-contract`, fed by the existing P5
+   catalogs), not a regression.
 
 A deterministic helper script (`scripts/update-pack.mjs`) exists for CI /
 scripted scenarios, but the manual copy + agent-driven migration is the
