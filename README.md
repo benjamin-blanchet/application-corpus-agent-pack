@@ -188,7 +188,7 @@ This pack is designed for an operator-assisted rollout:
 
 ## Installation
 
-Copy the full content of `COPY_INTO_REPO/` into the target application repository.
+Copy the pack files into the target application repository — `.github/`, `doc/`, `scripts/`, `schemas/`, `AGENTS.md`, `KICKSTART.md` and `PACK_VERSION` (everything in this repository except `README.md`, `LICENSE.md` and Git metadata).
 
 Then open the repository in an IDE supporting Copilot custom agents and run the `Corpus` agent.
 
@@ -233,10 +233,12 @@ A corpus is not limited to its own repository. The pack can read the corpora of 
 .github/skills/       reusable technical skills, grouped by intent (foundations, pipeline, actionable, continuous, exploration, governance, sources, authoring, development)
 .github/prompts/      optional prompt files, including subagent-assisted coverage
 .github/templates/    corpus templates and reusable documentation patterns
-scripts/              deterministic corpus validation utilities (with hard gates)
+scripts/              deterministic corpus utilities (validation, peer sync, ecosystem recomposition)
+schemas/              canonical path manifest and machine-readable schemas the validator enforces
 doc/                  application knowledge corpus skeleton
 AGENTS.md             local operating guide for humans and agents
 KICKSTART.md          first-run and continuous enrichment instructions
+PACK_VERSION          pack version stamp (used by upgrade tooling)
 ```
 
 ## Human-facing agent set
