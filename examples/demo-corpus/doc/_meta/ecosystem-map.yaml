@@ -1,0 +1,24 @@
+# ecosystem-map.yaml — canonical registry of corpus-bearing apps in the ecosystem.
+#
+# The single source of canonical app_id values (the join identity used by every
+# app's doc/architecture/boundary.yaml in its `to`/`from` counterparties).
+# Written by skill sources/ecosystem-corpus-discovery (org-wide scan via the
+# GitHub MCP). Ships as a skeleton with no apps; counterparty resolution in the
+# boundary validator activates only once this registry has at least one app.
+#
+# Do not hand-maintain at scale — re-run the discovery skill. See
+# SKILL.md sources/ecosystem-corpus-discovery § The registry.
+version: 1
+org: unknown          # GitHub org/owner scanned (or a list)
+last_scan: null
+apps: []
+  # - id: order-service          # canonical app_id (join identity) = boundary app.id
+  #   repo: acme/order-service
+  #   owner: acme
+  #   has_pack: true
+  #   has_boundary: true
+  #   boundary_path: doc/architecture/boundary.yaml
+  #   corpus_path: doc
+  #   aliases: []
+  #   app_id_provisional: false
+  #   last_seen: null

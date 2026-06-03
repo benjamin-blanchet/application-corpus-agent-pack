@@ -46,6 +46,24 @@ Beyond composing recognized agent-engineering primitives, the pack contributes:
 3. **Enrich continuously** — focused runs deepen the corpus along a [persistent roadmap](#continuous-corpus-roadmap); peer corpora and the [ecosystem graph](#cross-application-corpus-and-ecosystem-graph) link it to neighboring applications.
 4. **Adopt** — when the corpus is ready (validated, honest about gaps), generate adoption material so the team's agents work from it.
 
+## See the dashboard
+
+`scripts/build-corpus-site.mjs` renders the corpus into a single self-contained HTML dashboard. Below are two views from a fictional demo corpus ([`examples/demo-corpus/`](examples/demo-corpus/)).
+
+**Inbound / outbound — the application's place in the information system**, rendered from the integration data (no hand-drawn diagram):
+
+![Inbound/outbound context view](docs/screenshots/inbound-outbound.png)
+
+**Features** — each documented feature with status, criticality and summary:
+
+![Features view](docs/screenshots/features.png)
+
+Regenerate from the demo corpus:
+
+```bash
+node scripts/build-corpus-site.mjs --doc examples/demo-corpus/doc --out examples/demo-corpus/index.html
+```
+
 ## Core principle: code is the source of truth
 
 When two sources disagree about how the application behaves today, the higher-rank source wins:
