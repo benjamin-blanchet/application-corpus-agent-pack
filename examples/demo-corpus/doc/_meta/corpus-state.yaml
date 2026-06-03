@@ -1,0 +1,26 @@
+corpus:
+  phase: continuous-enrichment
+  operating_mode: continuous
+  maturity_level: 3
+  last_kickstart: 2026-05-12
+  last_continuous_run: 2026-05-30
+  indexes_initialized: true
+  source_inventory_done: true
+  first_code_pass_done: true
+  first_prod_pass_done: true
+  code_analysis_status: covered
+  actionable_readiness_status: covered
+  features_status: covered
+  apis_status: covered
+  domain_status: covered
+  integrations_status: covered
+  messaging_status: covered
+  persistence_status: covered
+  architecture_status: covered
+  prod_status: partial
+  dynatrace_mcp_status: connected
+  jira_mcp_status: connected
+adoption:
+  maturity_stage: pre-adoption
+notes:
+- DEMO DATA — fictional state for dashboard showcase only.

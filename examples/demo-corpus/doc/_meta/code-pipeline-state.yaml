@@ -1,0 +1,31 @@
+# DEMO DATA — fictional pipeline state for dashboard showcase only.
+pipeline:
+  overall_status: covered
+  last_run: 2026-05-29
+  p1_tree_inventory:
+    status: covered
+    last_run: 2026-05-29
+  p2_logical_boundaries:
+    status: covered
+    last_run: 2026-05-29
+  p3_feature_candidates:
+    status: covered
+    last_run: 2026-05-29
+  p4_feature_silo_deep_dive:
+    status: covered
+    last_run: 2026-05-29
+  p5_cross_cutting_extraction:
+    status: covered
+    last_run: 2026-05-29
+  p6_code_style_naming:
+    status: covered
+    last_run: 2026-05-29
+  p7_structural_issues:
+    status: covered
+    last_run: 2026-05-29
+  p8_code_maturity:
+    status: covered
+    last_run: 2026-05-29
+  p9_code_reconciliation_gate:
+    status: covered
+    last_run: 2026-05-29

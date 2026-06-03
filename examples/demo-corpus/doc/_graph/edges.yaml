@@ -1,0 +1,10 @@
+graph:
+  version: 1
+  edges:
+    - id: edge:roadmap-root-doc
+      from: roadmap:root
+      to: file:doc/_roadmap/CORPUS_ROADMAP.md
+      type: documented_by
+      confidence: confirmed
+      evidence:
+        - evidence:pack-roadmap-skeleton

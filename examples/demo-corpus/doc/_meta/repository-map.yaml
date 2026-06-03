@@ -1,0 +1,13 @@
+repositories:
+  current:
+    name: "unknown"
+    role: "primary"   # primary | secondary | frontend | backend | batch | library | infra | documentation | unknown
+    path: "."
+    description: "unknown"
+  related: []
+# Example related repository entry:
+# - name: "front-web"
+#   role: "frontend"
+#   relationship: "consumes current repository APIs"
+#   corpus_location: "unknown"
+#   status: "unknown"

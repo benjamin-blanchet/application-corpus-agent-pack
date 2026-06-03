@@ -1,0 +1,9 @@
+# DEMO DATA — fictional reconciliation ledger for dashboard showcase only.
+contradictions:
+  - id: RC-001
+    status: resolved
+    note: Confluence said sync charge; code shows async outbox — code wins.
+  - id: RC-002
+    status: resolved
+  - id: RC-003
+    status: resolved
