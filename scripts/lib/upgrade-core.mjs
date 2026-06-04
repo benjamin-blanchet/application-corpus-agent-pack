@@ -9,7 +9,7 @@
 //
 // Bucket policy (see runUpgrade):
 //   A · pack-owned        → overwritten with the source version
-//                           (skills, helper scripts, root index files)
+//                           (skills, helper scripts, schemas, root index files)
 //   AGENTS · confirm       → `.github/agents/**`. Copied when missing. When a
 //                           local agent DIFFERS it is operator-customized:
 //                           never overwritten silently — confirmation is
@@ -49,6 +49,7 @@ const BUCKET_A_FILES = new Set([
 const BUCKET_A_PREFIXES = [
   '.github/skills/',
   'scripts/',          // all pack scripts (incl. scripts/lib/**) are pack-owned — replaced wholesale
+  'schemas/',          // machine-readable contracts the validator enforces — pack-owned, not team data; refreshed so they never drift behind an updated validator
 ];
 
 // `.github/agents/**` is the confirm bucket: operator-customizable.
