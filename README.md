@@ -1,10 +1,10 @@
 # Application Corpus Agent Pack
 
-**Turn an existing codebase into an agent-readable knowledge base — built from the code itself, kept current, and linkable across your application ecosystem.**
+**Turn an existing codebase into an agent-readable knowledge base — built from the code as the source of truth, enriched from your live tooling via MCP, and linked across your application ecosystem.**
 
 ![Corpus dashboard — coverage, pipeline progress and maturity at a glance](docs/screenshots/overview.png)
 
-Drop the pack into a repository and the `Corpus` agent retro-documents it from the code: features, APIs, batches, integrations, data model and production knowledge — every durable claim backed by evidence, with an explicit source-of-truth ranking (code wins). Stack-agnostic: Java, PHP, Angular, Node.js, Python, .NET, monoliths, backend APIs, batch projects, libraries, or multi-repo landscapes.
+Drop the pack into a repository and the `Corpus` agent retro-documents it from the code — features, APIs, batches, integrations, data model — then **enriches that spine from your connected ecosystem**: production observability (Dynatrace/APM), Jira/Confluence, CI/CD, custom data sources and peer corpora, all consumed through the **Model Context Protocol (MCP)**. These are examples, not a fixed list — **any MCP server is eligible as a source**, and any non-MCP source (SQL database, API, file export, dashboard) can be registered too. Code stays the truth rank. Stack-agnostic: Java, PHP, Angular, Node.js, Python, .NET, monoliths, backend APIs, batch projects, libraries, or multi-repo landscapes.
 
 See the [highlights](#highlights), [how it works](#how-it-works), or jump straight to [installation](#installation). Built on open standards (Agent Skills, MCP) and recognized 2026 agent-engineering references.
 
@@ -14,9 +14,9 @@ Agents are effective on a codebase they understand — and weak on one they must
 
 This pack turns a repository into a **durable, code-true knowledge base that agents read instead of re-discovering** — and that **composes across applications** into a single ecosystem view. The corpus is owned by the team, lives alongside the code, and is built primarily from the code itself, so it stays true as the system evolves.
 
-- **From the code, not from tickets.** Every durable claim is evidence-backed, with an explicit source-of-truth ranking — code wins over docs that drift.
+- **Code decides — everything else enriches.** Production, tickets, docs and dashboards feed the corpus through MCP, but every durable claim is reconciled against code, which wins when sources disagree.
 - **A lasting asset, not a session.** The corpus is a versioned artefact maintained over many focused runs, not throwaway agent output.
-- **One app, then the whole landscape.** Each application documents its own boundary; those boundaries recompose into a cross-application graph.
+- **One app, then the whole landscape.** Each application documents its own boundary; those boundaries recompose into a cross-application graph, and peer corpora are read across the org via MCP.
 
 ## Highlights
 
@@ -28,7 +28,7 @@ This pack turns a repository into a **durable, code-true knowledge base that age
 | **Continuous enrichment** | A persistent [roadmap, graph and run ledger](#continuous-corpus-roadmap) lets the corpus deepen over many sessions, optionally parallelized by read-only subagents. |
 | **Deterministic quality gates** | [`validate-corpus.mjs`](#corpus-validation) hard-gates adoption claims — nothing is "done" until evidence, diagrams and state check out. |
 | **Token cost as a design constraint** | [Measured](#token-cost-discipline) progressive disclosure keeps the always-on surface small (−34% bootstrap, with figures). |
-| **Multi-source, no silent fallback** | [MCP wiring](#mcp-readiness) for Jira, Confluence, Dynatrace and custom sources, always reconciled against code. |
+| **Live multi-source enrichment (via MCP)** | Production observability, Jira/Confluence, CI/CD, custom data and peer corpora — examples only: **any MCP server is eligible** as a source ([register one](#generic-information-sources)). [No silent fallback](#mcp-readiness); reconciled against code. |
 | **Corpus-first delivery** | [Specs, impact analyses and incident investigations](#development-lifecycle) grounded in the corpus rather than raw tickets. |
 | **Stack-agnostic** | Detects the actual stack from the repository — no assumption about language or framework. |
 
@@ -40,6 +40,7 @@ Beyond composing recognized agent-engineering primitives, the pack contributes:
 - A deterministic **P1→P9 code analysis pipeline** with mandatory mermaid diagrams and hard gates — a fully specified pipeline, not just a pattern.
 - A **persistent corpus** as a durable organizational asset, not session-scoped output.
 - A **champion-mediated adoption model**: installed and kickstarted by an operator + AI champion who then design team-specific extensions on top of the generic baseline.
+- A **code spine enriched by a live, MCP-connected source ecosystem** — production, tickets, docs, dashboards and peer corpora, where any MCP server is eligible as a source. Most code-documentation tools stop at the repository.
 
 ## How it works
 
