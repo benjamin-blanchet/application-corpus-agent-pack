@@ -85,6 +85,12 @@ function isAgent(rel) {
 // ----------------------------------------------------------------------------
 // Pure helpers.
 
+// Relative paths are compared against forward-slash literals throughout (bucket
+// prefixes, denylist, BUCKET_A_FILES). On Windows `path.relative` yields
+// backslashes, so every relative path is normalized to POSIX separators before
+// any comparison. (path.join converts back to the native separator on write.)
+const toPosix = (p) => p.replace(/\\/g, '/');
+
 function walk(dirAbs) {
   if (!fs.existsSync(dirAbs)) return [];
   const out = [];
@@ -186,7 +192,7 @@ export async function runUpgrade({ sourceRoot, target, apply = false, force = fa
 
   // Walk the source pack and classify every file (skipping repo-only paths).
   const sourceFiles = walk(sourceRoot)
-    .map((p) => path.relative(sourceRoot, p))
+    .map((p) => toPosix(path.relative(sourceRoot, p)))
     .filter((rel) => !isIgnoredSource(rel));
   const sourceSet = new Set(sourceFiles);
   for (const rel of sourceFiles) {
@@ -200,7 +206,7 @@ export async function runUpgrade({ sourceRoot, target, apply = false, force = fa
   const localUnderManaged = [];
   for (const p of [...BUCKET_A_PREFIXES, ...AGENT_PREFIXES]) {
     const dir = path.join(target, p);
-    if (fs.existsSync(dir)) localUnderManaged.push(...walk(dir).map((f) => path.relative(target, f)));
+    if (fs.existsSync(dir)) localUnderManaged.push(...walk(dir).map((f) => toPosix(path.relative(target, f))));
   }
   for (const rel of localUnderManaged) {
     if (!sourceSet.has(rel)) plan.warnRemoved.push({ rel });
