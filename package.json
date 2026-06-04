@@ -1,0 +1,23 @@
+{
+  "name": "application-corpus-agent-pack",
+  "version": "1.0.0",
+  "description": "Copy-into-repo context engineering toolkit that turns an application repository into an agent-readable, code-true knowledge corpus.",
+  "type": "module",
+  "bin": {
+    "corpus-pack": "scripts/cli.mjs"
+  },
+  "scripts": {
+    "sync": "node scripts/cli.mjs sync",
+    "validate": "node scripts/validate-corpus.mjs",
+    "dashboard": "node scripts/build-corpus-site.mjs",
+    "update-pack": "node scripts/update-pack.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "SEE LICENSE IN LICENSE.md",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/benjamin-blanchet/application-corpus-agent-pack.git"
+  }
+}
