@@ -2,37 +2,46 @@
 
 // Update the corpus pack in-place from a newer pack source.
 // Usage (from the consumer repo root):
-//   node scripts/update-pack.mjs <source-pack-dir> [--dry-run] [--apply]
+//   node scripts/update-pack.mjs <source-pack-dir> [--apply] [--force]
 //
 // Default mode is read-only: previews what would change and writes the report.
 // Pass --apply to actually copy files. (--dry-run is the default; included
 // as an alias for clarity.)
 //
-// The script respects three buckets:
+// The script respects four buckets:
 //   A · pack-owned        → overwritten with the source version
+//                           (skills, helper scripts, root index files)
+//   AGENTS · confirm       → `.github/agents/**`. Copied when missing. When a
+//                           local agent DIFFERS from the incoming one it is
+//                           treated as operator-customized: never overwritten
+//                           silently — confirmation is requested (--apply on a
+//                           TTY prompts; non-interactive runs preserve it and
+//                           flag it in the report). `--force` overwrites all.
 //   B · pack-template     → copied only when missing locally (existing
 //                           enriched files are preserved; diff hints emitted)
 //   C · corpus-owned      → never touched, even if present in source
 //
-// The hard rule still holds: this script touches `.github/`, `scripts/`,
-// `AGENTS.md`, `KICKSTART.md`, `doc/CORPUS_MAP.md`, `doc/CORPUS_MANIFEST.md`,
-// `doc/README.md` and the `doc/_meta/` / `doc/_indexes/` / `doc/_roadmap/`
-// / `doc/_runs/` templates only when they don't exist locally. It never
-// edits the live corpus (features, prod knowledge, specs, graph data,
-// interview logs, runs, handover material).
+// Two hard rules:
+//   1. `doc/**` is NEVER overwritten. The corpus is the team's data. At most,
+//      genuinely-missing scaffold files are added; any existing file under
+//      `doc/` is preserved (with a diff hint when the template moved on).
+//   2. A locally-modified agent under `.github/agents/` is NEVER overwritten
+//      without explicit confirmation.
 
 import fs from 'node:fs';
 import path from 'node:path';
 import { execSync } from 'node:child_process';
+import { createInterface } from 'node:readline/promises';
 
 const args = process.argv.slice(2);
 const sourceArg = args.find((a) => !a.startsWith('--'));
 const apply = args.includes('--apply');
+const force = args.includes('--force') || args.includes('--yes');
 const root = process.cwd();
 
 if (!sourceArg) {
-  console.error('Usage: node scripts/update-pack.mjs <source-pack-dir> [--apply]');
-  console.error('       <source-pack-dir> is the path to a fresh COPY_INTO_REPO/ tree.');
+  console.error('Usage: node scripts/update-pack.mjs <source-pack-dir> [--apply] [--force]');
+  console.error('       <source-pack-dir> is the path to a fresh checkout/download of the pack tree.');
   process.exit(2);
 }
 
@@ -63,21 +72,29 @@ const BUCKET_A_FILES = new Set([
   'scripts/inventory-repo.mjs',
   'scripts/export-graph-json.mjs',
   'scripts/update-pack.mjs',
-  'doc/CORPUS_MAP.md',
-  'doc/CORPUS_MANIFEST.md',
-  'doc/README.md',
 ]);
+// Note: doc/CORPUS_MAP.md, doc/CORPUS_MANIFEST.md and doc/README.md used to be
+// bucket A (overwritten). They are intentionally NOT here anymore — nothing
+// under `doc/` is overwritten. They now fall through to the copy-if-missing /
+// preserve path like the rest of the corpus.
 
 // Files under these prefixes are bucket A (replaced wholesale).
 const BUCKET_A_PREFIXES = [
-  '.github/agents/',
   '.github/skills/',
   'scripts/',          // all pack scripts (incl. scripts/lib/**) are pack-owned — never operator-customized; replace wholesale on upgrade
 ];
 
+// `.github/agents/**` is the confirm bucket: operator-customizable, so a local
+// agent that differs from the incoming one is never overwritten silently.
+const AGENT_PREFIXES = ['.github/agents/'];
+
 function isBucketA(rel) {
   if (BUCKET_A_FILES.has(rel)) return true;
   return BUCKET_A_PREFIXES.some((p) => rel.startsWith(p));
+}
+
+function isAgent(rel) {
+  return AGENT_PREFIXES.some((p) => rel.startsWith(p));
 }
 
 // ----------------------------------------------------------------------------
@@ -137,6 +154,7 @@ const localVersion = readVersionFrom(read('PACK_VERSION')) || '<missing>';
 const plan = {
   replace: [],     // {rel, why}  — pack-owned, content differs
   copyNew: [],     // {rel, why}  — file missing locally
+  confirm: [],     // {rel, why}  — local agent differs → needs confirmation
   preserve: [],    // {rel, hint} — template diverged from local, NOT touched
   warnRemoved: [], // {rel}       — local file no longer in source pack
   unchanged: [],   // {rel}
@@ -153,6 +171,23 @@ function classifyAFile(rel) {
   const b = fs.readFileSync(dstAbs);
   if (a.equals(b)) plan.unchanged.push({ rel });
   else plan.replace.push({ rel, why: 'pack-owned, content drift' });
+}
+
+function classifyAgentFile(rel) {
+  const srcAbs = path.join(sourceRoot, rel);
+  const dstAbs = path.join(root, rel);
+  if (!fs.existsSync(dstAbs)) {
+    plan.copyNew.push({ rel, why: 'agent, missing locally' });
+    return;
+  }
+  const a = fs.readFileSync(srcAbs);
+  const b = fs.readFileSync(dstAbs);
+  if (a.equals(b)) {
+    plan.unchanged.push({ rel });
+    return;
+  }
+  // Local agent differs from the incoming one → treat as operator-customized.
+  plan.confirm.push({ rel, why: 'local agent differs — confirm before overwrite' });
 }
 
 function classifyBFile(rel) {
@@ -178,7 +213,8 @@ function classifyBFile(rel) {
 const sourceFiles = walk(sourceRoot).map((p) => path.relative(sourceRoot, p));
 const sourceSet = new Set(sourceFiles);
 for (const rel of sourceFiles) {
-  if (isBucketA(rel)) classifyAFile(rel);
+  if (isAgent(rel)) classifyAgentFile(rel);
+  else if (isBucketA(rel)) classifyAFile(rel);
   else classifyBFile(rel);
 }
 
@@ -186,7 +222,7 @@ for (const rel of sourceFiles) {
 // under pack-owned prefixes, where deletion is meaningful — under doc/ a
 // "removed from source" file is almost certainly local corpus content).
 const localFilesUnderA = [];
-for (const p of BUCKET_A_PREFIXES) {
+for (const p of [...BUCKET_A_PREFIXES, ...AGENT_PREFIXES]) {
   const dir = path.join(root, p);
   if (fs.existsSync(dir)) localFilesUnderA.push(...walk(dir).map((f) => path.relative(root, f)));
 }
@@ -215,9 +251,11 @@ console.log(`  Target:  ${root}        (version ${localVersion})`);
 
 header(`Replace (bucket A — pack-owned): ${plan.replace.length}`);
 row(plan.replace);
-header(`New files (bucket A or B missing locally): ${plan.copyNew.length}`);
+header(`New files (missing locally): ${plan.copyNew.length}`);
 row(plan.copyNew);
-header(`Preserve (bucket B — local content differs): ${plan.preserve.length}`);
+header(`Agents modified locally (confirm before overwrite${force ? ' — forced' : ''}): ${plan.confirm.length}`);
+row(plan.confirm);
+header(`Preserve (bucket B — local content differs, NOT touched): ${plan.preserve.length}`);
 row(plan.preserve);
 header(`Locally present, removed in source (review): ${plan.warnRemoved.length}`);
 row(plan.warnRemoved);
@@ -226,13 +264,43 @@ header(`Unchanged: ${plan.unchanged.length}`);
 // ----------------------------------------------------------------------------
 // Apply (when requested).
 
+async function confirmPrompt(question) {
+  // No TTY (npx in CI, piped) → never overwrite; the file is preserved and
+  // surfaced in the report for manual review.
+  if (!process.stdin.isTTY) return false;
+  const rl = createInterface({ input: process.stdin, output: process.stdout });
+  try {
+    const ans = (await rl.question(`${question} [y/N] `)).trim().toLowerCase();
+    return ans === 'y' || ans === 'yes';
+  } finally {
+    rl.close();
+  }
+}
+
 const actuallyChanged = [];
+const keptAgents = []; // agents preserved because the operator declined the overwrite
 if (apply) {
   for (const it of plan.replace.concat(plan.copyNew)) {
     const srcAbs = path.join(sourceRoot, it.rel);
     const dstAbs = path.join(root, it.rel);
     copy(srcAbs, dstAbs);
     actuallyChanged.push(it.rel);
+  }
+
+  // Locally-modified agents: never overwritten without an explicit yes.
+  if (plan.confirm.length && !force && !process.stdin.isTTY) {
+    console.log(`\n${plan.confirm.length} locally-modified agent(s) preserved (non-interactive run; re-run on a TTY or pass --force to overwrite).`);
+  }
+  for (const it of plan.confirm) {
+    const overwrite = force
+      ? true
+      : await confirmPrompt(`Overwrite locally-modified agent '${it.rel}'? Local changes will be lost.`);
+    if (overwrite) {
+      copy(path.join(sourceRoot, it.rel), path.join(root, it.rel));
+      actuallyChanged.push(it.rel);
+    } else {
+      keptAgents.push(it.rel);
+    }
   }
 
   // Stamp corpus-state.yaml with the new pack_version + last_pack_upgrade.
@@ -297,6 +365,19 @@ if (plan.replace.length) for (const it of plan.replace) lines.push(`- \`${it.rel
 lines.push('');
 lines.push('## Newly copied (was missing locally)');
 if (plan.copyNew.length) for (const it of plan.copyNew) lines.push(`- \`${it.rel}\``); else lines.push('- _none_');
+lines.push('');
+lines.push('## Agents modified locally (never overwritten silently)');
+lines.push('');
+lines.push(apply
+  ? 'These agents differ from the incoming pack version. Overwrites only happened where you confirmed (or `--force` was passed); the rest were preserved.'
+  : 'These agents differ from the incoming pack version. On `--apply` you will be asked per file before any overwrite (preserved by default).');
+lines.push('');
+if (plan.confirm.length) {
+  for (const it of plan.confirm) {
+    const fate = apply ? (keptAgents.includes(it.rel) ? ' — preserved' : ' — overwritten') : '';
+    lines.push(`- \`${it.rel}\`${fate}`);
+  }
+} else lines.push('- _none_');
 lines.push('');
 lines.push('## Preserved (template diverged from local, NOT touched)');
 lines.push('');
