@@ -219,7 +219,36 @@ This pack is designed for an operator-assisted rollout:
 
 ## Installation
 
-Copy the pack files into the target application repository — `.github/`, `doc/`, `scripts/`, `schemas/`, `AGENTS.md`, `KICKSTART.md` and `PACK_VERSION` (everything in this repository except `README.md`, `LICENSE.md` and Git metadata).
+From the root of the application repository you want to document, run:
+
+```bash
+# preview what would change (dry-run)
+npx github:benjamin-blanchet/application-corpus-agent-pack sync
+
+# install (or upgrade) the pack in place
+npx github:benjamin-blanchet/application-corpus-agent-pack sync --apply
+```
+
+`npx` fetches the pack and copies it into the current repository — no zip, no manual paste. The **same command installs and upgrades**: on an already-equipped repo it behaves as an in-place upgrade. Pin a version once releases are tagged:
+
+```bash
+npx github:benjamin-blanchet/application-corpus-agent-pack#v1.0.0 sync --apply
+```
+
+**Upgrade safety.** `doc/` (your corpus) is never overwritten, even with `--force`. A locally-modified agent under `.github/agents/` is never overwritten without confirmation (you are prompted per file; non-interactive runs preserve it and flag it in the upgrade report). Pack-owned files (skills, helper scripts, root index files) are refreshed to the new version. Every run writes a `doc/_meta/pack-*.md` report.
+
+Once the pack is in place, the consumer repo can self-upgrade later without `npx`:
+
+```bash
+node scripts/update-pack.mjs --from-github --apply          # latest
+node scripts/update-pack.mjs --from-github=v1.0.0 --apply   # pinned
+```
+
+<details>
+<summary>Manual install (no Node / offline)</summary>
+
+Copy the pack files into the target application repository — `.github/`, `doc/`, `scripts/`, `schemas/`, `AGENTS.md`, `KICKSTART.md` and `PACK_VERSION` (everything in this repository except `README.md`, `LICENSE.md`, `docs/`, `examples/` and Git/Node metadata).
+</details>
 
 Then open the repository in an IDE supporting Copilot custom agents and run the `Corpus` agent.
 
