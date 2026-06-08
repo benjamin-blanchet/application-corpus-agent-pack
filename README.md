@@ -252,6 +252,8 @@ Copy the pack files into the target application repository — `.github/`, `doc/
 
 Then open the repository in an IDE supporting Copilot custom agents and run the `Corpus` agent.
 
+On surfaces with no agent picker — the **GitHub Copilot app** (desktop) and web chat — there is no persona to select: state your intent ("init the corpus", "impact analysis on X") and `copilot-instructions.md` routes you to the right role. The three read-only roles (`functional-analyst`, `corpus`, `reliability-analyst`) never touch source code, so non-developers can use them safely — run the app in Interactive or Plan mode, not Autopilot. Details: [doc/_agents/copilot-surfaces.md](doc/_agents/copilot-surfaces.md).
+
 The agent recognises **any kickstart-mode trigger**, in any language — pick the phrasing that fits, the agent will verify state before doing anything. English first, with a French variant where useful:
 
 ```text

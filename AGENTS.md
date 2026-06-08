@@ -68,6 +68,11 @@ Confluence-only or Jira-only claims must use `confidence: probable` at most.
 Internal subagents (`corpus-brick-*`) parallelize broad read-only brick
 coverage on behalf of `corpus`. They never own state transitions.
 
+Roles are entered from an agent picker where one exists (VS Code, the GitHub
+coding agent) and from intent on surfaces without one (the GitHub Copilot
+app, web chat). Routing, the read-only roles for non-developers, and the
+re-anchoring footer: [doc/_agents/copilot-surfaces.md](doc/_agents/copilot-surfaces.md).
+
 ## Corpus structure
 
 Canonical structure, where-to-find-what, naming conventions:
