@@ -6,7 +6,9 @@ of human-facing agents under `.github/agents/`.
 > **The authoritative agent guide is [AGENTS.md](../AGENTS.md).** Read it
 > first. This file is the GitHub Copilot mirror — it duplicates the absolute
 > essentials so Copilot has them inline, but anything beyond what's here
-> belongs in `AGENTS.md` and the linked skills.
+> belongs in `AGENTS.md` and the linked skills. It also carries the role
+> routing for surfaces that have no agent picker (the Copilot app, web chat)
+> — see [Copilot surfaces](../doc/_agents/copilot-surfaces.md).
 
 ## Canonical knowledge zones
 
@@ -26,22 +28,58 @@ of human-facing agents under `.github/agents/`.
 | `.github/skills/` | Reusable technical skills. |
 | `.github/templates/` | Templates and reusable patterns. |
 
-## Human-facing agent routing
+## Role routing
 
-| Need | Agent |
-|---|---|
-| Initialize, maintain or audit the corpus | `corpus` |
-| Produce a spec or impact analysis | `functional-analyst` |
-| Implement a validated spec | `developer` |
-| Investigate production behavior or incident | `reliability-analyst` |
+The pack defines four human-facing roles. How you enter one depends on the
+surface:
 
-Repository orientation: `/exploration/repo-explain` (skill, not an agent).
-Team handover: `/governance/team-handover` (skill, used by `corpus`).
+- **Agent picker available** (VS Code Chat, the GitHub coding agent on
+  github.com): select the matching agent. Its declared `tools:` enforce the
+  write boundary at the tool level.
+- **No agent picker** (GitHub Copilot app, web chat): there is no persona
+  selector. Adopt **one** role from the user's intent, state it, and hold it
+  for the whole conversation. Here the write boundary is a contract you keep,
+  not a tool restriction — honor it strictly.
 
-## First-run rule
+| User intent | Role | Writes to | Source code |
+|---|---|---|---|
+| Spec, impact analysis, acceptance criteria | `functional-analyst` | `doc/spec/**` | read-only |
+| Initialize, enrich or audit the corpus; retrodocument code | `corpus` | `doc/**` | read-only |
+| Investigate an incident, failure mode or operational risk | `reliability-analyst` | `doc/prod/**` | read-only |
+| Implement a *validated* spec | `developer` | source + `doc/spec/**` | edits |
+
+Each role loads its own skills as its procedure dictates; the full contracts
+live in `.github/agents/`. Repository orientation is a skill, not a role:
+`/exploration/repo-explain`. Team handover: `/governance/team-handover`
+(used by `corpus`).
+
+**Non-developers (analyst, PO, manager):** the first three roles never touch
+application source code — they are the safe entry for impact analysis, specs,
+testing strategy and corpus work. On the Copilot app, run sessions in
+**Interactive** or **Plan** mode (not Autopilot) so every step stays under
+your control.
+
+## Picker-less surfaces: handshake and re-anchoring
+
+A conversational surface has no sticky role — it only survives if it is
+re-stated each turn.
+
+1. **First message** — name the role before answering:
+   `Active role: <Role> — I write to <surface>; I do not modify application
+   source code.` (drop the last clause for `developer`).
+2. **Every response** — end with a one-line footer, so the role survives long
+   sessions and context summarization:
+   `— [<Role>] write:<surface> · source:read-only · next: <one bounded step>`
+
+One task, one conversation: if the need clearly changes role, ask the user to
+start a new chat. When intent is ambiguous, ask one short question — never
+default to a role that edits code. The `corpus` role additionally uses the
+full `foundations/corpus-status-footer` during kickstart and continuous runs.
+
+## First run
 
 If `doc/_meta/corpus-state.yaml` has `maturity_level: 0` (or is missing),
-invoke the `corpus` agent in kickstart mode — see [KICKSTART.md](../KICKSTART.md).
+enter the `corpus` role in kickstart mode — see [KICKSTART.md](../KICKSTART.md).
 Kickstart must not modify application source code.
 
 ## Hard rules (always loaded — full detail in AGENTS.md)
