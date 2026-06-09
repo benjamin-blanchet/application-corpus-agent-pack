@@ -235,7 +235,7 @@ npx github:benjamin-blanchet/application-corpus-agent-pack sync --apply
 npx github:benjamin-blanchet/application-corpus-agent-pack#v1.0.0 sync --apply
 ```
 
-**Upgrade safety.** `doc/` (your corpus) is never overwritten, even with `--force`. A locally-modified agent under `.github/agents/` is never overwritten without confirmation (you are prompted per file; non-interactive runs preserve it and flag it in the upgrade report). Pack-owned files (skills, helper scripts, root index files) are refreshed to the new version. Every run writes a `doc/_meta/pack-*.md` report.
+**Upgrade safety.** `doc/` (your corpus) is never overwritten, even with `--force`. A locally-modified agent under `.github/agents/` is never overwritten without confirmation (you are prompted per file; non-interactive runs preserve it and flag it in the upgrade report). Pack-owned files (skills, helper scripts, root index files, `AGENTS.md`, `KICKSTART.md` and `.github/copilot-instructions.md`) are refreshed to the new version — do not edit them; put repository-specific Copilot instructions in `.github/instructions/*.instructions.md`, which the pack never ships or touches. Every run writes a `doc/_meta/pack-*.md` report.
 
 Once the pack is in place, the consumer repo can self-upgrade later without `npx`:
 

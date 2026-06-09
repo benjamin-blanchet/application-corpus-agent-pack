@@ -9,6 +9,11 @@ of human-facing agents under `.github/agents/`.
 > belongs in `AGENTS.md` and the linked skills. It also carries the role
 > routing for surfaces that have no agent picker (the Copilot app, web chat)
 > — see [Copilot surfaces](../doc/_agents/copilot-surfaces.md).
+>
+> **This file is pack-owned and refreshed on every pack upgrade — do not
+> edit it.** Put repository-specific Copilot instructions in
+> `.github/instructions/*.instructions.md` (an `applyTo` glob scopes them);
+> the pack never ships or overwrites that directory.
 
 ## Canonical knowledge zones
 

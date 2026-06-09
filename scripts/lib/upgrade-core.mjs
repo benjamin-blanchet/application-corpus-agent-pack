@@ -35,6 +35,7 @@ import { createInterface } from 'node:readline/promises';
 const BUCKET_A_FILES = new Set([
   'AGENTS.md',
   'KICKSTART.md',
+  '.github/copilot-instructions.md', // pack doctrine (the AGENTS.md mirror + role routing), like AGENTS.md — refreshed on upgrade. Operator-specific Copilot instructions belong in `.github/instructions/*.instructions.md`, which the pack never ships or touches.
   'PACK_VERSION',
   'scripts/build-corpus-site.mjs',
   'scripts/validate-corpus.mjs',
