@@ -4,6 +4,8 @@ status: draft
 confidence: unknown
 source: pack
 last_validated:
+title: "Recurring Questions"
+description: "Use this file to collect questions that repeatedly appear during corpus kickstarts."
 ---
 
 # Recurring Questions

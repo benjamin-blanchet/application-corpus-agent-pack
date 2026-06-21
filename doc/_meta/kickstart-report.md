@@ -4,6 +4,8 @@ status: draft
 confidence: unknown
 source: pack
 last_validated:
+title: "Kickstart Report"
+description: "This file is filled by the `Corpus` agent during the first kickstart pass."
 ---
 
 # Kickstart Report

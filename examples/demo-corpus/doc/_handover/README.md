@@ -4,6 +4,8 @@ status: draft
 confidence: confirmed
 source: pack
 last_validated:
+title: "Adoption Guide"
+description: "This directory supports adoption by the AI champion and team when the operator decides the corpus is clean and advanced enough to show."
 ---
 
 # Adoption Guide

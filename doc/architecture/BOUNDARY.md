@@ -4,6 +4,8 @@ status: draft
 confidence: unknown
 source: pack
 last_validated:
+title: "Boundary — Inbound / Outbound"
+description: "This file is a stub until the boundary contract is populated during P3/P5."
 ---
 
 # Boundary — Inbound / Outbound

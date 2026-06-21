@@ -4,6 +4,8 @@ status: active
 confidence: confirmed
 source: code
 last_validated: 2026-05-29
+title: "Features index"
+timestamp: "2026-05-29"
 ---
 
 # Features index

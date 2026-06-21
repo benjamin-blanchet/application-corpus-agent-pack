@@ -163,6 +163,34 @@ Append a single row to `doc/_meta/corpus-changelog.md`:
 | <date> | pack upgrade | from <from> to <to>; schema fields added: <count>; orphan skills detected: <count> | <operator name or pack-upgrade skill> |
 ```
 
+### Step 5b — OKF conformance pass
+
+Bring the corpus up to the Open Knowledge Format (OKF v0.1) baseline the new
+pack expects. Run:
+
+```bash
+node scripts/build-okf-indexes.mjs        # add --dry-run first to preview
+```
+
+This is **safe under the Hard constraints**: it is deterministic, additive and
+idempotent. It only:
+
+- emits the reserved `index.md` listings (lowercase) where they do not collide
+  with an existing `INDEX.md`/`README.md` — never overwriting corpus-owned
+  listings;
+- backfills the derivable OKF fields (`title`/`description`/`timestamp`) onto
+  concept docs that **already** have a frontmatter block, deriving them from the
+  doc's own H1 / first sentence / `last_validated` — never inventing, never
+  touching prose;
+- stamps `okf_version` on the bundle-root `doc/index.md`.
+
+It never adds or guesses a `type`, never rewrites bodies, and never touches the
+sacred zones beyond adding sibling `index.md` files. Capture the one-line
+summary (indexes written, fields backfilled) for the report. Concept docs that
+genuinely lack a `type` are left for the validator to surface as P0 (next step)
+— do not hand-fix them in this skill unless the `type` is unambiguous from the
+doc's existing frontmatter.
+
 ### Step 6 — Validate
 
 Run `node scripts/validate-corpus.mjs --json` and capture:

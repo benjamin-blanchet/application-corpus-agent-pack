@@ -4,6 +4,8 @@ status: active
 confidence: confirmed
 source: pack
 last_validated:
+title: "Corpus Runs"
+description: "This directory records continuous enrichment sessions."
 ---
 
 # Corpus Runs

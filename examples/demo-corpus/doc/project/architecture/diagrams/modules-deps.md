@@ -4,6 +4,8 @@ status: active
 confidence: confirmed
 source: code
 last_validated: 2026-05-28
+title: "Module dependency graph (P2)"
+timestamp: "2026-05-28"
 ---
 
 # Module dependency graph (P2)

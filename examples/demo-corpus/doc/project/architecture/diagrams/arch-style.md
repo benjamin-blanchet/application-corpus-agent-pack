@@ -4,6 +4,9 @@ status: active
 confidence: confirmed
 source: code
 last_validated: 2026-05-28
+title: "Architecture style (P2)"
+description: "Hexagonal (ports & adapters) over a Spring Boot service."
+timestamp: "2026-05-28"
 ---
 
 # Architecture style (P2)

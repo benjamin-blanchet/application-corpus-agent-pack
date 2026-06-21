@@ -4,6 +4,8 @@ status: draft
 confidence: unknown
 source: pack
 last_validated:
+title: "MCP Readiness"
+description: "Use this file to track whether MCP-backed sources are available to the current IDE agent session."
 ---
 
 # MCP Readiness

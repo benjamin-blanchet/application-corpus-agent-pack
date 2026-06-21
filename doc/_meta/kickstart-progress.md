@@ -4,6 +4,8 @@ status: draft
 confidence: unknown
 source: pack
 last_validated:
+title: "Kickstart Progress"
+description: "Use this file as the live operator cockpit during corpus initialization."
 ---
 
 # Kickstart Progress

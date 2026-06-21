@@ -4,6 +4,8 @@ status: draft
 confidence: unknown
 source: pack
 last_validated:
+title: "Dynatrace / APM"
+description: "Unknown until configured for the target team."
 ---
 
 # Dynatrace / APM

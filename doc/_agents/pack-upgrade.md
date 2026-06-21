@@ -3,6 +3,8 @@ type: agents-reference
 audience: operator
 status: stable
 source: pack
+title: "Pack upgrade — operator procedure"
+description: "When a newer version of the pack is released and you want to pick up its"
 ---
 
 # Pack upgrade — operator procedure

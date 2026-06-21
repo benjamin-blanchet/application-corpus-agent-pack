@@ -4,6 +4,8 @@ status: draft
 confidence: unknown
 source: pack
 last_validated:
+title: "Project Knowledge"
+description: "This directory contains stable application knowledge extracted from the repository and verified team sources."
 ---
 
 # Project Knowledge

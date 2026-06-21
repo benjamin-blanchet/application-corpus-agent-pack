@@ -4,6 +4,8 @@ status: draft
 confidence: unknown
 source: pack
 last_validated:
+title: "Actionable Readiness"
+description: "This file decides whether the corpus is dense enough for serious team use on a defined priority scope."
 ---
 
 # Actionable Readiness

@@ -116,12 +116,20 @@ completion.
 
 After P1→P9 and source discovery, see `procedure-readiness.md`.
 
-## Step 10 — Validation
+## Step 10 — OKF conformance + Validation
 
-Run `governance/post-kickstart-completeness-audit`, then
-`node scripts/validate-corpus.mjs`. Fix P0 immediately. Address P1 before
-any broad adoption claim. Record P2 hygiene work in
-`doc/_meta/update-candidates.md`.
+First make the corpus conformant with the Open Knowledge Format (OKF v0.1):
+run `node scripts/build-okf-indexes.mjs`. This is deterministic and additive —
+it emits the reserved `index.md` listings, backfills the derivable OKF fields
+(`title`/`description`/`timestamp`) onto docs that already have frontmatter, and
+stamps `okf_version` on the bundle-root index. It never rewrites corpus prose
+and never invents a `type`. A freshly kickstarted corpus must ship OKF-conformant.
+
+Then run `governance/post-kickstart-completeness-audit`, then
+`node scripts/validate-corpus.mjs`. Fix P0 immediately (including any
+`okf-missing-type` / `okf-missing-frontmatter` on concept docs the engine could
+not auto-fix). Address P1 before any broad adoption claim. Record P2 hygiene
+work in `doc/_meta/update-candidates.md`.
 
 ## Step 11 — Handover (only when gates pass)
 

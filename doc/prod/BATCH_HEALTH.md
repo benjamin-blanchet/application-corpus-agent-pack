@@ -4,6 +4,8 @@ status: draft
 confidence: unknown
 source: pack
 last_validated:
+title: "Batch / Job Health"
+description: "Fill from verified production, deployment or team sources."
 ---
 
 # Batch / Job Health

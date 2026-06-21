@@ -4,6 +4,8 @@ status: draft
 confidence: unknown
 source: pack
 last_validated:
+title: "CI/CD"
+description: "This section documents delivery automation, pipeline status and recent repository activity."
 ---
 
 # CI/CD

@@ -1,3 +1,12 @@
+---
+type: agents-reference
+audience: operator
+status: stable
+source: pack
+title: "Copilot surfaces — where the pack runs and how roles are entered"
+description: "The pack ships four human-facing roles (`corpus`, `functional-analyst`,"
+---
+
 # Copilot surfaces — where the pack runs and how roles are entered
 
 The pack ships four human-facing roles (`corpus`, `functional-analyst`,

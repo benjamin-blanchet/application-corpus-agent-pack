@@ -10,6 +10,8 @@ started_at:
 ended_at:
 operator:
 repository:
+title: "Corpus Interaction Session"
+description: "State what this session was trying to accomplish."
 ---
 
 # Corpus Interaction Session

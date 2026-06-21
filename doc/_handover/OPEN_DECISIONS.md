@@ -4,6 +4,8 @@ status: draft
 confidence: unknown
 source: mixed
 last_validated:
+title: "Open Decisions"
+description: "Use this file for decisions that must be confirmed by the team during or after handover."
 ---
 
 # Open Decisions

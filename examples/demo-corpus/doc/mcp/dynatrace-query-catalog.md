@@ -4,6 +4,8 @@ status: draft
 confidence: unknown
 source: pack
 last_validated:
+title: "Dynatrace Query Catalog"
+description: "Use this catalog during `exploration/production-discovery` when Dynatrace MCP is available."
 ---
 
 # Dynatrace Query Catalog

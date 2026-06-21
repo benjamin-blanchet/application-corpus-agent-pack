@@ -3,6 +3,8 @@ type: operations-guide
 audience: operator
 status: stable
 source: pack
+title: "Agent cache discipline"
+description: "Claude's prompt cache is **sequential, left-to-right**."
 ---
 
 # Agent cache discipline

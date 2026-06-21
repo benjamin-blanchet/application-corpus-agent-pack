@@ -4,6 +4,8 @@ status: draft
 confidence: unknown
 source: pack
 last_validated:
+title: "Roadmap Decisions"
+description: "Record decisions that shape the corpus roadmap."
 ---
 
 # Roadmap Decisions

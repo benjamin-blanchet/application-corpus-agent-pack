@@ -4,6 +4,8 @@ status: active
 confidence: confirmed
 source: pack
 last_validated:
+title: "Corpus Manifest"
+description: "This corpus turns an existing application repository into a knowledge base that can be used by agents and humans."
 ---
 
 # Corpus Manifest

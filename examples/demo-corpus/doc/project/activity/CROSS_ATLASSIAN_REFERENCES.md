@@ -4,6 +4,8 @@ status: draft
 confidence: unknown
 source: pack
 last_validated:
+title: "Cross Atlassian References"
+description: "This file tracks Jira issues and Confluence pages outside the obvious application scope that mention or depend on this application."
 ---
 
 # Cross Atlassian References

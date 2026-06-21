@@ -5,6 +5,7 @@ confidence: unknown
 source: code
 last_validated:
 produced_by: pipeline/p5-cross-cutting-extraction
+title: "Integration Flow Detail"
 ---
 
 # Integration Flow Detail

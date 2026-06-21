@@ -4,6 +4,8 @@ status: draft
 confidence: unknown
 source: pack
 last_validated:
+title: "Project Trajectory"
+description: "This file captures the application's observed trajectory from Jira, Confluence, Git/PR/CI and operator-confirmed evidence."
 ---
 
 # Project Trajectory

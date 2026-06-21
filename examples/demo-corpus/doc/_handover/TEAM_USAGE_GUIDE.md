@@ -4,6 +4,8 @@ status: draft
 confidence: confirmed
 source: pack
 last_validated:
+title: "Team Usage Guide"
+description: "This guide explains how the team should use the corpus and agents after the initial kickstart."
 ---
 
 # Team Usage Guide

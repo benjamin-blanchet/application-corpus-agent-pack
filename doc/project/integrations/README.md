@@ -4,6 +4,8 @@ status: draft
 confidence: unknown
 source: pack
 last_validated:
+title: "Integrations"
+description: "This area contains actionable deep dives for external systems and cross-application flows."
 ---
 
 # Integrations

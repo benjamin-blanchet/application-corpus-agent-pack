@@ -4,6 +4,8 @@ status: active
 confidence: confirmed
 source: pack
 last_validated:
+title: "Source Inventory"
+description: "Record the sources used to build or enrich the corpus."
 ---
 
 # Source Inventory

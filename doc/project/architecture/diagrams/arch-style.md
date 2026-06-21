@@ -5,6 +5,7 @@ confidence: unknown
 source: code
 last_validated:
 produced_by: pipeline/p2-logical-boundaries
+title: "Architectural Style Diagram"
 ---
 
 # Architectural Style Diagram

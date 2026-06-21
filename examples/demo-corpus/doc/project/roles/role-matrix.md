@@ -4,6 +4,8 @@ status: draft
 confidence: unknown
 source: pack
 last_validated:
+title: "Role Matrix"
+description: "Do not assume an authorization framework."
 ---
 
 # Role Matrix

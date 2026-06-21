@@ -4,6 +4,7 @@ status: draft
 confidence: unknown
 source: pack
 last_validated:
+title: "Recent Repository Activity"
 ---
 
 # Recent Repository Activity

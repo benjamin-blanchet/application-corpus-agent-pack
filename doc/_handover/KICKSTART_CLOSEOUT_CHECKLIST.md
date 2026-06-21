@@ -4,6 +4,8 @@ status: draft
 confidence: confirmed
 source: pack
 last_validated:
+title: "Kickstart Closeout Checklist"
+description: "Use this checklist before presenting adoption guide material to the team."
 ---
 
 # Kickstart Closeout Checklist

@@ -4,6 +4,8 @@ status: active
 confidence: confirmed
 source: pack
 last_validated:
+title: "Agent Entrypoints"
+description: "Only human-facing agents are listed here."
 ---
 
 # Agent Entrypoints

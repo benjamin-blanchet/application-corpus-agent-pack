@@ -4,6 +4,8 @@ status: draft
 confidence: unknown
 source: pack
 last_validated:
+title: "Infrastructure State"
+description: "Fill from verified production, deployment or team sources."
 ---
 
 # Infrastructure State

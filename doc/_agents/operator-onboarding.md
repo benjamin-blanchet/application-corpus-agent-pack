@@ -3,6 +3,8 @@ type: agents-reference
 audience: operator
 status: stable
 source: pack
+title: "Operator onboarding — kickstart, outputs, dashboard, rollout"
+description: "Any kickstart-mode trigger works:"
 ---
 
 # Operator onboarding — kickstart, outputs, dashboard, rollout

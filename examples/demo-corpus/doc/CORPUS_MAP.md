@@ -4,6 +4,8 @@ status: active
 confidence: confirmed
 source: pack
 last_validated:
+title: "Corpus Map"
+description: "Use indexes for navigation, not for long-form knowledge."
 ---
 
 # Corpus Map

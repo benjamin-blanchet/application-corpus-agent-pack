@@ -4,6 +4,8 @@ status: active
 confidence: confirmed
 source: pack
 last_validated:
+title: "MCP / Connected Sources"
+description: "This directory documents how agents should use connected sources and tools for this application."
 ---
 
 # MCP / Connected Sources

@@ -3,6 +3,8 @@ type: meta
 status: active
 confidence: confirmed
 source: pack
+title: "Code Interview Logs"
+description: "This directory holds per-brick interview transcripts produced by `pipeline/per-brick-interview`."
 ---
 
 # Code Interview Logs

@@ -8,6 +8,7 @@ related_features: ["_example-cross-channel-request"]
 related_components: []
 related_risks: []
 related_bugs: []
+title: "Cross-channel Request Handling — Workflows"
 ---
 
 # Cross-channel Request Handling — Workflows

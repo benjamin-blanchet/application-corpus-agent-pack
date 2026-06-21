@@ -4,6 +4,8 @@ status: active
 confidence: confirmed
 source: pack
 last_validated:
+title: "Interaction History"
+description: "This directory records synthetic histories of important interactions with the `Corpus` agent."
 ---
 
 # Interaction History

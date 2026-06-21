@@ -4,6 +4,8 @@ status: draft
 confidence: confirmed
 source: pack
 last_validated:
+title: "Next 30 Days"
+description: "This plan helps the team move from operator-led kickstart to autonomous usage."
 ---
 
 # Next 30 Days

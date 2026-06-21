@@ -4,6 +4,8 @@ status: active
 confidence: confirmed
 source: pack
 last_validated:
+title: "MCP Readiness"
+description: "Use this file before consuming Jira, Confluence, Dynatrace or any other MCP-backed source."
 ---
 
 # MCP Readiness

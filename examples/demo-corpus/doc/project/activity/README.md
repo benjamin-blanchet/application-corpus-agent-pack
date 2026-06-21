@@ -4,6 +4,8 @@ status: active
 confidence: confirmed
 source: pack
 last_validated:
+title: "Project activity"
+description: "This area captures what connected project sources reveal about the current life of the application: active work, recurring themes, delivery flow, defects, maintenance pressure and repository activity."
 ---
 
 # Project activity
