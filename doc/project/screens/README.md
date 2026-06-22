@@ -4,6 +4,8 @@ status: draft
 confidence: unknown
 source: pack
 last_validated:
+title: "Screens"
+description: "This area contains actionable deep dives for UI screens, views and page workflows."
 ---
 
 # Screens

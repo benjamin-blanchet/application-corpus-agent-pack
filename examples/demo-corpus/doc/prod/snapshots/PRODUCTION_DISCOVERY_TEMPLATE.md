@@ -9,6 +9,7 @@ related_features: []
 related_components: []
 related_risks: []
 related_bugs: []
+title: "Production Discovery Snapshot — YYYY-MM-DD"
 ---
 
 # Production Discovery Snapshot — YYYY-MM-DD

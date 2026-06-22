@@ -4,6 +4,8 @@ status: active
 confidence: confirmed
 source: pack
 last_validated:
+title: "Update Candidates"
+description: "Two uses for this file:"
 ---
 
 # Update Candidates

@@ -4,6 +4,8 @@ status: active
 confidence: confirmed
 source: pack
 last_validated:
+title: "Index by Source"
+description: "Canonical source profiles live in `doc/_meta/information-sources.yaml`."
 ---
 
 # Index by Source

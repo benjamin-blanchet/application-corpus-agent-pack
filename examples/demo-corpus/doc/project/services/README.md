@@ -4,6 +4,8 @@ status: draft
 confidence: unknown
 source: pack
 last_validated:
+title: "Services and modules"
+description: "Internal modules, packages, services, bounded contexts or deployable units."
 ---
 
 # Services and modules

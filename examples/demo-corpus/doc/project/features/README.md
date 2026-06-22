@@ -4,6 +4,8 @@ status: active
 confidence: confirmed
 source: pack
 last_validated:
+title: "Features"
+description: "Feature folders capture behavior that matters to the team."
 ---
 
 # Features

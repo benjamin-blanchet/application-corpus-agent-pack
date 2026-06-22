@@ -4,6 +4,8 @@ status: draft
 confidence: unknown
 source: pack
 last_validated:
+title: "Prompt Improvements"
+description: "Use this file to collect changes that would make future corpus kickstarts smoother."
 ---
 
 # Prompt Improvements

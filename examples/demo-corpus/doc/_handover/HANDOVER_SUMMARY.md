@@ -8,6 +8,8 @@ related_features: []
 related_components: []
 related_risks: []
 related_bugs: []
+title: "Handover Summary"
+description: "Summarize in a few paragraphs what was learned and what the corpus can already support."
 ---
 
 # Handover Summary

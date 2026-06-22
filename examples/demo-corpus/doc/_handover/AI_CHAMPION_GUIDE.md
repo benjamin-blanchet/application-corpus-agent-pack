@@ -4,6 +4,8 @@ status: draft
 confidence: confirmed
 source: pack
 last_validated:
+title: "AI Champion Guide"
+description: "The AI champion is the team relay for corpus quality and agent usage after the initial kickstart."
 ---
 
 # AI Champion Guide

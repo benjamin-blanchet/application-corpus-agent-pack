@@ -13,6 +13,8 @@ questions_asked: 0
 questions_answered: 0
 referrals: []
 follow_up_scheduled: null
+title: "Interview — <brick label>"
+description: "**Hypothesis the agent had:** ..."
 ---
 
 # Interview — <brick label>

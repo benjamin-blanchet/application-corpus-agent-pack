@@ -4,6 +4,8 @@ status: draft
 confidence: unknown
 source: pack
 last_validated:
+title: "Atlassian Query Catalog"
+description: "Use this catalog during `exploration/project-activity-discovery` and Confluence enrichment when Jira/Confluence MCP is available."
 ---
 
 # Atlassian Query Catalog

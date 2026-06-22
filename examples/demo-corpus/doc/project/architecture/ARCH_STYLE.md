@@ -4,6 +4,9 @@ status: active
 confidence: confirmed
 source: code
 last_validated: 2026-05-28
+title: "Architectural style"
+description: "Hexagonal (ports & adapters) on Spring Boot."
+timestamp: "2026-05-28"
 ---
 
 # Architectural style

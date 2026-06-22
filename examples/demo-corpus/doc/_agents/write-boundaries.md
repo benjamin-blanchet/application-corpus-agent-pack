@@ -2,6 +2,8 @@
 type: agents-reference
 status: stable
 source: pack
+title: "Write boundaries — hard rule"
+description: "The `corpus` agent **never modifies application source code**."
 ---
 
 # Write boundaries — hard rule

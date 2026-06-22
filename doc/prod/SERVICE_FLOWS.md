@@ -4,6 +4,8 @@ status: draft
 confidence: unknown
 source: pack
 last_validated:
+title: "Service Flows"
+description: "This file captures inbound and outbound runtime flows observed through Dynatrace/APM or another verified production source."
 ---
 
 # Service Flows

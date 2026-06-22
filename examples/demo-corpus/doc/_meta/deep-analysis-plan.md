@@ -4,6 +4,8 @@ status: draft
 confidence: unknown
 source: pack
 last_validated:
+title: "Deep Analysis Plan"
+description: "Use this file to coordinate a serious corpus kickstart across multiple analysis lanes."
 ---
 
 # Deep Analysis Plan

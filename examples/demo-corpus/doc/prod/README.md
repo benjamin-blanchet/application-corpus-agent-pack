@@ -4,6 +4,8 @@ status: active
 confidence: confirmed
 source: pack
 last_validated:
+title: "Production Knowledge"
+description: "This directory captures what the application does in real environments: failure modes, risks, incidents, monitoring signals and operational constraints."
 ---
 
 # Production Knowledge

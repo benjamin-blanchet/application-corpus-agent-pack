@@ -118,6 +118,40 @@ runtime.
 
 Do not rely only on predefined tools. Teams may expose logs, metrics, tickets, exports or business data through SQL, APIs, files or manual evidence. Register each source in `doc/_meta/information-sources.yaml`, document usage in `doc/mcp/custom-sources.md`, and route findings through the corpus with evidence and confidence.
 
+## Corpus output format (OKF v0.1)
+
+The corpus is an **Open Knowledge Format** bundle
+([spec](https://github.com/GoogleCloudPlatform/knowledge-catalog/tree/main/okf)):
+a directory of markdown files with YAML frontmatter, vendor-neutral and
+consumable by any OKF-aware agent — including a consumer agent that lives
+*outside* the corpus and reads many corpora across the ecosystem. This is a
+**corpus invariant**, enforced by `scripts/validate-corpus.mjs`:
+
+- **Hard rule (P0):** every non-reserved `.md` carries a frontmatter block with
+  a non-empty `type`. The pack's richer fields (`status`, `confidence`,
+  `source`, `related_*`) are legal OKF *extra keys* and remain the premium
+  layer a pack-aware consumer reads on top of the baseline.
+- **Reserved files** `index.md` and `log.md` are listings, not concept docs:
+  no frontmatter, except the bundle-root `doc/index.md` which declares
+  `okf_version`. The corpus' own uppercase `INDEX.md` / `README.md` are
+  preserved — on case-insensitive filesystems they collide with `index.md`, so
+  the generator never overwrites them (OKF index files are optional; a consumer
+  synthesizes one on the fly).
+- **Conformance is mechanical, additive and idempotent:** run
+  `node scripts/build-okf-indexes.mjs` as part of the regeneration ritual
+  (kickstart close, pack upgrade, quality passes), alongside
+  `scripts/validate-corpus.mjs` and `scripts/build-corpus-site.mjs`. It emits
+  index listings, backfills the derivable OKF fields (`title`/`description`/
+  `timestamp`) only where deterministically derivable, and stamps
+  `okf_version`. It never rewrites corpus prose and never invents a `type` — a
+  concept doc that genuinely lacks one surfaces as a P0 for an agent/operator
+  to resolve, not a guess.
+
+The boundary surface (`doc/architecture/BOUNDARY.md`, produced by
+`governance/boundary-contract`) already carries a `type` and is therefore an
+OKF concept doc; the machine-readable `boundary.yaml` sidecar and `doc/_graph/`
+stay as the premium layer beyond the OKF baseline.
+
 ## Safety baseline
 
 Read-only by default. No destructive database, Git, filesystem, ticketing, CI/CD or production action unless explicitly requested and safety-gated. Prefer dry-run, diff, SELECT, preview and update candidates.

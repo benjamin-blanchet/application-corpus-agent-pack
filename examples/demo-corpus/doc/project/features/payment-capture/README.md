@@ -5,6 +5,9 @@ confidence: confirmed
 source: code
 criticality: high
 last_validated: 2026-05-29
+title: "Payment Capture"
+description: "Consumes `payments.captured` from payments-service and moves the order from `AUTHORIZED` to `PAID`, then triggers fulfillment."
+timestamp: "2026-05-29"
 ---
 
 # Payment Capture

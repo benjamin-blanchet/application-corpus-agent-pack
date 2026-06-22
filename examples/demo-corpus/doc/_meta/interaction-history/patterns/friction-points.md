@@ -4,6 +4,8 @@ status: draft
 confidence: unknown
 source: pack
 last_validated:
+title: "Friction Points"
+description: "Use this file to collect process issues that made corpus initialization feel unclear, slow or hard to control."
 ---
 
 # Friction Points

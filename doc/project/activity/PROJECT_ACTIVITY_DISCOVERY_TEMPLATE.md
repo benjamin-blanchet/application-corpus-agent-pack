@@ -8,6 +8,8 @@ related_features: []
 related_components: []
 related_risks: []
 related_bugs: []
+title: "Project activity discovery — YYYY-MM-DD"
+description: "What the current project activity appears to show, in plain language."
 ---
 
 # Project activity discovery — YYYY-MM-DD

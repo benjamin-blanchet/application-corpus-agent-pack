@@ -4,6 +4,8 @@ status: draft
 confidence: unknown
 source: pack
 last_validated:
+title: "Blocking Questions"
+description: "Use this file to track questions that should be asked interactively during corpus kickstart."
 ---
 
 # Blocking Questions

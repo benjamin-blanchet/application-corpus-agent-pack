@@ -4,6 +4,8 @@ status: active
 confidence: confirmed
 source: code
 last_validated: 2026-05-28
+title: "Integration flow — checkout (P5)"
+timestamp: "2026-05-28"
 ---
 
 # Integration flow — checkout (P5)

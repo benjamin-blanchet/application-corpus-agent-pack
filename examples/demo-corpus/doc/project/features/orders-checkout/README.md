@@ -5,6 +5,9 @@ confidence: confirmed
 source: code
 criticality: critical
 last_validated: 2026-05-29
+title: "Orders — Checkout"
+description: "Turns a validated cart into a persisted order, authorizes payment synchronously, and publishes `orders.created` for downstream fulfillment."
+timestamp: "2026-05-29"
 ---
 
 # Orders — Checkout

@@ -8,6 +8,8 @@ related_features: ["_example-cross-channel-request"]
 related_components: []
 related_risks: []
 related_bugs: []
+title: "Cross-channel Request Handling — Business Rules"
+description: "When converting real code to rules, always link each rule to evidence: code path, test, ticket, Confluence page, API contract or human confirmation."
 ---
 
 # Cross-channel Request Handling — Business Rules

@@ -4,6 +4,8 @@ status: active
 confidence: confirmed
 source: pack
 last_validated:
+title: "Corpus Graph"
+description: "This directory stores a repo-native knowledge graph in YAML/Markdown."
 ---
 
 # Corpus Graph

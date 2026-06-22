@@ -4,6 +4,8 @@ status: draft
 confidence: unknown
 source: pack
 last_validated:
+title: "Runtime Architecture"
+description: "This file captures the production architecture observed through Dynatrace/APM or another verified production source."
 ---
 
 # Runtime Architecture

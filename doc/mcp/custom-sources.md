@@ -4,6 +4,8 @@ status: active
 confidence: confirmed
 source: pack
 last_validated:
+title: "Custom Information Sources"
+description: "Use this file to document sources that are not covered by a dedicated connector file such as `dynatrace.md`, `atlassian.md`, `github.md` or `servicenow.md`."
 ---
 
 # Custom Information Sources

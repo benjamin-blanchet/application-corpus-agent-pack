@@ -7,6 +7,7 @@ last_validated:
 roadmap_node:
 run_started:
 run_finished:
+title: "Corpus Run - YYYY-MM-DD - <run-id>"
 ---
 
 # Corpus Run - YYYY-MM-DD - <run-id>

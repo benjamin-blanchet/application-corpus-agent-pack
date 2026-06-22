@@ -4,6 +4,8 @@ status: draft
 confidence: unknown
 source: pack
 last_validated:
+title: "Reliability Analyses"
+description: "Create one folder or file per analysis."
 ---
 
 # Reliability Analyses

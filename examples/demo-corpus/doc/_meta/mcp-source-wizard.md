@@ -4,6 +4,8 @@ status: draft
 confidence: unknown
 source: pack
 last_validated:
+title: "MCP Source Wizard"
+description: "Use this file early in corpus kickstart to inventory standard and custom MCP sources."
 ---
 
 # MCP Source Wizard

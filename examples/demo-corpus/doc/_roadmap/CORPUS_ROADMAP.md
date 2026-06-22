@@ -4,6 +4,8 @@ status: draft
 confidence: unknown
 source: pack
 last_validated:
+title: "Corpus Roadmap"
+description: "This roadmap is split in two parts to avoid desynchronization between cheap per-run updates and expensive structural refreshes:"
 ---
 
 # Corpus Roadmap

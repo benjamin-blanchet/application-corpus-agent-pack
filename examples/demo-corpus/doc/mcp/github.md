@@ -4,6 +4,8 @@ status: draft
 confidence: unknown
 source: pack
 last_validated:
+title: "GitHub / Git / Source Control"
+description: "GitHub is used here in two distinct ways."
 ---
 
 # GitHub / Git / Source Control

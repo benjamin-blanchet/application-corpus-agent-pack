@@ -4,6 +4,9 @@ status: active
 confidence: confirmed
 source: code
 last_validated: 2026-05-28
+title: "Integrations"
+description: "How the Orders Service sits in the information system."
+timestamp: "2026-05-28"
 ---
 
 # Integrations

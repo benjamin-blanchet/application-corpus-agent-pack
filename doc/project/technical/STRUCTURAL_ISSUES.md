@@ -5,6 +5,7 @@ confidence: unknown
 source: pack
 last_validated:
 produced_by: pipeline/p7-structural-issues
+title: "Structural Issues"
 ---
 
 # Structural Issues

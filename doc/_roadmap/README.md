@@ -4,6 +4,8 @@ status: active
 confidence: confirmed
 source: pack
 last_validated:
+title: "Corpus Roadmap"
+description: "This directory is the persistent work map for continuous corpus enrichment."
 ---
 
 # Corpus Roadmap

@@ -4,6 +4,8 @@ status: active
 confidence: confirmed
 source: code
 last_validated: 2026-05-28
+title: "API catalog"
+timestamp: "2026-05-28"
 ---
 
 # API catalog

@@ -8,6 +8,7 @@ related_features: []
 related_components: []
 related_risks: []
 related_bugs: []
+title: "RISK-000 — <Title>"
 ---
 
 # RISK-000 — <Title>

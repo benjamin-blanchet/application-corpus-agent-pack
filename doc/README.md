@@ -4,6 +4,8 @@ status: active
 confidence: confirmed
 source: pack
 last_validated:
+title: "Application Corpus"
+description: "This directory is the durable knowledge base for the application."
 ---
 
 # Application Corpus

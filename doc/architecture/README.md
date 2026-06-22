@@ -4,6 +4,8 @@ status: active
 confidence: confirmed
 source: pack
 last_validated:
+title: "Architecture — Boundary Contract"
+description: "This zone holds the **sanctuarized boundary contract**: the single"
 ---
 
 # Architecture — Boundary Contract

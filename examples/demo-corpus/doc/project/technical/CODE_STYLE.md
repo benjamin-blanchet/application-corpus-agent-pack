@@ -5,6 +5,7 @@ confidence: unknown
 source: pack
 last_validated:
 produced_by: pipeline/p6-code-style-naming
+title: "Code Style"
 ---
 
 # Code Style

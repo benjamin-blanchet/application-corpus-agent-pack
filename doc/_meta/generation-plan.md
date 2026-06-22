@@ -4,6 +4,7 @@ status: active
 confidence: confirmed
 source: pack
 last_validated:
+title: "Corpus Generation Plan"
 ---
 
 # Corpus Generation Plan

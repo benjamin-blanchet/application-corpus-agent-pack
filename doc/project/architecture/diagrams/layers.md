@@ -5,6 +5,7 @@ confidence: unknown
 source: code
 last_validated:
 produced_by: pipeline/p2-logical-boundaries
+title: "Layer Stack per Module"
 ---
 
 # Layer Stack per Module

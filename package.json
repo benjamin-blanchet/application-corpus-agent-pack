@@ -9,6 +9,7 @@
   "scripts": {
     "sync": "node scripts/cli.mjs sync",
     "validate": "node scripts/validate-corpus.mjs",
+    "okf": "node scripts/build-okf-indexes.mjs",
     "dashboard": "node scripts/build-corpus-site.mjs",
     "update-pack": "node scripts/update-pack.mjs"
   },

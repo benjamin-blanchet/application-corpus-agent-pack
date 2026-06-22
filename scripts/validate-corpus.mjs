@@ -207,6 +207,10 @@ function checkFrontmatter() {
   const important = markdownFiles.filter((abs) => {
     const fileRel = rel(abs);
     if (fileRel.includes('/spec/template/')) return false;
+    // OKF reserved files (index.md, log.md) are listings, not concept docs —
+    // the spec forbids frontmatter on them (except okf_version on the root
+    // index). OKF conformance is enforced separately in checkOkfConformance.
+    if (/\/(index|log)\.md$/.test(fileRel)) return false;
     if (fileRel.includes('/_indexes/')) return true;
     if (fileRel.includes('/_meta/')) return true;
     if (fileRel.includes('/_handover/')) return true;
@@ -223,6 +227,38 @@ function checkFrontmatter() {
     for (const field of requiredFields) {
       if (!(field in fm)) add('P2', 'missing-frontmatter-field', `Missing frontmatter field: ${field}`, fileRel);
     }
+  }
+}
+
+// Open Knowledge Format (OKF) v0.1 conformance gate.
+// Spec §9 hard rule (promoted to P0): every non-reserved .md in the bundle has
+// a parseable frontmatter block carrying a non-empty `type`. Reserved files
+// (index.md, log.md) and raw templates are exempt. The bundle-root index
+// (doc/index.md) should declare okf_version (P2 advisory). Run
+// `node scripts/build-okf-indexes.mjs` to make a corpus conformant.
+function checkOkfConformance() {
+  const files = walk(docRoot).filter((file) => file.endsWith('.md') && !file.endsWith('.template'));
+  for (const abs of files) {
+    const fileRel = rel(abs);
+    if (fileRel.includes('/spec/template/')) continue;
+    if (/\/(index|log)\.md$/.test(fileRel)) continue; // reserved listings — not concept docs
+    const content = fs.readFileSync(abs, 'utf8');
+    if (!hasFrontmatter(content)) {
+      add('P0', 'okf-missing-frontmatter', 'OKF: concept document has no frontmatter block (every non-reserved .md needs frontmatter + non-empty type)', fileRel);
+      continue;
+    }
+    const fm = frontmatter(content);
+    const type = fm.type;
+    if (type === undefined || type === null || String(type).trim() === '') {
+      add('P0', 'okf-missing-type', 'OKF: concept document frontmatter has no non-empty `type` (the only field OKF requires)', fileRel);
+    }
+  }
+  // Bundle-root index + okf_version stamp (advisory — index is optional in OKF).
+  const rootIndex = 'doc/index.md';
+  if (!exists(rootIndex)) {
+    add('P2', 'okf-root-index-missing', 'OKF: no bundle-root doc/index.md; run scripts/build-okf-indexes.mjs to stamp okf_version and emit listings', rootIndex);
+  } else if (!('okf_version' in frontmatter(read(rootIndex)))) {
+    add('P2', 'okf-version-unstamped', 'OKF: doc/index.md does not declare okf_version', rootIndex);
   }
 }
 
@@ -1911,6 +1947,7 @@ checkRequiredStructure();
 checkCanonicalPaths();
 checkMarkdownLinks();
 checkFrontmatter();
+checkOkfConformance();
 checkFeatureFolders();
 checkProductionKnowledge();
 checkIndexes();

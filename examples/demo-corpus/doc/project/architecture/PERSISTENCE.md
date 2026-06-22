@@ -4,6 +4,9 @@ status: active
 confidence: confirmed
 source: code
 last_validated: 2026-05-28
+title: "Persistence"
+description: "PostgreSQL (schema `orders`)."
+timestamp: "2026-05-28"
 ---
 
 # Persistence

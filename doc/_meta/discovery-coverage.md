@@ -4,6 +4,8 @@ status: draft
 confidence: unknown
 source: pack
 last_validated:
+title: "Discovery Coverage"
+description: "This file tracks what the `Corpus` agent has actually covered during kickstart."
 ---
 
 # Discovery Coverage

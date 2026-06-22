@@ -4,6 +4,8 @@ status: draft
 confidence: unknown
 source: pack
 last_validated:
+title: "Roles"
+description: "This section documents application roles, permissions and system actors."
 ---
 
 # Roles

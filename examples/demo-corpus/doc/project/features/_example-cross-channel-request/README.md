@@ -8,6 +8,8 @@ related_features: []
 related_components: []
 related_risks: []
 related_bugs: []
+title: "Cross-channel Request Handling"
+description: "This is a fictional stack-agnostic example."
 ---
 
 # Cross-channel Request Handling

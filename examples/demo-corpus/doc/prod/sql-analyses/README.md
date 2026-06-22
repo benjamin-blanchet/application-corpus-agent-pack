@@ -4,6 +4,8 @@ status: draft
 confidence: unknown
 source: pack
 last_validated:
+title: "SQL Analyses"
+description: "Create one folder or file per analysis."
 ---
 
 # SQL Analyses

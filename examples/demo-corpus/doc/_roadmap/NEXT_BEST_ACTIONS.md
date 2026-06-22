@@ -4,6 +4,8 @@ status: draft
 confidence: unknown
 source: pack
 last_validated:
+title: "Next Best Actions"
+description: "Use this file to guide the next useful corpus runs."
 ---
 
 # Next Best Actions
