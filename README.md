@@ -1,12 +1,16 @@
 # Application Corpus Agent Pack
 
-**Turn an existing codebase into an agent-readable knowledge base — built from the code as the source of truth, enriched from your live tooling via MCP, and linked across your application ecosystem.**
+[![Open Knowledge Format v0.1 compliant](https://img.shields.io/badge/OKF-v0.1%20compliant-2ea44f)](https://github.com/GoogleCloudPlatform/knowledge-catalog/tree/main/okf)
+&nbsp;[![Built on Agent Skills](https://img.shields.io/badge/Agent%20Skills-open%20standard-blue)](https://agentskills.io)
+&nbsp;[![MCP](https://img.shields.io/badge/MCP-Model%20Context%20Protocol-blue)](https://modelcontextprotocol.io)
+
+**Turn an existing codebase into an agent-readable knowledge base — built from the code as the source of truth, enriched from your live tooling via MCP, and linked across your application ecosystem.** Every corpus is an [**Open Knowledge Format (OKF) v0.1**](#open-knowledge-format-okf-v01) bundle — portable markdown that any OKF-aware agent can read.
 
 ![Corpus dashboard — coverage, pipeline progress and maturity at a glance](docs/screenshots/overview.png)
 
 Drop the pack into a repository and the `Corpus` agent retro-documents it from the code — features, APIs, batches, integrations, data model — then **enriches that spine from your connected ecosystem**: production observability (Dynatrace/APM), Jira/Confluence, CI/CD, custom data sources and peer corpora, all consumed through the **Model Context Protocol (MCP)**. These are examples, not a fixed list — **any MCP server is eligible as a source**, and any non-MCP source (SQL database, API, file export, dashboard) can be registered too. Code stays the truth rank. Stack-agnostic: Java, PHP, Angular, Node.js, Python, .NET, monoliths, backend APIs, batch projects, libraries, or multi-repo landscapes.
 
-See the [highlights](#highlights), [how it works](#how-it-works), or jump straight to [installation](#installation). Built on open standards (Agent Skills, MCP) and recognized 2026 agent-engineering references.
+See the [highlights](#highlights), [how it works](#how-it-works), or jump straight to [installation](#installation). Built on open standards (Agent Skills, MCP, **Open Knowledge Format**) and recognized 2026 agent-engineering references.
 
 ## Why this exists
 
@@ -30,6 +34,7 @@ This pack turns a repository into a **durable, code-true knowledge base that age
 | **Token cost as a design constraint** | [Measured](#token-cost-discipline) progressive disclosure keeps the always-on surface small (−34% bootstrap, with figures). |
 | **Live multi-source enrichment (via MCP)** | Production observability, Jira/Confluence, CI/CD, custom data and peer corpora — examples only: **any MCP server is eligible** as a source ([register one](#generic-information-sources)). [No silent fallback](#mcp-readiness); reconciled against code. |
 | **Corpus-first delivery** | [Specs, impact analyses and incident investigations](#development-lifecycle) grounded in the corpus rather than raw tickets. |
+| **OKF-compliant by construction** | Every corpus is an [Open Knowledge Format v0.1](#open-knowledge-format-okf-v01) bundle — vendor-neutral markdown any OKF-aware agent can consume, [validator-gated](#corpus-validation) and shipped conformant out of the box. |
 | **Stack-agnostic** | Detects the actual stack from the repository — no assumption about language or framework. |
 
 ## What makes it different
@@ -41,6 +46,7 @@ Beyond composing recognized agent-engineering primitives, the pack contributes:
 - A **persistent corpus** as a durable organizational asset, not session-scoped output.
 - A **champion-mediated adoption model**: installed and kickstarted by an operator + AI champion who then design team-specific extensions on top of the generic baseline.
 - A **code spine enriched by a live, MCP-connected source ecosystem** — production, tickets, docs, dashboards and peer corpora, where any MCP server is eligible as a source. Most code-documentation tools stop at the repository.
+- An **OKF-conformant output with a premium layer on top.** The corpus is a standard [Open Knowledge Format](#open-knowledge-format-okf-v01) bundle any OKF-aware agent can read; the pack's ranked truth model, `confidence`/`source` metadata, boundary contract and ecosystem graph ride *above* that baseline — so a generic consumer reads the markdown, and a pack-aware consumer reads deeper. The baseline is the standard; the depth is the differentiator.
 
 ## How it works
 
@@ -87,6 +93,16 @@ Confluence, Jira and dashboards are useful for intent, history and stakeholders 
 ## Standards & references
 
 The pack is built on top of widely-recognized 2026 references rather than reinventing primitives. It composes them into a domain-specific methodology for enterprise codebase corpus.
+
+### Open Knowledge Format (OKF) v0.1
+
+Every corpus this pack produces is an [**Open Knowledge Format**](https://github.com/GoogleCloudPlatform/knowledge-catalog/tree/main/okf) bundle (Google Cloud, June 2026): a directory of markdown files with YAML frontmatter, vendor-neutral, version-controllable, readable by humans and parseable by any OKF-aware agent — no SDK, no integration, no translation layer. This makes a corpus directly consumable by an agent that lives **outside** it: a consumer can discover, navigate and query corpora across the whole ecosystem with one reader, regardless of which tool produced each bundle.
+
+- **Conformance, not migration.** The corpus already met OKF's only hard rule (a non-empty `type` on every document). Compliance is **additive** — the pack's richer fields (`status`, `confidence`, `source`, `related_*`) are legal OKF extra keys and remain a premium layer *on top of* the standard baseline. Nothing is renamed or lost.
+- **Compliant out of the box, and on upgrade.** A freshly kickstarted corpus ships conformant; existing corpora gain conformance through the normal `governance/pack-upgrade` flow. The mechanism is deterministic, additive and idempotent (`scripts/build-okf-indexes.mjs`, `npm run okf`): it emits the reserved `index.md` listings, backfills the standardized OKF fields where derivable, and stamps `okf_version` — never rewriting prose, never inventing a `type`.
+- **Gated.** [`validate-corpus.mjs`](#corpus-validation) hard-fails (P0) any concept document missing a `type`, so OKF conformance is enforced, not aspirational.
+
+The machine-readable `boundary.yaml` and the `_graph/` knowledge graph stay as the pack's premium layer beyond the OKF surface; `architecture/BOUNDARY.md` is their OKF-visible projection.
 
 ### Agent Skills open standard (Anthropic, Dec 2025 → open March 2026)
 
