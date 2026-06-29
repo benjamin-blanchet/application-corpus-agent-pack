@@ -220,6 +220,29 @@ in cache misses. The compound effect with stable cache discipline
 total saving on a kickstart-class session into the **−50 to −70 %** range
 on input tokens billed.
 
+### Budgeted context retrieval
+
+Progressive disclosure keeps the *always-on* surface small; for the
+*on-demand* surface, the pack ships `scripts/corpus-load.mjs` — a
+deterministic, read-only retriever. Given a task (plus optional feature or
+workspace-path hints) it scores the corpus, then serves the highest-relevance
+slices that fit a token budget and lists what it dropped, so nothing is
+silently hidden. An agent gets a routed slice instead of opening files by hand:
+
+```bash
+node scripts/corpus-load.mjs --task "payment capture refund" --budget 2000
+node scripts/corpus-load.mjs --feature billing --content      # full slice bodies
+node scripts/corpus-load.mjs --task "..." --json              # machine output
+node scripts/corpus-load.mjs --task "..." --expand            # ignore the budget
+```
+
+Scoring favors title/description/path matches over body keywords, then applies
+priors that rank code-derived application knowledge above navigation and meta
+scaffolding, and weights by the `confidence` of each slice — so a `confirmed`,
+code-sourced feature note outranks an `unknown` index. Token estimates use the
+same `ceil(chars / 3.5)` unit as the cost report above, so `--budget` speaks the
+same currency.
+
 ## Continuous Enrichment Model
 
 This pack is designed for an operator-assisted rollout:

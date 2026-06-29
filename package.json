@@ -8,6 +8,7 @@
   },
   "scripts": {
     "sync": "node scripts/cli.mjs sync",
+    "load": "node scripts/corpus-load.mjs",
     "validate": "node scripts/validate-corpus.mjs",
     "okf": "node scripts/build-okf-indexes.mjs",
     "dashboard": "node scripts/build-corpus-site.mjs",
