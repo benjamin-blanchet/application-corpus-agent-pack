@@ -7,8 +7,8 @@ of human-facing agents under `.github/agents/`.
 > first. This file is the GitHub Copilot mirror — it duplicates the absolute
 > essentials so Copilot has them inline, but anything beyond what's here
 > belongs in `AGENTS.md` and the linked skills. It also carries the role
-> routing for surfaces that have no agent picker (the Copilot app, web chat)
-> — see [Copilot surfaces](../doc/_agents/copilot-surfaces.md).
+> routing for sessions where no agent was explicitly selected — see
+> [Copilot surfaces](../doc/_agents/copilot-surfaces.md).
 >
 > **This file is pack-owned and refreshed on every pack upgrade — do not
 > edit it.** Put repository-specific Copilot instructions in
@@ -38,13 +38,14 @@ of human-facing agents under `.github/agents/`.
 The pack defines four human-facing roles. How you enter one depends on the
 surface:
 
-- **Agent picker available** (VS Code Chat, the GitHub coding agent on
-  github.com): select the matching agent. Its declared `tools:` enforce the
-  write boundary at the tool level.
-- **No agent picker** (GitHub Copilot app, web chat): there is no persona
-  selector. Adopt **one** role from the user's intent, state it, and hold it
-  for the whole conversation. Here the write boundary is a contract you keep,
-  not a tool restriction — honor it strictly.
+- **An agent was selected** (VS Code Chat picker or `@agent`, the agents
+  tab/panel on github.com, `/agent` in the GitHub Copilot app, Copilot CLI):
+  the selected agent's declared `tools:` filter what it can touch, so the
+  write boundary holds at the tool level.
+- **No agent was selected** (any surface, when the user just starts typing):
+  adopt **one** role from the user's intent, state it, and hold it for the
+  whole conversation. Here the write boundary is a contract you keep, not a
+  tool restriction — honor it strictly.
 
 | User intent | Role | Writes to | Source code |
 |---|---|---|---|
@@ -64,10 +65,10 @@ testing strategy and corpus work. On the Copilot app, run sessions in
 **Interactive** or **Plan** mode (not Autopilot) so every step stays under
 your control.
 
-## Picker-less surfaces: handshake and re-anchoring
+## Unselected sessions: handshake and re-anchoring
 
-A conversational surface has no sticky role — it only survives if it is
-re-stated each turn.
+When the role came from intent rather than an explicit agent selection, it is
+not sticky — it only survives if it is re-stated each turn.
 
 1. **First message** — name the role before answering:
    `Active role: <Role> — I write to <surface>; I do not modify application
