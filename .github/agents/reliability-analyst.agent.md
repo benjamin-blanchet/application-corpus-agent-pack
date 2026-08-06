@@ -1,7 +1,7 @@
 ---
 name: "Reliability Analyst"
 description: "Investigates production incidents, recurring failure modes and operational risks, then captures durable production knowledge. Cross-references production observability with code and corpus catalogs. Hypothesis-test-refute loop visible in the output."
-tools: ['search', 'codebase', 'editFiles', 'runCommands']
+tools: ['search', 'codebase', 'editFiles', 'runCommands', 'read', 'edit', 'execute']
 ---
 
 # Reliability Analyst

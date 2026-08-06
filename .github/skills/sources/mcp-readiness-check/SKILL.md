@@ -1,19 +1,28 @@
 ---
 name: mcp-readiness-check
 category: sources
-description: "Prevent silent degradation when Jira, Confluence, Dynatrace or other MCP sources are expected but not actually available to the agent in the IDE."
+description: "Prevent silent degradation when Jira, Confluence, Dynatrace or other MCP sources are expected but not actually available to the agent in this session."
 ---
 # MCP Readiness Check
 
 ## Purpose
 
-Prevent silent degradation when Jira, Confluence, Dynatrace or other MCP sources are expected but not actually available to the agent in the IDE.
+Prevent silent degradation when Jira, Confluence, Dynatrace or other MCP sources are expected but not actually available to the agent in this session.
 
 This skill makes MCP consumption explicit: the agent must announce that it is about to use MCP, verify that the servers and tools are available, run a minimal read-only smoke test when possible, then report a clear status before choosing the next path.
 
 ## Why this matters
 
-VS Code and Copilot can be ambiguous about tool availability. A server may be configured but not running, running but not exposed to the current agent, or exposed but missing required tools. If the agent simply decides "MCP unavailable" and continues with repository-only evidence, the generated corpus may miss critical Jira, Confluence or Dynatrace knowledge.
+Copilot can be ambiguous about tool availability. A server may be configured but not running, running but not exposed to the current agent, or exposed but missing required tools. If the agent simply decides "MCP unavailable" and continues with repository-only evidence, the generated corpus may miss critical Jira, Confluence or Dynatrace knowledge.
+
+How a server reaches the agent depends on the surface, so the remediation you ask for differs:
+
+| Surface | Where MCP comes from | What to ask the operator |
+|---|---|---|
+| VS Code, JetBrains, Eclipse, Xcode, Visual Studio | the IDE attaches servers to the session | start the server and attach its tools to this agent/session |
+| Copilot cloud agent (github.com), Copilot app, Copilot CLI | the agent profile's `mcp-servers` frontmatter, or org-level provisioning | declare the server for this agent, or have an org owner provision it |
+
+The status you record is the same either way — availability is established by a read-only smoke test, never by assumption.
 
 ## Mandatory first reads
 
@@ -37,7 +46,7 @@ Before consuming MCP evidence, say plainly:
 ```text
 MCP readiness checkpoint
 I am about to use MCP sources for Jira/Confluence/Dynatrace evidence.
-Please verify in the IDE that the MCP servers are running and that their tools are attached to this agent/session.
+Please verify that the MCP servers are reachable from this session (in an IDE: running and attached to this agent; on a cloud surface: declared for this agent or provisioned by the org).
 I will run read-only smoke tests and record the exact availability status before using or skipping each source.
 ```
 
@@ -47,7 +56,7 @@ I will run read-only smoke tests and record the exact availability status before
 |---|---|
 | `available` | Server/tool is visible to the agent and a read-only smoke test succeeded. |
 | `available_unverified` | Tool appears configured, but no safe smoke test could be run. Do not use for strong claims. |
-| `not_attached_to_agent` | The IDE/session does not expose the expected MCP tools to the agent. |
+| `not_attached_to_agent` | The session does not expose the expected MCP tools to the agent — not attached by the IDE, or not declared/provisioned on a cloud surface. |
 | `server_not_running` | The expected MCP server appears configured but unreachable. |
 | `not_configured` | No evidence that the source is configured. |
 | `permission_blocked` | Tool is visible but the read-only test failed due to permissions. |

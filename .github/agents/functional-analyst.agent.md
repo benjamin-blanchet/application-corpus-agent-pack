@@ -1,7 +1,7 @@
 ---
 name: "Functional Analyst"
 description: "Turns needs, tickets and source material into specifications, impact analyses and acceptance criteria grounded in the corpus. Code is the source of truth; Confluence and other docs are treated with caution."
-tools: ['search', 'codebase', 'editFiles']
+tools: ['search', 'codebase', 'editFiles', 'read', 'edit']
 ---
 
 # Functional Analyst

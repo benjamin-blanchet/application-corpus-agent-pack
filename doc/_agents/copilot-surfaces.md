@@ -35,6 +35,48 @@ no agent was explicitly selected: there the write boundary is a contract the
 model holds, reinforced by the re-anchoring footer (below) and the
 `foundations/` discipline skills.
 
+## Agent file contract
+
+The pack ships its roles as `.github/agents/<slug>.agent.md`. Both `<slug>.md`
+and `<slug>.agent.md` are valid GitHub custom-agent files, and the name minus
+that suffix is what deduplicates repository-level agents against org-level
+ones — so a repo-local `corpus.agent.md` overrides an org-level `corpus.md`.
+
+What the pack sets, and why:
+
+| Field | Pack choice | Why |
+|---|---|---|
+| `description` | always present | the only **required** field; it is also what the model matches on when it picks an agent by itself |
+| `name` | display name (`Corpus`, `Developer`, …) | what a human sees in the picker |
+| `target` | unset | defaults to *both* `vscode` and `github-copilot`; the roles are meant to be selectable everywhere |
+| `tools` | dual vocabulary — see below | one file has to work on IDE and cloud surfaces |
+| `user-invocable` | `false` on the five `corpus-brick-*` / `corpus-control-plane-*` subagents | they are invoked by `corpus`, never chosen by a human; without this they would clutter every picker |
+
+### Why `tools:` lists two vocabularies
+
+VS Code and the cloud surfaces do not name tools the same way (`editFiles` /
+`runCommands` / `codebase` on one side, `edit` / `execute` / `read` on the
+other). GitHub resolves this explicitly: **all unrecognized tool names are
+ignored**, precisely so a single profile can carry product-specific names.
+
+So each human-facing role lists the IDE names *and* their cloud equivalents.
+Each surface keeps what it knows and drops the rest, and the same file grants
+a working toolset everywhere instead of an agent that can search but not read
+on half the surfaces.
+
+The read-only subagents deliberately stay on `read` / `search` / `codebase` —
+no `edit`, no `execute` — on every surface.
+
+### MCP on cloud surfaces
+
+In an IDE, MCP servers are attached to the session by the IDE. On the cloud
+agent they are not: a custom agent can declare its own servers through the
+`mcp-servers` frontmatter object (ignored by VS Code and other IDEs), or the
+org can provision them. The pack ships **no** server configuration — sources
+are per-organization — but `sources/mcp-readiness-check` treats a missing
+server the same way on every surface: record it as `not_attached_to_agent`
+and never silently fall back to repository-only evidence.
+
 > Surface capabilities move fast. This map reflects the GitHub Copilot
 > documentation as of August 2026 — re-check
 > [Custom agents configuration](https://docs.github.com/en/copilot/reference/custom-agents-configuration)
