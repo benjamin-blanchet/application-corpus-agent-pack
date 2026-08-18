@@ -6,7 +6,14 @@
 &nbsp;[![Built on Agent Skills](https://img.shields.io/badge/Agent%20Skills-open%20standard-blue)](https://agentskills.io)
 &nbsp;[![MCP](https://img.shields.io/badge/MCP-Model%20Context%20Protocol-blue)](https://modelcontextprotocol.io)
 
-Copy the pack into any repository, run the `Corpus` agent, and it retro-documents the application **from the code itself** into a **corpus**: a versioned markdown knowledge base — features, APIs, data model, integrations, architecture diagrams — that lives in `doc/` next to the code and stays true as the code changes.
+Copy the pack into any repository, run the `Corpus` agent, and it retro-documents the application into a **corpus**: a versioned markdown knowledge base — features, APIs, data model, integrations, architecture diagrams — that lives in `doc/` next to the code and stays true as the code changes.
+
+It capitalizes on **two things at once**:
+
+- **the code**, walked file by file as the spine and the highest-ranked source of truth;
+- **every source your team already has**, pulled in live through [MCP](https://modelcontextprotocol.io) — Jira, Confluence, Dynatrace, CloudWatch, RDS and other databases, GitHub, CI/CD, dashboards, peer applications' corpora. **Any MCP server is eligible**, and non-MCP sources (a SQL export, an internal API, a file drop) can be registered too.
+
+Everything converges into one knowledge base, and every claim carries its source and confidence. When a source contradicts the code, the code wins and the contradiction is logged.
 
 Stack-agnostic (Java, PHP, Angular, Node.js, Python, .NET, monolith or multi-repo). No SaaS, no index to host: the corpus is plain markdown your team owns.
 
@@ -26,7 +33,9 @@ Open the repo in an IDE with GitHub Copilot custom agents, select the **`Corpus`
 init the corpus
 ```
 
-The agent answers with a state report — adoption stage, status of each analysis pass, source coverage, next bounded action — then starts documenting. Drop `--apply` for a dry-run. No agent picker (Copilot desktop/web)? State your intent and `copilot-instructions.md` routes you. → [Installation & upgrade](docs/installation.md)
+The agent answers with a state report — adoption stage, status of each analysis pass, source coverage, next bounded action — then starts documenting. Drop `--apply` for a dry-run.
+
+Works the same on every Copilot surface: the VS Code picker, the agents tab on github.com, `/agent` in the Copilot desktop app, the Copilot CLI. Skip the selection and just state your intent — `copilot-instructions.md` routes you to the right role. → [Installation & upgrade](docs/installation.md)
 
 ## The problem it solves
 
@@ -34,6 +43,7 @@ The agent answers with a state report — adoption stage, status of each analysi
 |---|---|
 | Every agent session re-explores the repo, burning tokens and guessing | Agents read a pre-built map and get to work |
 | Documentation drifts from the code within weeks | The corpus is rebuilt **from the code**, which always wins over docs |
+| What you know is scattered across the repo, Jira, Confluence, APM dashboards, databases and people's heads | Every source is plugged in through MCP and capitalized into one corpus, each claim tagged with its origin and confidence |
 | Cross-application flows are tribal knowledge | Each app declares its boundary; boundaries recompose into an ecosystem graph |
 | Agent output dies with the session | The corpus is a versioned team asset that deepens run after run |
 
@@ -42,7 +52,7 @@ The agent answers with a state report — adoption stage, status of each analysi
 - **An exhaustive, evidence-backed map of the application** — features, APIs, batches, integrations, persistence, messaging — produced by a deterministic **9-pass pipeline (P1 → P9)** where each pass blocks the next. → [Pipeline](docs/pipeline.md)
 - **Architecture diagrams generated from code** — modules, layers, C4 context, sequence flows, messaging topology, ER — inline mermaid, never imported from a drifting wiki.
 - **A ranked source-of-truth model** — 8 levels, code first. Production, Jira, Confluence and dashboards *enrich*; when they disagree with code, code wins, and the contradiction is logged. → [Corpus model](docs/corpus-model.md)
-- **Live enrichment through MCP** — production observability, Jira/Confluence, CI/CD, SQL exports, peer corpora. Any MCP server is eligible as a source, with no silent fallback when a tool is not attached. → [Sources & MCP](docs/sources-and-mcp.md)
+- **Knowledge captured from every connected source** — what production does (Dynatrace, CloudWatch, APM, logs), what the data really looks like (RDS and other databases, SQL exports), why it was built that way (Jira, Confluence, PRs, CI/CD), and what the neighbors expose (peer corpora, GitHub). Each source is checked for readiness before use — **no silent fallback** when a tool is not attached — and every claim is written with `source:` and `confidence:`. → [Sources & MCP](docs/sources-and-mcp.md)
 - **A cross-application view** — a machine-readable boundary contract per app, recomposed into an inbound/outbound ecosystem graph that surfaces orphan events and contract drift. → [Ecosystem](docs/ecosystem.md)
 - **Hard quality gates** — `node scripts/validate-corpus.mjs` fails the build on out-of-order passes, missing diagrams, undocumented features or premature adoption claims. Nothing is "done" on the agent's word alone.
 - **Portable output** — every corpus is an [Open Knowledge Format v0.1](docs/standards.md#open-knowledge-format-okf-v01) bundle, readable by any OKF-aware agent without SDK or integration.
@@ -50,9 +60,10 @@ The agent answers with a state report — adoption stage, status of each analysi
 ## How it works
 
 1. **Install** — one `npx` command copies the pack into your repo (agents, skills, scripts, corpus skeleton).
-2. **Kickstart** — the `Corpus` agent runs the P1 → P9 pipeline over the whole repository, interviewing you per feature where the code is ambiguous.
-3. **Enrich** — focused runs deepen the corpus along a persistent roadmap, pulling in production and project sources. → [Continuous enrichment](docs/continuous-enrichment.md)
-4. **Adopt** — once validation and the readiness gate pass, the team's agents (`Developer`, `Functional Analyst`, `Reliability Analyst`) work from the corpus instead of rediscovering the repo. → [Agents & workflow](docs/agents-and-workflow.md)
+2. **Connect** — a source wizard inventories what the corpus can read: MCP servers (Jira, Confluence, Dynatrace, CloudWatch, GitHub, your own), databases, exports, dashboards. Each is probed before use. → [Sources & MCP](docs/sources-and-mcp.md)
+3. **Kickstart** — the `Corpus` agent runs the P1 → P9 pipeline over the whole repository, interviewing you per feature where the code is ambiguous, and cross-checks what the connected sources say.
+4. **Enrich** — focused runs deepen the corpus along a persistent roadmap: production reality, batch health, Jira trajectory, code/prod reconciliation. → [Continuous enrichment](docs/continuous-enrichment.md)
+5. **Adopt** — once validation and the readiness gate pass, the team's agents (`Developer`, `Functional Analyst`, `Reliability Analyst`) work from the corpus instead of rediscovering the repo. → [Agents & workflow](docs/agents-and-workflow.md)
 
 ## See it
 

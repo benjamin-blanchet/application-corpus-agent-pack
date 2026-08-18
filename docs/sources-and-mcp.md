@@ -19,7 +19,16 @@ doc/mcp/MCP_READINESS.md
 doc/_meta/mcp-readiness.md
 ```
 
-This prevents silent fallback when VS Code/Copilot has not attached the MCP tools to the current agent session — a source that is not actually reachable is recorded as blocked, never quietly imagined.
+This prevents silent fallback when the MCP tools are not actually reachable from the current session — such a source is recorded as blocked, never quietly imagined.
+
+Where a server comes from depends on the surface, and the readiness check asks for the right remediation on each:
+
+| Surface | Where MCP comes from |
+|---|---|
+| VS Code, JetBrains, Eclipse, Xcode, Visual Studio | the IDE attaches the servers to the session |
+| Copilot cloud agent (github.com), Copilot app, Copilot CLI | the agent profile's `mcp-servers` frontmatter, or org-level provisioning |
+
+The pack ships no server configuration — your sources are yours — but the status recorded is the same on every surface, and it is established by a read-only smoke test rather than by assumption.
 
 Bounded query catalogs (`doc/mcp/atlassian-query-catalog.md`, `doc/mcp/dynatrace-query-catalog.md`) keep the agent's queries scoped and repeatable.
 

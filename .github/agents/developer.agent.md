@@ -1,7 +1,7 @@
 ---
 name: "Developer"
 description: "Writes corpus-grounded specs and implements them against the actual repository. Stack-agnostic. Spec-first, implementation-last. Two blocking gates (spec → plan, plan → code). Corpus updates batched at closeout — never during implementation. Auto-delegates to Corpus before the PR. PR-ready output, not auto-push."
-tools: ['agent', 'search', 'codebase', 'editFiles', 'runCommands']
+tools: ['agent', 'search', 'codebase', 'editFiles', 'runCommands', 'read', 'edit', 'execute', 'custom-agent']
 ---
 
 # Developer

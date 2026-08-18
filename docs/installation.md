@@ -65,11 +65,23 @@ prepare the adoption guide   ·  prépare le guide d'adoption
 
 The adoption guide material is honest about roadmap coverage, reliable knowledge, gaps and next recommended enrichment runs.
 
-## Copilot surfaces without an agent picker
+## Selecting a role on each Copilot surface
 
-On the **GitHub Copilot app** (desktop) and web chat there is no persona to select: state your intent ("init the corpus", "impact analysis on X") and `copilot-instructions.md` routes you to the right role. The three read-only roles (`functional-analyst`, `corpus`, `reliability-analyst`) never touch source code, so non-developers can use them safely — run the app in Interactive or Plan mode, not Autopilot.
+The pack ships four human-facing roles. Every current surface lets you select one explicitly:
 
-Details: [doc/_agents/copilot-surfaces.md](../doc/_agents/copilot-surfaces.md).
+| Surface | How to select the role |
+|---|---|
+| VS Code Chat | agent picker, or `@corpus` in the chat input |
+| github.com | dropdown in the agents tab / panel, or on issue assignment |
+| GitHub Copilot app (desktop) | type `/agent` in a session |
+| GitHub Copilot CLI | custom agent selection supported |
+| JetBrains / Eclipse / Xcode | agent picker (public preview) |
+
+If you skip the selection and simply state your intent ("init the corpus", "impact analysis on X"), `copilot-instructions.md` routes you to the right role anyway — but the write boundary is then a contract the model holds rather than a tool-level restriction, so prefer selecting the agent.
+
+The three read-only roles (`functional-analyst`, `corpus`, `reliability-analyst`) never touch source code, so non-developers can use them safely — in the Copilot app, run sessions in Interactive or Plan mode, not Autopilot.
+
+Details and the re-anchoring footer: [doc/_agents/copilot-surfaces.md](../doc/_agents/copilot-surfaces.md).
 
 ## Multi-repo workspaces
 
