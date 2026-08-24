@@ -11,10 +11,8 @@ Migrate a corpus that was built with an older version of the pack to a newer ver
 
 The canonical procedure is **manual file copy + agent-driven migration**:
 
-1. The operator copies the contents of the new `COPY_INTO_REPO/` over the target repo, **excluding `doc/`** (the live corpus).
-2. The operator invokes this skill. The agent handles version detection, schema gap detection and repair, version stamp, changelog, validator pass, dashboard rebuild and migration report.
-
-A deterministic helper script (`scripts/update-pack.mjs`) exists for CI / scripted scenarios — see the appendix at the end. It is **not** the canonical operator workflow.
+1. The operator runs `sync`, which copies pack-owned files, confirms before overwriting a locally-modified agent, and never touches `doc/`.
+2. The operator invokes this skill. The agent handles version detection, schema gap detection and repair, structural migrations, version stamp, changelog, validator pass, dashboard rebuild and migration report.
 
 ## When to invoke
 
@@ -65,13 +63,24 @@ cd <TARGET_REPO>
 git checkout -b chore/pack-upgrade-$(date +%Y%m%d)
 cp -r doc /tmp/corpus-backup-$(date +%Y%m%d-%H%M%S)
 
-# Step 2 — copy new pack except doc/ (operator)
-rsync -av --delete --exclude='doc/' <NEW_PACK>/ ./
-# (or rsync without --delete if you prefer to keep orphan skills around for manual review)
+# Step 2 — sync the new pack (operator). Dry-run first; nothing is written.
+npx github:benjamin-blanchet/application-corpus-agent-pack sync
+npx github:benjamin-blanchet/application-corpus-agent-pack sync --apply
 
 # Step 3 — invoke this skill in the IDE
 #   open the Corpus agent and type one of the trigger phrases above
 ```
+
+`sync` is the only supported copy path. It resolves three buckets: pack-owned
+files are replaced, `.github/agents/**` is **confirmed before overwrite** when
+the local copy differs (`--force` to skip the prompt; non-interactive runs
+preserve and flag instead), and everything else with local content is
+preserved. `doc/` is never overwritten.
+
+> **Never use `rsync --delete` for this.** Local additions that do not ship
+> with the pack — new skills, custom agents, project scripts — are legitimate
+> and frequent, and `--delete` destroys them silently. `sync` lists them under
+> *"locally present, removed in source"* for review and deletes nothing.
 
 That's the whole operator side. Everything after is the agent.
 
@@ -176,7 +185,7 @@ This is **safe under the Hard constraints**: it is deterministic, additive and
 idempotent. It only:
 
 - emits the reserved `index.md` listings (lowercase) where they do not collide
-  with an existing `INDEX.md`/`README.md` — never overwriting corpus-owned
+  with an existing `CATALOG.md`/`README.md` — never overwriting corpus-owned
   listings;
 - backfills the derivable OKF fields (`title`/`description`/`timestamp`) onto
   concept docs that **already** have a frontmatter block, deriving them from the
@@ -291,15 +300,19 @@ If `P0 > 0`, do **not** mark the migration as complete in the report; status: `i
 | Dashboard | `doc/_site/corpus.html` (rebuilt) |
 | Migration report | `doc/_meta/pack-upgrade-<from>-to-<to>.md` |
 
-## Appendix — `scripts/update-pack.mjs` (optional automation)
+## Appendix — running the sync from a local pack checkout
 
-For CI pipelines or scripted upgrade scenarios where the operator wants deterministic file copy without manual `rsync`, the helper script `scripts/update-pack.mjs` exists. Usage:
+`npx … sync` fetches the pack itself. When the operator already has a pack
+checkout — offline, air-gapped, or testing an unreleased branch — the same
+engine is reachable directly:
 
 ```bash
 node scripts/update-pack.mjs <source-pack-dir>           # dry-run (default)
 node scripts/update-pack.mjs <source-pack-dir> --apply   # apply
+node scripts/update-pack.mjs <source-pack-dir> --apply --force   # overwrite modified agents
 ```
 
-The script handles the file-copy portion (buckets A and B). The agent-side migration (this skill, steps 1–9) still runs **after** the script, because the script does not detect schema gaps in existing `doc/_meta/**` files — it only copies pack-owned files.
-
-For most operator-driven upgrades, the manual `rsync --exclude='doc/'` + this skill is faster and more transparent. The script exists for cases where the manual copy is impractical (CI, batch upgrade of N repos, scripted rollout).
+Either entry point covers only the file-copy portion. The agent-side migration
+(this skill, steps 1–9) still runs **afterwards**, because neither detects
+schema gaps in existing `doc/_meta/**` files — they copy pack-owned files and
+report, nothing more.
