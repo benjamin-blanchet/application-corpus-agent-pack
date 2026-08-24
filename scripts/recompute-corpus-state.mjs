@@ -134,6 +134,10 @@ const OWNED_CORPUS_FIELDS = new Set([
 const OWNED_INVENTORY_KEYS = new Set([
   'bugs',
   'risks',
+  'features',
+  'apis',
+  'batches',
+  'screens',
 ]);
 
 // Per-field vocabulary the recompute is allowed to write. When the EXISTING
@@ -159,6 +163,10 @@ const TIMESTAMP_FIELDS = new Set([
 // ============================================================================
 // Compute derived values from on-disk reality
 // ============================================================================
+
+function firstExisting(candidates) {
+  return candidates.find((rel) => fs.existsSync(path.join(root, rel))) || candidates[0];
+}
 
 function computeDerived() {
   const derived = { corpus: {}, corpus_inventory: {} };
@@ -282,12 +290,69 @@ function computeDerived() {
             n.startsWith(prefix) &&
             n.endsWith('.md') &&
             !n.toLowerCase().includes('template') &&
+            n !== 'CATALOG.md' &&
             n !== 'INDEX.md',
         )
         .sort();
       for (const f of files) {
         const id = f.match(/^([A-Z]+-\d+)/)?.[1] || f.replace(/\.md$/, '');
         map[id] = `${dir}/${f}`;
+      }
+    }
+    derived.corpus_inventory[key] = map;
+  }
+
+  // corpus_inventory.features/apis/batches/screens — enumerate folder-based
+  // knowledge objects from disk. A knowledge object is a directory holding a
+  // README.md, either directly under the zone (doc/project/features/<slug>/)
+  // or one level down when the zone groups them (doc/project/apis/rest/<x>/).
+  // `batchs` is the pack's historical spelling and `batches` the correct one;
+  // corpora exist with each, so both resolve. Only zones that genuinely group
+  // their objects (APIs under rest/, soap/) are allowed to nest — recursing
+  // everywhere turns a feature that is merely missing its README into a set
+  // of phantom features named after its subdirectories.
+  const folderDirs = [
+    { key: 'features', dir: 'doc/project/features', depth: 0 },
+    { key: 'apis', dir: 'doc/project/apis', depth: 1 },
+    { key: 'batches', dir: firstExisting(['doc/project/batches', 'doc/project/batchs']), depth: 0 },
+    { key: 'screens', dir: 'doc/project/screens', depth: 0 },
+  ];
+  const RESERVED_ZONE_DOCS = new Set(['README.md', 'CATALOG.md', 'INDEX.md', 'index.md', 'log.md']);
+  for (const { key, dir, depth } of folderDirs) {
+    const dirAbs = path.join(root, dir);
+    const map = {};
+    if (fs.existsSync(dirAbs)) {
+      // Corpora express a knowledge object either as a folder holding a
+      // README.md, or as a single flat .md file. Both shapes occur in the
+      // wild, sometimes for different zones of the same corpus — enumerate
+      // both rather than assuming one.
+      const collect = (relPrefix, absDir, depth) => {
+        const entries = fs
+          .readdirSync(absDir, { withFileTypes: true })
+          .filter((e) => !e.name.startsWith('_') && !e.name.startsWith('.'))
+          .sort((a, b) => a.name.localeCompare(b.name));
+        for (const entry of entries) {
+          const childAbs = path.join(absDir, entry.name);
+          const childRel = relPrefix ? `${relPrefix}/${entry.name}` : entry.name;
+          if (!entry.isDirectory()) continue;
+          if (fs.existsSync(path.join(childAbs, 'README.md'))) {
+            map[childRel] = `${dir}/${childRel}/README.md`;
+          } else if (depth > 0) {
+            collect(childRel, childAbs, depth - 1);
+          }
+        }
+      };
+      collect('', dirAbs, depth);
+      // A zone is either folder-shaped or file-shaped, never both: once any
+      // folder-shaped object is found, loose .md files in the zone are reports
+      // or notes, not knowledge objects, and must not pollute the inventory.
+      if (Object.keys(map).length === 0) {
+        for (const entry of fs.readdirSync(dirAbs, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+          if (!entry.isFile() || !entry.name.endsWith('.md')) continue;
+          if (entry.name.startsWith('_') || RESERVED_ZONE_DOCS.has(entry.name)) continue;
+          if (entry.name.toLowerCase().includes('template')) continue;
+          map[entry.name.replace(/\.md$/, '')] = `${dir}/${entry.name}`;
+        }
       }
     }
     derived.corpus_inventory[key] = map;
