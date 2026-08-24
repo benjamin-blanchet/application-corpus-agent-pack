@@ -71,12 +71,13 @@ TESTS.md           # test strategy by category
 SUMMARY.md         # stakeholder-readable summary with acceptance criteria
 SUGGESTIONS.md     # out-of-scope findings (never fixed in this change)
 CHANGELOG.md       # one line per material spec change
+JOURNAL.md         # chronological record of how it was actually built
 ```
 
-## Corpus grounding
+Added after the specification is approved, never before:
 
-List the corpus files this spec is grounded in (cited in `SPECIFICATION.md` and `IMPACTS.md`):
-
-- `<doc/project/features/<feature>/...>`
-- `<doc/project/architecture/...>`
-- `<doc/prod/.../ if relevant>`
+```text
+TECHNICAL_PLAN.md    # rationale, lots, DAG, decisions, review plan
+technical-plan.yaml  # machine-readable lots, ownership, contracts, verification
+factory-state.yaml   # current gate, allocation, lot, review, tested SHA, delivery
+```

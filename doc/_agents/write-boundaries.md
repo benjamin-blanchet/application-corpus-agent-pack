@@ -44,6 +44,7 @@ code, the agent declines and reroutes to `developer`.
 | `developer` | application source code (after Step 7 gate), spec package, feature files for verified claims |
 | `functional-analyst` | spec packages (`doc/spec/...`), impact analyses |
 | `reliability-analyst` | `doc/prod/known-bugs/`, `doc/prod/structural-risks/`, `doc/prod/root-cause-playbooks/`, `doc/prod/watchlist/`, reliability analyses |
+| `acceptance` | spec-package `TESTS.md`, `tests/`, evidence, report, `JOURNAL.md`, acceptance fields of `factory-state.yaml` |
 
 Cross-boundary writes are declined and rerouted via update-candidates.
 

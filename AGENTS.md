@@ -64,6 +64,7 @@ Confluence-only or Jira-only claims must use `confidence: probable` at most.
 | `functional-analyst` | specs, impact analyses, acceptance criteria | [.github/agents/functional-analyst.agent.md](.github/agents/functional-analyst.agent.md) |
 | `developer` | implementation from validated specs | [.github/agents/developer.agent.md](.github/agents/developer.agent.md) |
 | `reliability-analyst` | incident analysis, production knowledge | [.github/agents/reliability-analyst.agent.md](.github/agents/reliability-analyst.agent.md) |
+| `acceptance` | end-to-end validation on a frozen SHA, validation report | [.github/agents/acceptance.agent.md](.github/agents/acceptance.agent.md) |
 
 Internal subagents (`corpus-brick-*`) parallelize broad read-only brick
 coverage on behalf of `corpus`. They never own state transitions.

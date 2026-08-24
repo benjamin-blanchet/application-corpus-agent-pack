@@ -42,6 +42,7 @@ What do you want to work on?
 |---|---|
 | 🎫 Start / implement a change from a ticket or need | `development/change-triage` + `exploration/repo-explain` + `authoring/spec-from-need` + `authoring/spec-completeness-check` + `authoring/implement-spec` + `development/risk-analysis-checklist` + `development/verify-by-change-type` + `development/corpus-closeout-delegation` + `development/pr-readiness` |
 | 🔍 Explain code / walk through a module | `exploration/repo-explain` |
+| 📝 Record what changed in the corpus | `authoring/modification-tracking` |
 | 🗃️ Schema change / data migration | `authoring/implement-spec` + repo migration convention + `development/verify-by-change-type` |
 | 🔥 Hotfix | `authoring/incident-investigation` + `development/change-triage` (often Small) + `authoring/spec-from-need` (light) + `authoring/implement-spec` |
 | 👁️ Code review / PR review | `authoring/implementation-guard` + `authoring/spec-completeness-check` + `development/pr-readiness` |
@@ -52,29 +53,46 @@ What do you want to work on?
 right-sized workflow, regression risk, code quality, performance, corpus
 loop closure.
 
-## Mandatory lifecycle (steps 0 → 11)
+## Mandatory lifecycle (steps 0 → 14)
 
-The full step-by-step procedure (Pre-flight, Triage, Read corpus slice,
-Locate code, Map change surface, Risk analysis, Spec package, Active spec
-validation gate, Implementation plan, Go-ahead gate, Implement, Verify,
-Corpus closeout, PR readiness) is encoded in the linked skills:
+The procedure lives in the linked skills. Two human gates block, and neither
+is skippable by size — proportionality shortens what an artefact contains, it
+never removes a transition.
 
 | Step | Owner skill |
 |---|---|
-| 0 — Pre-flight (intent + corpus state + anti-duplicate) | `development/change-triage` § Pre-flight |
+| 0 — Pre-flight: intent, corpus state, anti-duplicate, runtime model routing | `development/model-routing` + `development/change-triage` § Pre-flight |
 | 0.5 — Triage | `development/change-triage` |
-| 1 — Read corpus slice (depth per triage) | `development/change-triage` § Read budget |
-| 2 — Locate code entry point | `exploration/repo-explain` |
-| 3 — Map change surface (graph-driven) | `development/risk-analysis-checklist` |
+| 1 — Read the corpus slice (depth per triage) | `development/change-triage` § Read budget |
+| 2 — Locate the code entry point | `exploration/repo-explain` |
+| 3 — Map the change surface (graph-driven) | `development/risk-analysis-checklist` |
 | 4 — Risk analysis | `development/risk-analysis-checklist` |
-| 5 — Spec package | `authoring/spec-from-need` |
-| 5b — Active spec validation gate ⛔ | `authoring/spec-completeness-check` |
-| 6 — Implementation plan | `authoring/implement-spec` |
-| 7 — Go-ahead gate ⛔ | inline below |
-| 8 — Implement | `authoring/implement-spec` + `authoring/implementation-guard` |
-| 9 — Verify per change type | `development/verify-by-change-type` |
-| 10 — Corpus closeout (batched) | `development/corpus-closeout-delegation` |
-| 11 — PR readiness | `development/pr-readiness` |
+| 5 — Complete spec package + self-audit | `authoring/spec-from-need` + `authoring/spec-completeness-check` |
+| **5a — Clarify: bounded interrogation, ≤5 questions** | `development/clarify` |
+| 5b — Implementation briefing in chat | `development/implementation-briefing` |
+| **5c — Specification approval gate ⛔** | inline below |
+| 6 — Plan + machine plan + state (post-approval only) | `development/technical-intervention-plan` |
+| **7 — Plan, lots and allocation go-ahead gate ⛔** | inline below |
+| 8 — Bounded lots + independent lot reviews | `development/subagent-implementation-orchestration` + `development/pre-commit-review` |
+| 9 — Integrate and verify per change type | `development/verify-by-change-type` |
+| 10 — Consolidated independent review, fresh context ⛔ | `development/pre-commit-review` |
+| 11 — Corpus closeout, delta merged | `development/corpus-closeout-delegation` |
+| 12 — Acceptance on a frozen SHA | `development/agent-handoff` → `acceptance` |
+| 13 — Release readiness gate ⛔ | `development/factory-release-readiness` |
+| 14 — PR readiness; the PR and merge are human actions | `development/pr-readiness` |
+| 14b — Address PR review comments | `development/pr-review-response` |
+
+`development/work-journal` runs throughout: every step, lot, review and gate
+appends, with per-execution model provenance and cost.
+
+At step 0, use the catalogue the **current runtime** exposes. Never infer
+availability from a repository file — a model named in a document records what
+was available once, and running on something nobody chose is how a task
+silently changes character.
+
+At step 5a, do not skip clarification because the need "seems clear". The
+invariant is *never pick an interpretation silently*, and an agent that has
+not been given a bounded way to ask will not notice it is guessing.
 
 ### Spec path convention (enforced — never invent)
 

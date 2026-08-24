@@ -53,6 +53,7 @@ surface:
 | Initialize, enrich or audit the corpus; retrodocument code | `corpus` | `doc/**` | read-only |
 | Investigate an incident, failure mode or operational risk | `reliability-analyst` | `doc/prod/**` | read-only |
 | Implement a *validated* spec | `developer` | source + `doc/spec/**` | edits |
+| Validate delivered features on a frozen SHA; produce the validation report | `acceptance` | `doc/spec/**` evidence | read-only |
 
 Each role loads its own skills as its procedure dictates; the full contracts
 live in `.github/agents/`. Repository orientation is a skill, not a role:

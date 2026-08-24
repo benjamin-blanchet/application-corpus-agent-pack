@@ -1,0 +1,40 @@
+# The factory's guarantees are written in skills, and a skill is read by a
+# model when it happens to. This workflow is what makes them hold when nobody
+# is reading.
+name: Factory policy
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: factory-policy-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # The validator proves itself before it is trusted to judge anything else.
+      - name: Factory validator self-test
+        run: node scripts/validate-factory.mjs --self-test
+
+      - name: Factory state and plans
+        run: node scripts/validate-factory.mjs
+
+      - name: Corpus
+        run: node scripts/validate-corpus.mjs
+
+# Note for whoever wires this into a repository whose changes are opened by an
+# automation token: a workflow triggered by the default token may not create a
+# run at all, or may create one that waits for approval. Verify on a real
+# change before treating this as a gate — a check that never runs is worse than
+# no check, because it reads as green.

@@ -7,10 +7,11 @@
     "corpus-pack": "scripts/cli.mjs"
   },
   "scripts": {
-    "test": "node scripts/test-pack.mjs",
+    "test": "node scripts/test-pack.mjs && node scripts/validate-factory.mjs --self-test",
     "sync": "node scripts/cli.mjs sync",
     "load": "node scripts/corpus-load.mjs",
     "validate": "node scripts/validate-corpus.mjs",
+    "validate-factory": "node scripts/validate-factory.mjs",
     "verify-claims": "node scripts/verify-claims.mjs",
     "okf": "node scripts/build-okf-indexes.mjs",
     "dashboard": "node scripts/build-corpus-site.mjs",
