@@ -26,7 +26,16 @@ import { validateFactoryPackageV3 } from './lib/factory-v3/package-io.mjs';
 const argv = process.argv.slice(2);
 const jsonMode = argv.includes('--json');
 const selfTest = argv.includes('--self-test');
-const target = argv.find((a) => !a.startsWith('--'));
+let requestedRoot = null;
+let target = null;
+for (let index = 0; index < argv.length; index += 1) {
+  const value = argv[index];
+  if (value === '--root') {
+    requestedRoot = argv[index + 1] || null;
+    index += 1;
+  } else if (value.startsWith('--root=')) requestedRoot = value.slice('--root='.length);
+  else if (!value.startsWith('--') && target === null) target = value;
+}
 
 // The only states the factory recognises, in order. A package in an
 // undeclared state has gates that cannot be checked.
@@ -457,7 +466,11 @@ if (selfTest) {
   process.exit(failed ? 2 : 0);
 }
 
-const root = process.cwd();
+const rootRequest = path.resolve(requestedRoot || process.cwd());
+const root = fs.realpathSync(rootRequest);
+if (rootRequest !== root || !fs.statSync(root).isDirectory()) {
+  throw new Error('--root must be a real directory without symbolic-link indirection');
+}
 const findings = [];
 const packages = target ? [target.replace(/\/+$/, '')] : packagesUnder(root, 'doc/spec');
 for (const pkg of packages) validatePackage(root, pkg, findings);

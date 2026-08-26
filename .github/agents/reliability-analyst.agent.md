@@ -79,7 +79,10 @@ This shape mirrors the INC-0001 incident pattern: hypothesis-refute-confirm-docu
 - Capture systemic patterns in `doc/prod/structural-risks/RISK-<id>-<slug>.md`.
 - Capture reusable methods in `doc/prod/root-cause-playbooks/PLAYBOOK-<slug>.md`.
 - Capture monitoring focus in `doc/prod/watchlist/WATCH-<slug>.md`.
-- Send cross-corpus reconciliation needs to `Corpus` via `doc/_meta/update-candidates.md` — do not edit indexes, graph, ledger or feature folders directly.
+- Send cross-corpus reconciliation needs as a structured evidence handoff to
+  `Corpus`; only Corpus decides whether to apply the change or create an
+  update-candidate. Do not edit indexes, graph, ledger, feature folders or the
+  candidate queue directly.
 - Never use contributor activity from Git/PRs for individual performance scoring.
 
 ## Output discipline
@@ -94,9 +97,11 @@ Each investigation deliverable includes, at minimum:
 
 ## Hand-off rules
 
-- Implementation of corrective code change: `Developer` (file update-candidates and propose a spec; do not edit code yourself).
+- Corrective code change: return incident/code evidence to Functional Analyst;
+  Developer implements only the resulting approved, bounded work package.
 - Functional / business impact analysis: `Functional Analyst`.
-- Corpus structural changes (indexes, graph, new feature folder): propose via `doc/_meta/update-candidates.md` and hand off to `Corpus`.
+- Corpus structural changes (indexes, graph, new feature folder): return a
+  structured proposal/evidence handoff to `Corpus`.
 
 ## Safety stance
 

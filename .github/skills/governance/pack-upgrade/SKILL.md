@@ -12,8 +12,9 @@ Migrate a corpus that was built with an older version of the pack to a newer ver
 The canonical procedure is **safe sync + agent-driven migration**:
 
 1. The operator runs `sync`, which copies pack-owned files, confirms before
-   overwriting a locally-modified agent, never overwrites an existing `doc/`
-   file, and may add missing pack scaffolds. During an upgrade, a missing
+   overwriting a locally-modified agent, preserves application corpus content,
+   refreshes the two explicit Factory-owned `doc/` surfaces documented below,
+   and may add missing pack scaffolds. During an upgrade, a missing
    `doc/_meta/corpus-state.yaml` is deferred to this skill so the previous
    version remains explicitly unknown.
 2. The operator invokes this skill. The agent handles version detection, schema gap detection and repair, structural migrations, version stamp, changelog, validator pass, dashboard rebuild and migration report.
@@ -47,10 +48,14 @@ condition.
 ## Hard constraints (always)
 
 - **The corpus agent never modifies application source code.** This skill only touches pack-owned and pack-template files. See `AGENTS.md` § "Write boundaries — hard rule" and `foundations/core-discipline` Rule 5.
-- **Corpus content is sacred.** The agent never modifies:
+- **Corpus content is sacred.** The agent never modifies instantiated corpus
+  content. `doc/spec/template/**` is a reusable executable scaffold and
+  `doc/_meta/factory-learning.yaml` is pack regression memory; both are
+  refreshed by `sync`. Real packages live under
+  `doc/spec/<version>/<topic>/**` and remain protected. The agent never modifies:
   - `doc/project/**`
   - `doc/prod/**`
-  - `doc/spec/**`
+  - `doc/spec/**` except `doc/spec/template/**`
   - `doc/mcp/**` (when populated with team-specific content)
   - `doc/_graph/**`
   - `doc/_meta/code-interview/**`
@@ -68,10 +73,10 @@ The same model as before, now applied **by the agent** based on what it reads:
 
 | Bucket | Examples | Behavior |
 |---|---|---|
-| **A — pack-owned** | `.github/skills/**`, `.github/prompts/**`, `scripts/**`, `schemas/**`, `AGENTS.md`, `KICKSTART.md`, `PACK_VERSION` | `sync` refreshes these from the incoming pack. The agent reads them as the source of truth for the new contract. |
+| **A — pack-owned** | `.github/skills/**`, `.github/prompts/**`, `scripts/**`, `schemas/**`, `AGENTS.md`, `KICKSTART.md`, `PACK_VERSION`, executable `.github/templates/software-factory/**`, reusable `doc/spec/template/**`, `doc/_meta/factory-learning.yaml` | `sync` refreshes these from the incoming pack. The agent reads them as the source of truth for the new contract; runtime code, workflows, role policy, executable spec scaffold and regression memory cannot drift across an upgrade. Instantiate and customize a real package under `doc/spec/<version>/<topic>/**`, never the reusable template. |
 | **Agents — confirmed** | `.github/agents/**` | `sync` copies missing agents and confirms before replacing a divergent local agent; non-interactive runs preserve it unless `--force` is explicit. |
 | **B — pack-template** | `doc/_meta/*.yaml`, `doc/_meta/*.md` (top-level), `doc/_indexes/by-*.md`, `doc/_roadmap/*.md`, `doc/_runs/RUN_LEDGER.md`, `doc/_runs/RUN_TEMPLATE.md` | `sync` copies missing scaffolds but preserves every existing file. This skill inspects existing templates for schema drift and performs the migration. A missing corpus state is deferred here on upgrade. |
-| **C — corpus-owned** | Everything else under `doc/` (see Hard constraints above) | Existing content is untouched. `sync` may add a missing pack-provided scaffold, but the migration never rewrites corpus knowledge. |
+| **C — corpus-owned** | Everything else under `doc/`, including every instantiated `doc/spec/<version>/<topic>/**` package (see Hard constraints above) | Existing content is untouched. `sync` may add a missing pack-provided scaffold, but the migration never rewrites corpus knowledge. |
 
 ## Canonical operator procedure
 
@@ -93,14 +98,27 @@ npx github:benjamin-blanchet/application-corpus-agent-pack sync --apply
 **confirms before overwriting** a divergent `.github/agents/**` file (`--force`
 to skip the prompt; non-interactive runs preserve and surface it), copies
 missing templates, and preserves every existing local template or corpus file.
-Existing `doc/` files are never overwritten; missing scaffolds may be copied.
+Existing corpus-owned `doc/` files are never overwritten; missing scaffolds may
+be copied. The reusable `doc/spec/template/**` scaffold and
+`doc/_meta/factory-learning.yaml` are pack-owned and refreshed in the same sync
+plan as the Factory scripts and schemas. Before replacing a divergent
+executable template or learning ledger on upgrade, `sync` stores its exact
+previous bytes under `.corpus-pack-backups/<from>-to-<to>/`. Each file replace
+is atomic; the whole multi-file sync is resumable/idempotent rather than a
+filesystem transaction. A failed run must be re-run before Corpus migration.
+A reviewed retirement is backed up to the same inactive recovery surface
+before its exact source path is unlinked.
 A missing `doc/_meta/corpus-state.yaml` is copied only on a fresh install and
 is deferred to this skill during an upgrade.
 
 > **Never use `rsync --delete` for this.** Local additions that do not ship
 > with the pack — new skills, custom agents, project scripts — are legitimate
 > and frequent, and `--delete` destroys them silently. `sync` lists them under
-> *"locally present, removed in source"* for review and deletes nothing.
+> *"locally present, removed in source"* for review. The targeted retirement
+> allowlist contains only the obsolete MCP readiness skill and the two V1
+> template truths `technical-plan.yaml` / `factory-state.yaml`; `sync` removes
+> those exact pack surfaces only after preserving their bytes in the inactive
+> compatibility backup. No wildcard or generic deletion rule exists.
 
 That's the whole operator side. Everything after is the agent.
 
@@ -187,6 +205,29 @@ blocking pack-integrity finding; do not invent a partial state file. Keep the
 already-captured `from_version: unknown`, then apply Steps 3–4. This skill, not
 `sync`, owns that durable creation and version stamp.
 
+### Step 3a — Retire persistent MCP readiness
+
+Version 1.2 replaces workstation/session MCP readiness with durable source
+requirements and historical coverage plus an ephemeral runtime probe.
+
+1. Confirm that `sync` removed the exact obsolete active skill
+   `.github/skills/sources/mcp-readiness-check/SKILL.md`. If it remains, block
+   the migration; do not run both contracts.
+2. If `doc/_meta/mcp-readiness.md` or `doc/mcp/MCP_READINESS.md` exists, inspect
+   it before deletion. Reconcile only durable facts into
+   `doc/_meta/information-sources.yaml` and historical, dated successful
+   coverage into `doc/_meta/source-coverage.yaml`. Transport/tool availability,
+   current status, attachment, authentication and “next action” values are
+   session-local and must not be copied.
+3. Record the two legacy paths and their pre-migration digests in the durable
+   upgrade report, then delete the files. Git history is the recovery surface;
+   do not preserve them under another active corpus path or filename.
+4. Run `node scripts/test-runtime-sources.mjs`. Any remaining active durable
+   readiness vocabulary is blocking.
+
+This is a named schema migration, not permission to delete arbitrary corpus
+files.
+
 ### Step 3b — Scaffold the boundary contract zone (pack-template)
 
 The `doc/architecture/` zone and the ecosystem registry are **pack-template
@@ -211,6 +252,29 @@ the empty skeletons, never synthesized content:
   the contract is still empty. That P1 is expected post-upgrade and is the
   operator's signal to run the population pass; surface it in the report rather
   than letting it look like a regression.
+
+### Step 3c — Reconcile adopted Factory workflows
+
+`sync` refreshes the installable templates under
+`.github/templates/software-factory/delivery/`, but deliberately never copies
+this pack repository's active `.github/workflows/**` into a consumer.
+
+1. Inventory the four optional active consumer workflows:
+   `factory-policy.yml`, `factory-acceptance.yml`, `factory-release.yml` and
+   `factory-draft-pr.yml`.
+2. If none exists, record `factory_workflows: not_adopted`; do not install them
+   during a schema migration.
+3. If any exists, compare every adopted active file with its corresponding
+   `.workflow.yml` template. Back up its exact bytes in the migration report
+   evidence and show the operator the replacement diff. Active workflow
+   replacement needs explicit operator approval because it changes CI
+   behaviour; never silently copy over repository CI.
+4. An adopted workflow left divergent keeps the migration
+   `needs-operator-input`. Partial adoption is allowed only when the absent
+   gates are explicitly recorded as not adopted; a present stale gate is not.
+5. Run `node scripts/validate-delivery.mjs --lint-template --json` after the
+   approved reconciliation. Any active/template drift or unsafe workflow is a
+   blocking migration finding.
 
 ### Step 4 — Stamp the upgrade
 
@@ -289,7 +353,18 @@ doc's existing frontmatter.
 
 ### Step 6 — Validate the migrated corpus
 
-Run `node scripts/validate-corpus.mjs --json` and capture:
+Run all three migration gates:
+
+```bash
+node scripts/test-runtime-sources.mjs
+node scripts/validate-corpus.mjs --json
+```
+
+When Step 3c found adopted Factory workflows, also run
+`node scripts/validate-delivery.mjs --lint-template --json`; it must pass. When
+none is adopted, record `not_adopted` and do not pretend the active-workflow
+parity validator applies. The runtime-source command must always pass. Then
+capture from the corpus validator:
 
 - `P0` count — must be 0 before the migration commit. If > 0, the migration is incomplete; surface each P0 with file:reason.
 - `P1` count — typical to have a few new P1 findings from stricter gates in the new validator. List the top 5 with codes. They are not blockers but are committed as known follow-ups.
@@ -378,8 +453,9 @@ If Step 6 has P0=0, finish in this order:
 2. Fill the report with final counts and set `status: complete`, while keeping
    `validation_status: pending`.
 3. Run `node scripts/build-corpus-site.mjs` and capture its summary.
-4. Run `node scripts/validate-corpus.mjs --json` against the state, changelog,
-   completed report content and rebuilt dashboard.
+4. Re-run the applicable Step 6 commands (including Delivery when adopted)
+   against the final state, changelog, completed report content and rebuilt
+   dashboard.
 5. If final P0 is 0, make the **last durable write** to the report:
    `validation_status: passed` and `validated_at: <now>`. Perform no corpus or
    dashboard write afterwards. Then run the validator once more in strictly

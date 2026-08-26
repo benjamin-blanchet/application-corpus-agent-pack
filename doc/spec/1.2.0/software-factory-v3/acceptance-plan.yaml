@@ -5,6 +5,7 @@ subject:
   freeze_at_execution: true
 campaign:
   adapter: command
+  operation: pack-test
   unattended_required: true
   continue_after_failure: true
   flaky_blocks: true
@@ -53,9 +54,9 @@ criteria:
   - id: AC-021
     cases: [CASE-DELIVERY]
   - id: AC-022
-    cases: [CASE-INTEGRATION]
+    cases: [CASE-CONTROL]
   - id: AC-023
-    cases: [CASE-INTEGRATION]
+    cases: [CASE-CONTROL]
   - id: AC-024
     cases: [CASE-DELIVERY]
   - id: AC-025
@@ -69,9 +70,9 @@ criteria:
   - id: AC-029
     cases: [CASE-DELIVERY]
   - id: AC-030
-    cases: [CASE-INTEGRATION]
+    cases: [CASE-CONTROL]
   - id: AC-031
-    cases: [CASE-INTEGRATION]
+    cases: [CASE-CONTROL]
   - id: AC-032
     cases: [CASE-DELIVERY]
   - id: AC-033
@@ -79,18 +80,110 @@ criteria:
   - id: AC-034
     cases: [CASE-LEARNING]
   - id: AC-035
-    cases: [CASE-LEARNING]
+    cases: [CASE-CONTROL]
 cases:
   - id: CASE-CONTROL
-    criteria: [AC-001, AC-002, AC-003, AC-004, AC-005, AC-006, AC-007, AC-008, AC-009, AC-010, AC-011, AC-012, AC-013, AC-014]
+    criteria: [AC-001, AC-002, AC-003, AC-004, AC-005, AC-006, AC-007, AC-008, AC-009, AC-010, AC-011, AC-012, AC-013, AC-014, AC-022, AC-023, AC-030, AC-031, AC-035]
     test_ref:
       path: scripts/test-factory-v3.mjs
-      title: acceptance becomes valid only when every case and oracle passed
+      title: "[BF-002] mutation of a prior event breaks the hash chain"
     preconditions: [factory-plan-approved]
     oracle:
-      - id: control-plane-regression
+      - id: canonical-event-journal
         type: file
         assertion: "node scripts/test-factory-v3.mjs exits 0"
+        criteria: [AC-001]
+        record_marker: "[BF-002] mutation of a prior event breaks the hash chain"
+      - id: derived-state-projection
+        type: file
+        assertion: "node scripts/test-factory-v3.mjs exits 0"
+        criteria: [AC-002]
+        record_marker: "[BF-021] package validation detects a manually edited derived snapshot"
+      - id: pure-scheduler
+        type: file
+        assertion: "node scripts/test-factory-v3.mjs exits 0"
+        criteria: [AC-003]
+        record_marker: "scheduler is pure and deterministic"
+      - id: collision-safe-reservations
+        type: file
+        assertion: "node scripts/test-factory-v3.mjs exits 0"
+        criteria: [AC-004]
+        record_marker: "[BF-007] normalized parent/child claims collide"
+      - id: transitive-invalidation
+        type: file
+        assertion: "node scripts/test-factory-v3.mjs exits 0"
+        criteria: [AC-005]
+        record_marker: "[BF-034] upstream invalidation stales every transitive dependent and no unrelated lot"
+      - id: closed-event-contract
+        type: file
+        assertion: "node scripts/test-factory-v3.mjs exits 0"
+        criteria: [AC-006]
+        record_marker: "event payloads and their nested actor, model, subject and basis objects reject drift"
+      - id: bounded-work-package
+        type: file
+        assertion: "node scripts/test-factory-v3.mjs exits 0"
+        criteria: [AC-007]
+        record_marker: "[BF-040] a work package requires readable paths, stop rules and a digest-bound handoff"
+      - id: exact-capabilities
+        type: file
+        assertion: "node scripts/test-factory-v3.mjs exits 0"
+        criteria: [AC-008]
+        record_marker: "effective capabilities must exactly match the bounded work package"
+      - id: digest-bound-handoff
+        type: file
+        assertion: "node scripts/test-factory-v3.mjs exits 0"
+        criteria: [AC-009]
+        record_marker: "[BF-047] package validation resolves every handoff input and verifies its exact bytes"
+      - id: bounded-model-profile
+        type: file
+        assertion: "node scripts/test-factory-v3.mjs exits 0"
+        criteria: [AC-010]
+        record_marker: "[BF-010] economy is forbidden for control-plane-critical work"
+      - id: anti-under-routing
+        type: file
+        assertion: "node scripts/test-factory-v3.mjs exits 0"
+        criteria: [AC-011]
+        record_marker: "[BF-046] sensitive paths prevent economy routing even when risk metadata is understated"
+      - id: independent-review
+        type: file
+        assertion: "node scripts/test-factory-v3.mjs exits 0"
+        criteria: [AC-012]
+        record_marker: "[BF-012] a lot author cannot review their own diff"
+      - id: actionable-findings
+        type: file
+        assertion: "node scripts/test-factory-v3.mjs exits 0"
+        criteria: [AC-013]
+        record_marker: "[BF-013] review findings must be actionable and structured"
+      - id: operator-attempt-extension
+        type: file
+        assertion: "node scripts/test-factory-v3.mjs exits 0"
+        criteria: [AC-014]
+        record_marker: "operator arbitration extends one exhausted lot by exactly one attempt"
+      - id: existing-convention-boundary
+        type: file
+        assertion: "node scripts/test-factory-v3.mjs exits 0"
+        criteria: [AC-022]
+        record_marker: "[BF-009] a result cannot touch a forbidden subtree"
+      - id: real-blocker-arbitration
+        type: file
+        assertion: "node scripts/test-factory-v3.mjs exits 0"
+        criteria: [AC-023]
+        record_marker: "[BF-042] invalidating running work preserves its exclusive reservation until terminal recovery"
+      - id: mandatory-corpus-closeout
+        type: file
+        assertion: "node scripts/test-factory-v3.mjs exits 0"
+        criteria: [AC-030]
+        record_marker: "corpus closeout verifies recursive doc bytes while excluding current machine artifacts"
+      - id: coherent-release-gates
+        type: file
+        assertion: "node scripts/test-factory-v3.mjs exits 0"
+        criteria: [AC-031]
+        record_marker: "a complete CI-artifact envelope with resolvable Git provenance is release-ready"
+      - id: safe-v1-migration
+        type: file
+        assertion: "node scripts/test-factory-v3.mjs exits 0"
+        criteria: [AC-035]
+        record_marker: "[BF-022] V1 release-ready migration remains review-required and non-green"
     evidence:
       required:
         - id: control-plane-log
@@ -104,9 +197,31 @@ cases:
       title: required-source-failure-blocks-without-changing-history
     preconditions: [source-contracts-present]
     oracle:
-      - id: runtime-source-regression
+      - id: durable-source-contract
         type: file
         assertion: "node scripts/test-runtime-sources.mjs exits 0"
+        criteria: [AC-015]
+        record_marker: "canonical-source-contract-is-valid"
+      - id: ephemeral-probe-plan
+        type: file
+        assertion: "node scripts/test-runtime-sources.mjs exits 0"
+        criteria: [AC-016]
+        record_marker: "probe-plan-is-transport-neutral-and-bounded"
+      - id: historical-source-coverage
+        type: file
+        assertion: "node scripts/test-runtime-sources.mjs exits 0"
+        criteria: [AC-017]
+        record_marker: "dashboard-separates-contract-lifecycle-from-historical-coverage"
+      - id: required-source-fallback
+        type: file
+        assertion: "node scripts/test-runtime-sources.mjs exits 0"
+        criteria: [AC-018]
+        record_marker: "required-source-failure-blocks-without-changing-history"
+      - id: no-persisted-runtime-readiness
+        type: file
+        assertion: "node scripts/test-runtime-sources.mjs exits 0"
+        criteria: [AC-019]
+        record_marker: "durable-state-scanner-catches-yaml-and-json-runtime-bypasses"
     evidence:
       required:
         - id: runtime-source-log
@@ -120,33 +235,64 @@ cases:
       title: evidence, report and draft-PR CLIs compose without push or merge capability
     preconditions: [environment-contract-present, delivery-contract-present]
     oracle:
-      - id: delivery-regression
+      - id: environment-contract
         type: file
         assertion: "node scripts/test-factory-delivery.mjs exits 0"
+        criteria: [AC-020]
+        record_marker: "the stack-neutral fixture contracts validate together"
+      - id: ci-contract
+        type: file
+        assertion: "node scripts/test-factory-delivery.mjs exits 0"
+        criteria: [AC-021]
+        record_marker: "protected workflow context binds disjoint full SHAs and exports selected CI retention"
+      - id: exact-criteria-oracles
+        type: file
+        assertion: "node scripts/test-factory-delivery.mjs exits 0"
+        criteria: [AC-024]
+        record_marker: "acceptance criteria require exact oracle-linked test markers"
+      - id: honest-case-statuses
+        type: file
+        assertion: "node scripts/test-factory-delivery.mjs exits 0"
+        criteria: [AC-025]
+        record_marker: "the public case vocabulary is canonical and retry-only success is failed"
+      - id: immutable-candidate
+        type: file
+        assertion: "node scripts/test-factory-delivery.mjs exits 0"
+        criteria: [AC-026]
+        record_marker: "stale revision, missing evidence, flaky retry and pending cleanup all block readiness"
+      - id: hash-verifiable-evidence
+        type: file
+        assertion: "node scripts/test-factory-delivery.mjs exits 0"
+        criteria: [AC-027]
+        record_marker: "evidence assembly produces a ready, hash-verifiable manifest and factual report"
+      - id: replayable-playwright-evidence
+        type: file
+        assertion: "node scripts/test-factory-delivery.mjs exits 0"
+        criteria: [AC-028]
+        record_marker: "copied Playwright packages discover planned tests and retain protected failure media"
+      - id: immutable-ci-artifacts
+        type: file
+        assertion: "node scripts/test-factory-delivery.mjs exits 0"
+        criteria: [AC-029]
+        record_marker: "GitHub Actions attestation rejects stale runs, expired artifacts and false retention"
+      - id: protected-release-before-draft
+        type: file
+        assertion: "node scripts/test-factory-delivery.mjs exits 0"
+        criteria: [AC-032]
+        record_marker: "protected release workflow derives the exact release-ready envelope before draft delivery"
+      - id: active-policy-parity
+        type: file
+        assertion: "node scripts/test-factory-delivery.mjs exits 0"
+        criteria: [AC-033]
+        record_marker: "installable delivery workflows are present in the npm package"
     evidence:
       required:
         - id: delivery-log
           type: log
           checkpoint: factory-delivery-test-output
     mutations: []
-  - id: CASE-INTEGRATION
-    criteria: [AC-022, AC-023, AC-030, AC-031]
-    test_ref:
-      path: scripts/test-factory-learning.mjs
-      title: the shipped specification template is a real V3 package without legacy dual truth
-    preconditions: [corpus-reconciled]
-    oracle:
-      - id: integration-regression
-        type: file
-        assertion: "npm test includes delivery, source, V3 and learning regressions"
-    evidence:
-      required:
-        - id: integration-log
-          type: log
-          checkpoint: npm-test-output
-    mutations: []
   - id: CASE-LEARNING
-    criteria: [AC-034, AC-035]
+    criteria: [AC-034]
     test_ref:
       path: scripts/test-factory-learning.mjs
       title: every adopted factory learning resolves to executable positive and negative fixtures
@@ -155,6 +301,8 @@ cases:
       - id: learning-regression
         type: file
         assertion: "node scripts/test-factory-learning.mjs exits 0"
+        criteria: [AC-034]
+        record_marker: "every adopted factory learning resolves to executable positive and negative fixtures"
     evidence:
       required:
         - id: learning-log

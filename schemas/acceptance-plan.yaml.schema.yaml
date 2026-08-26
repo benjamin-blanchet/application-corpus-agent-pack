@@ -15,20 +15,30 @@ criterion:
   required_keys: [id]
   one_of: [cases, waiver]
 oracle:
-  required_keys: [id, type, assertion]
+  required_keys: [id, type, assertion, criteria]
+  command_required_key: record_marker
+  closed_keys: [id, type, assertion, criteria, record_marker]
+  traceability: every oracle criterion must belong to its case, and every case criterion must be covered by at least one distinct oracle; command record_marker is an exact test title from test_ref.path
   enums:
     type: [ui, api, db_read, log, file, human_attestation]
 mutation:
-  required_keys: [id, scope, cleanup_required]
+  required_keys: [id, scope, target, side_effects, cleanup_required]
   optional_keys: [cleanup_operation, waiver]
+  authorization: every mutation is non-production and requires a protected signed runtime grant bound to its exact target, side effects, plan, candidate and run; a plan boolean is never approval
 campaign_enums:
   adapter: [playwright, command, manual]
   unattended_required: [true, false]
   continue_after_failure: [true, false]
   flaky_blocks: [true, false]
 campaign_required_keys: [adapter, unattended_required, continue_after_failure, flaky_blocks, results_contract_version]
+campaign_adapter_contracts:
+  command: {required_keys: [operation], operation_side_effect: none}
+  playwright: {required_keys: [config], optional_keys: [bootstrap_operation], bootstrap_side_effect: build}
 evidence_requirement:
   required_keys: [id, type, checkpoint]
+  optional_keys: [media_pii_policy, pii_attestation_ref]
   type: [screenshot, trace, video, log, report, file]
+  media_pii_policy: [masked_or_synthetic]
+  conditional: pixel-bearing screenshot or video evidence must declare masked_or_synthetic and a concrete external pii_attestation_ref; archives are rejected because their contents cannot be minimized safely
 waiver:
   required_keys: [reason, approver_ref, approved_at]

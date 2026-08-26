@@ -35,6 +35,7 @@ export function validateEvidenceManifest(manifest, {
   requireFiles = false,
   acceptancePlanFile = null,
   environmentContractFile = null,
+  expectedSpecPackage = null,
 } = {}) {
   const findings = [];
   if (!isObject(manifest)) return [finding('factory-evidence-manifest-shape', 'Delivery evidence manifest must be an object')];
@@ -43,6 +44,12 @@ export function validateEvidenceManifest(manifest, {
   if (typeof manifest.run_id !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._:-]*$/.test(manifest.run_id)) findings.push(finding('factory-evidence-run-id', 'evidence manifest requires a valid run_id'));
   if (!manifest.generated_at || Number.isNaN(Date.parse(manifest.generated_at))) findings.push(finding('factory-evidence-generated-at', 'generated_at must be an ISO timestamp'));
   safePath(manifest.spec_package, 'spec_package', findings);
+  if (expectedSpecPackage !== null && manifest.spec_package !== expectedSpecPackage) {
+    findings.push(finding(
+      'factory-evidence-spec-package-mismatch',
+      `evidence spec_package ${String(manifest.spec_package)} differs from the validated package ${expectedSpecPackage}`,
+    ));
+  }
 
   const subject = isObject(manifest.subject) ? manifest.subject : {};
   requireKeys(subject, ['head_sha', 'tested_sha', 'source_tree_digest'], 'evidence.subject', findings);
@@ -151,7 +158,7 @@ export function validateEvidenceManifest(manifest, {
   return findings;
 }
 
-export function validateReleaseProvenance({ repoRoot, state, manifest }) {
+export function validateReleaseProvenance({ repoRoot, state, manifest, expectedPackageRef = null }) {
   const findings = [];
   if (!repoRoot) return [finding('factory-git-repository-missing', 'release provenance requires a Git repository')];
   const candidate = state?.provenance?.candidate_sha;
@@ -172,9 +179,16 @@ export function validateReleaseProvenance({ repoRoot, state, manifest }) {
   if ((manifest?.subject?.tested_sha ?? null) !== resolvedTested) findings.push(finding('factory-evidence-tested-mismatch', 'manifest subject.tested_sha differs from acceptance provenance'));
   if (resolvedCandidate && resolvedTested && resolvedCandidate !== resolvedTested) findings.push(finding('factory-tested-sha-mismatch', 'tested SHA differs from candidate SHA'));
 
+  const canonicalPackage = expectedPackageRef === null
+    ? null
+    : safeNormalizedPath(expectedPackageRef, 'factory-evidence-package-binding', findings);
+  if (!canonicalPackage) findings.push(finding('factory-evidence-package-binding-required', 'release provenance requires the package path derived from packageDir and the Git root'));
+  if (canonicalPackage && manifest?.spec_package !== canonicalPackage) {
+    findings.push(finding('factory-evidence-spec-package-mismatch', 'manifest spec_package differs from the validated package directory'));
+  }
+
   if (resolvedCandidate) {
-    const excluded = safeNormalizedPath(manifest?.spec_package, 'factory-evidence-spec-package', findings);
-    const expectedTree = sourceTreeDigest(repoRoot, resolvedCandidate, excluded ? [`${excluded}/acceptance/runs`] : [], findings);
+    const expectedTree = sourceTreeDigest(repoRoot, resolvedCandidate, canonicalPackage ? [`${canonicalPackage}/acceptance/runs`] : [], findings);
     if (expectedTree && manifest?.subject?.source_tree_digest !== expectedTree) findings.push(finding('factory-evidence-source-tree-mismatch', `manifest source tree digest differs from ${expectedTree}`));
   }
   if (!publication || publication.mode !== manifest?.publication?.mode) findings.push(finding('factory-evidence-publication-mismatch', 'event publication mode differs from the manifest'));
@@ -182,22 +196,22 @@ export function validateReleaseProvenance({ repoRoot, state, manifest }) {
   let expectedHead = resolvedCandidate;
   if (publication?.mode === 'ci_artifact') {
     if (state.provenance.evidence_sha !== null) findings.push(finding('factory-ci-artifact-false-sha', 'ci_artifact mode must not carry an evidence Git SHA'));
-    if (!publication.artifact_locator || !TYPED_SHA256.test(publication.artifact_digest || '') || !publication.media_type) findings.push(finding('factory-ci-artifact-envelope', 'ci_artifact requires locator, digest and media type'));
-    if (publication.artifact_locator && publication.artifact_locator !== manifest?.publication?.artifact_url) findings.push(finding('factory-ci-artifact-locator-mismatch', 'event artifact locator differs from manifest publication.artifact_url'));
-    if (publication.artifact_digest && publication.artifact_digest !== manifest?.publication?.bundle_digest) findings.push(finding('factory-ci-artifact-digest-mismatch', 'event artifact digest differs from manifest publication.bundle_digest'));
+    const locator = publication.manifest_locator;
+    if (locator?.kind !== 'ci_artifact' || locator.provider !== 'github_actions' || !TYPED_SHA256.test(locator.bundle_digest || '') || !publication.media_type) findings.push(finding('factory-ci-artifact-envelope', 'ci_artifact requires a typed GitHub Actions manifest locator, bundle digest and media type'));
+    if (locator?.artifact_id !== manifest?.publication?.artifact_id) findings.push(finding('factory-ci-artifact-locator-mismatch', 'event artifact_id differs from manifest publication.artifact_id'));
+    if (locator?.run_id !== manifest?.publication?.ci_run_id) findings.push(finding('factory-ci-artifact-run-mismatch', 'event run_id differs from manifest publication.ci_run_id'));
+    if (locator?.bundle_digest !== manifest?.publication?.bundle_digest) findings.push(finding('factory-ci-artifact-digest-mismatch', 'event bundle digest differs from manifest publication.bundle_digest'));
   } else if (publication?.mode === 'evidence_only_commit') {
     const evidenceSha = resolveCommit(repoRoot, state.provenance.evidence_sha, findings, 'evidence');
     if (resolvedCandidate && evidenceSha) {
       expectedHead = evidenceSha;
       if (!gitOk(repoRoot, ['merge-base', '--is-ancestor', resolvedCandidate, evidenceSha])) findings.push(finding('factory-evidence-not-descendant', 'evidence commit must descend from candidate'));
-      const manifestPath = publication.manifest_path;
-      const specPackage = safeNormalizedPath(manifest?.spec_package, 'factory-evidence-spec-package', findings);
-      const normalizedManifestPath = safeNormalizedPath(manifestPath, 'factory-evidence-manifest-path', findings);
-      if (specPackage && normalizedManifestPath) {
-        const allowed = [
-          { kind: 'prefix', path: `${specPackage}/acceptance/runs` },
-          { kind: 'exact', path: normalizedManifestPath },
-        ];
+      const normalizedManifestPath = safeNormalizedPath(publication.manifest_locator?.path, 'factory-evidence-manifest-path', findings);
+      if (canonicalPackage && normalizedManifestPath) {
+        const allowed = [{ kind: 'prefix', path: `${canonicalPackage}/acceptance/runs` }];
+        if (!pathAllowedByPatterns(normalizedManifestPath, allowed)) {
+          findings.push(finding('factory-evidence-manifest-outside-package-runs', 'evidence manifest must be inside the validated package acceptance/runs directory'));
+        }
         findings.push(...validateEvidenceDeltaPaths(gitLines(repoRoot, ['diff', '--name-only', `${resolvedCandidate}..${evidenceSha}`]), allowed));
       }
     }
@@ -205,6 +219,35 @@ export function validateReleaseProvenance({ repoRoot, state, manifest }) {
   const head = currentGitHead(repoRoot, findings);
   if (expectedHead && head && head !== expectedHead) findings.push(finding('factory-candidate-head-moved', `current HEAD ${head} differs from release provenance ${expectedHead}`));
   return findings;
+}
+
+export function classifyGitHeadChange({ repoRoot, state, expectedPackageRef }) {
+  const candidate = state?.provenance?.candidate_sha;
+  const head = observedGitHead(repoRoot);
+  if (!repoRoot || !validateEvidenceSha(candidate) || !head) return 'unknown';
+  if (head === candidate) return 'none';
+
+  const publication = state?.provenance?.publication;
+  const evidenceSha = state?.provenance?.evidence_sha;
+  let packageRef;
+  try {
+    packageRef = normalizeRepoPath(expectedPackageRef);
+  } catch {
+    return 'implementation';
+  }
+  if (
+    publication?.mode !== 'evidence_only_commit'
+    || evidenceSha !== head
+    || !gitOk(repoRoot, ['cat-file', '-e', `${candidate}^{commit}`])
+    || !gitOk(repoRoot, ['cat-file', '-e', `${evidenceSha}^{commit}`])
+    || !gitOk(repoRoot, ['merge-base', '--is-ancestor', candidate, evidenceSha])
+  ) return 'implementation';
+
+  const allowed = [{ kind: 'prefix', path: `${packageRef}/acceptance/runs` }];
+  const changed = gitLines(repoRoot, ['diff', '--name-only', `${candidate}..${evidenceSha}`]);
+  return changed.length > 0 && validateEvidenceDeltaPaths(changed, allowed).length === 0
+    ? 'evidence_only'
+    : 'implementation';
 }
 
 export function evidenceManifestHash(manifest) {

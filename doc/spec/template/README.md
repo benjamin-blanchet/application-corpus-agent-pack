@@ -58,7 +58,7 @@ Per-class file inclusion (see development/change-triage):
 - [ ] Direct corpus writes applied (feature files where behavior changed)
 - [ ] Update-candidates filed and consumed by `Corpus`
 - [ ] Multi-repo sibling sync recommendation produced (if applicable)
-- [ ] PR description produced (Step 11)
+- [ ] PR description produced (Step 15)
 - [ ] Candidate branch published through the repository's authorised path
 - [ ] Draft PR opened by `Delivery`; human approval/merge still pending
 
@@ -84,6 +84,29 @@ factory/events.v3.jsonl    # canonical append-only event history
 factory/state.v3.json      # reproducible projection; never edit by hand
 ```
 
-Add `acceptance/acceptance-plan.yaml` and executable tests before candidate
-freeze. The controller generates `factory/evidence-manifest.v3.json` only after
-acceptance; do not create a hand-written placeholder.
+Add `acceptance-plan.yaml` at the package root plus executable config/tests
+under `acceptance/` before candidate freeze. Run artefacts belong under
+`acceptance/runs/` or in the declared CI artefact store. The controller records
+`factory/evidence-manifest.v3.json` only after acceptance; do not create a
+hand-written placeholder.
+
+## Instantiate the V3 scaffold
+
+The committed machine scaffold is validator-clean **at this template path**.
+After copying it, do not reuse that path binding:
+
+1. replace every placeholder in the specification and technical plan;
+2. in `factory/plan.v3.json`, replace the specification entry in both
+   `lots[].read_claims` and `lots[].handoff.inputs` with the new
+   repository-relative package path, for example
+   `doc/spec/<version>/<topic>/SPECIFICATION.md`;
+3. recompute the handoff input SHA-256 from the finalized file bytes, then
+   update claims, outputs, verification commands and other placeholders;
+4. keep `factory/events.v3.jsonl` empty until the Controller appends the first
+   `package_initialized` event; let that controlled append regenerate
+   `factory/state.v3.json` from the edited plan and event log;
+5. run `node scripts/validate-factory.mjs <new-package-path>` before approval.
+
+Never copy the shipped `state.v3.json` forward as asserted truth after editing
+the plan. It is only the deterministic zero-event projection of this exact
+scaffold.

@@ -1,20 +1,33 @@
 version: 1
 provider: github
+repository: acme/repo
 draft: true
 title: Fixture delivery
 base_ref: main
 head_ref_from: FACTORY_HEAD_REF
 body_path: scripts/fixtures/factory-delivery/PR_DESCRIPTION.md
 spec_ref: scripts/fixtures/factory-delivery/SPECIFICATION.md
-technical_plan_ref: scripts/fixtures/factory-delivery/technical-plan.yaml
+factory_plan_ref: scripts/fixtures/factory-delivery/factory/plan.v3.json
 acceptance_matrix_ref: scripts/fixtures/factory-delivery/acceptance-plan.yaml
-replay_command: "node scripts/adapters/playwright/run.mjs --plan scripts/fixtures/factory-delivery/acceptance-plan.yaml --environment scripts/fixtures/factory-delivery/environment.yaml --ci scripts/fixtures/factory-delivery/ci.yaml --observation scripts/fixtures/factory-delivery/observation.json --config .github/templates/software-factory/acceptance/playwright.config.mjs --subject-sha aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa --run-id fixture-run-001"
-required_checks: [factory-policy, factory-acceptance]
+environment_contract_ref: scripts/fixtures/factory-delivery/environment.yaml
+ci_contract_ref: scripts/fixtures/factory-delivery/ci.yaml
+replay_command: "node scripts/factory-acceptance.mjs --plan scripts/fixtures/factory-delivery/acceptance-plan.yaml --environment scripts/fixtures/factory-delivery/environment.yaml --ci scripts/fixtures/factory-delivery/ci.yaml --subject-sha $FACTORY_SUBJECT_SHA --run-id $FACTORY_RUN_ID --observation-out factory-observation.json --evidence-root factory-evidence"
+required_checks: [factory-policy, factory-application-ci]
+ci_attestation:
+  provider: github_actions
+  workflow_ref: .github/workflows/factory-acceptance.yml
+  event: repository_dispatch
+  artifact_name_prefix: factory-evidence-bundle-
 authorization:
   required: true
   provider: external_receipt
+  issuer_ref: fixture-external-gate
   gate_id: draft-pr
+  public_key_ref: scripts/fixtures/factory-delivery/delivery-public-key.pem
+  max_age_minutes: 60
 permissions:
+  actions: read
   contents: read
+  checks: read
   pull_requests: write
 forbidden_actions: [push, approve, mark_ready, merge, force_push]

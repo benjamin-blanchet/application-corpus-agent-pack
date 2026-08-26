@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { TextDecoder } from 'node:util';
 
 const FORBIDDEN_BASENAMES = [
   /storage[-_.]?state/i,
@@ -19,11 +20,107 @@ const TEXT_PATTERNS = [
   ['evidence-possible-email', /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i],
 ];
 
-const TEXT_EXTENSIONS = new Set(['.txt', '.json', '.yaml', '.yml', '.md', '.xml', '.log', '.html', '.csv', '.js', '.mjs', '.css', '.map', '.svg']);
-const INSPECTABLE_BINARY_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.webp']);
+const TEXT_MEDIA_TYPES = new Map([
+  ['.txt', 'text/plain'],
+  ['.log', 'text/plain'],
+  ['.md', 'text/markdown'],
+  ['.json', 'application/json'],
+  ['.map', 'application/json'],
+  ['.yaml', 'application/yaml'],
+  ['.yml', 'application/yaml'],
+  ['.xml', 'application/xml'],
+  ['.html', 'text/html'],
+  ['.csv', 'text/csv'],
+  ['.js', 'text/javascript'],
+  ['.mjs', 'text/javascript'],
+  ['.css', 'text/css'],
+  ['.svg', 'image/svg+xml'],
+]);
+const BYTE_MEDIA_TYPES = new Map([
+  ['.png', 'image/png'],
+  ['.jpg', 'image/jpeg'],
+  ['.jpeg', 'image/jpeg'],
+  ['.webp', 'image/webp'],
+  ['.webm', 'video/webm'],
+  ['.mp4', 'video/mp4'],
+  ['.zip', 'application/zip'],
+]);
+const PIXEL_MEDIA_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml', 'video/webm', 'video/mp4']);
+const APPROVED_MEDIA_PII_POLICIES = new Set(['masked_or_synthetic']);
 const MAX_INSPECTABLE_BYTES = 50 * 1024 * 1024;
 
-export function scanEvidenceFile(file, relativePath) {
+function byteSignatureMatches(extension, buffer) {
+  if (extension === '.png') return buffer.length >= 20
+    && buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
+    && buffer.subarray(buffer.length - 8, buffer.length - 4).toString('ascii') === 'IEND';
+  if (extension === '.jpg' || extension === '.jpeg') return buffer.length >= 5
+    && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff
+    && buffer[buffer.length - 2] === 0xff && buffer[buffer.length - 1] === 0xd9;
+  if (extension === '.webp') return buffer.length >= 12
+    && buffer.subarray(0, 4).toString('ascii') === 'RIFF'
+    && buffer.readUInt32LE(4) === buffer.length - 8
+    && buffer.subarray(8, 12).toString('ascii') === 'WEBP';
+  if (extension === '.webm') return buffer.length >= 4 && buffer.subarray(0, 4).equals(Buffer.from([0x1a, 0x45, 0xdf, 0xa3]));
+  if (extension === '.mp4') return buffer.length >= 12 && buffer.subarray(4, 8).toString('ascii') === 'ftyp';
+  if (extension === '.zip') return buffer.length >= 4 && ['504b0304', '504b0506', '504b0708'].includes(buffer.subarray(0, 4).toString('hex'));
+  return false;
+}
+
+function decodeUtf8(buffer) {
+  const text = new TextDecoder('utf-8', { fatal: true }).decode(buffer).replace(/^\uFEFF/, '');
+  if (/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/.test(text)) throw new Error('control bytes are not accepted as evidence text');
+  return text;
+}
+
+// The returned media type is derived from validated bytes within a finite
+// allowlist. The caller-provided Content-Type is never authoritative.
+export function inspectEvidenceMedia(file, relativePath = file) {
+  const extension = path.extname(relativePath).toLowerCase();
+  const stat = fs.statSync(file);
+  if (stat.size > MAX_INSPECTABLE_BYTES) {
+    return { mediaType: null, kind: 'blocked', error: `${relativePath} exceeds the inspectable evidence size limit` };
+  }
+  const buffer = fs.readFileSync(file);
+  if (TEXT_MEDIA_TYPES.has(extension)) {
+    let text;
+    try {
+      text = decodeUtf8(buffer);
+    } catch {
+      return { mediaType: null, kind: 'blocked', error: `${relativePath} is not valid UTF-8 text` };
+    }
+    if ((extension === '.json' || extension === '.map')) {
+      try {
+        JSON.parse(text);
+      } catch {
+        return { mediaType: null, kind: 'blocked', error: `${relativePath} is not valid JSON` };
+      }
+    }
+    const trimmed = text.trimStart().toLowerCase();
+    if ((extension === '.xml' && (!trimmed.startsWith('<') || !text.trimEnd().endsWith('>')))
+      || (extension === '.html' && !/^<(?:!doctype\s+html|html)\b/.test(trimmed))
+      || (extension === '.svg' && !/^<(?:\?xml[^>]*>\s*)?<svg\b/.test(trimmed))) {
+      return { mediaType: null, kind: 'blocked', error: `${relativePath} content does not match its evidence extension` };
+    }
+    return {
+      mediaType: TEXT_MEDIA_TYPES.get(extension),
+      kind: PIXEL_MEDIA_TYPES.has(TEXT_MEDIA_TYPES.get(extension)) ? 'pixel_media' : 'text',
+      text,
+    };
+  }
+  if (BYTE_MEDIA_TYPES.has(extension)) {
+    if (!byteSignatureMatches(extension, buffer)) {
+      return { mediaType: null, kind: 'blocked', error: `${relativePath} content does not match its evidence extension` };
+    }
+    return {
+      mediaType: BYTE_MEDIA_TYPES.get(extension),
+      kind: extension === '.zip' ? 'archive' : 'pixel_media',
+      metadataText: buffer.toString('latin1'),
+    };
+  }
+  return { mediaType: null, kind: 'blocked', error: `${relativePath} has a format outside the fail-closed evidence allowlist` };
+}
+
+export function scanEvidenceFile(file, relativePath, { mediaPiiPolicy = null } = {}) {
   const findings = [];
   const basename = path.basename(relativePath);
   for (const pattern of FORBIDDEN_BASENAMES) {
@@ -32,32 +129,25 @@ export function scanEvidenceFile(file, relativePath) {
       break;
     }
   }
-  const extension = path.extname(file).toLowerCase();
-  if (!TEXT_EXTENSIONS.has(extension) && !INSPECTABLE_BINARY_EXTENSIONS.has(extension)) {
-    findings.push({ code: 'evidence-uninspectable-artifact', message: `${relativePath} has an artifact format that the minimizer cannot inspect safely` });
+  const inspection = inspectEvidenceMedia(file, relativePath);
+  if (inspection.error) {
+    const code = inspection.error.includes('size limit') ? 'evidence-artifact-too-large'
+      : inspection.error.includes('does not match') || inspection.error.includes('valid JSON') || inspection.error.includes('valid UTF-8')
+        ? 'evidence-artifact-format-mismatch'
+        : 'evidence-uninspectable-artifact';
+    findings.push({ code, message: inspection.error });
     return findings;
   }
-  const stat = fs.statSync(file);
-  if (stat.size > MAX_INSPECTABLE_BYTES) {
-    findings.push({ code: 'evidence-artifact-too-large', message: `${relativePath} exceeds the inspectable evidence size limit` });
+  if (inspection.kind === 'archive') {
+    findings.push({ code: 'evidence-uninspectable-archive', message: `${relativePath} is an archive; publish extracted, individually scanned evidence instead` });
     return findings;
   }
-  if (INSPECTABLE_BINARY_EXTENSIONS.has(extension)) {
-    const buffer = fs.readFileSync(file);
-    const isPng = extension === '.png' && buffer.length >= 8 && buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
-    const isJpeg = (extension === '.jpg' || extension === '.jpeg') && buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
-    const isWebp = extension === '.webp' && buffer.length >= 12 && buffer.subarray(0, 4).toString('ascii') === 'RIFF' && buffer.subarray(8, 12).toString('ascii') === 'WEBP';
-    if (!isPng && !isJpeg && !isWebp) {
-      findings.push({ code: 'evidence-artifact-format-mismatch', message: `${relativePath} content does not match its declared inspectable image extension` });
-      return findings;
-    }
-    const metadataText = buffer.toString('latin1');
-    for (const [code, pattern] of TEXT_PATTERNS) if (pattern.test(metadataText)) findings.push({ code, message: `${relativePath} contains sensitive textual metadata` });
-    return findings;
+  if (inspection.kind === 'pixel_media' && !APPROVED_MEDIA_PII_POLICIES.has(mediaPiiPolicy)) {
+    findings.push({ code: 'evidence-media-pii-policy-missing', message: `${relativePath} contains pixels and requires the approved masked_or_synthetic PII policy` });
   }
-  const text = fs.readFileSync(file, 'utf8');
+  const text = inspection.text || inspection.metadataText || '';
   for (const [code, pattern] of TEXT_PATTERNS) {
-    if (pattern.test(text)) findings.push({ code, message: `${relativePath} contains material that must be removed or pseudonymized` });
+    if (pattern.test(text)) findings.push({ code, message: `${relativePath} contains material that must be removed, masked or pseudonymized` });
   }
   return findings;
 }

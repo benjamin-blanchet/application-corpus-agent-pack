@@ -3,26 +3,32 @@
   "blockers": [],
   "delivery": null,
   "derived_from": {
-    "current_inputs_sha256": "8ccc85f8b73061bf142f80467027194eb195bd53ca86cf380ac9aec03c3748b4",
-    "events_sha256": "a88b8a20487d99171631db5afee348f314ce315048b71b503e6e1ab4789010ca",
-    "last_seq": 6
+    "current_inputs_sha256": "b8662eebbb9146036fcbb631d3c66694e0f76a37c5ec16321e5fa07ce6dffac5",
+    "events_sha256": "d66028e4c4d51d605fddc5a39b9fec6aaaa8f8aa2588c9bcaaaf3b651bd45100",
+    "last_seq": 43
   },
   "digests": {
-    "corpus_manifest_sha256": null,
+    "corpus_tree_sha256": null,
     "evidence_manifest_sha256": null,
-    "plan_sha256": "6a58f4fe165fb670b12b126c486892ef235dde7110b18a883552b89f889ad038",
-    "spec_sha256": "134400759f2c7d641d9e89bed10a0246476902be46d8ec0edc2cc71be144d32a",
+    "plan_sha256": "694952924c26a11a9179a087d496ef05b68f0e21de88a501eff51b67379892d4",
+    "spec_sha256": "c268ed3663d791bd5004acdb840efc3b31d0d7b2e19df831079a1e6a213dd962",
     "test_bundle_sha256": null
   },
   "execution_policy": {
     "mode": "balanced",
-    "models": {
-      "economy": "bounded-small",
-      "expert": "deep-reasoning",
-      "reviewer": "fresh-reviewer",
-      "standard": "balanced-coding"
+    "model_families": {
+      "economy": "gpt-5",
+      "expert": "gpt-5",
+      "reviewer": "gpt-5",
+      "standard": "gpt-5"
     },
-    "observed_at": "2026-08-26T13:11:00+02:00"
+    "models": {
+      "economy": "gpt-5",
+      "expert": "gpt-5",
+      "reviewer": "gpt-5",
+      "standard": "gpt-5"
+    },
+    "observed_at": "2026-08-26T19:59:45.177Z"
   },
   "gates": {
     "acceptance": {
@@ -50,8 +56,8 @@
       "status": "pending"
     },
     "lot_reviews": {
-      "basis_event": null,
-      "status": "pending"
+      "basis_event": "EVT-000043",
+      "status": "valid"
     },
     "release": {
       "basis_event": null,
@@ -69,59 +75,1089 @@
   "legacy": null,
   "lots": {
     "LOT-1": {
-      "attempts": 0,
-      "diff_sha256": null,
-      "reservation_id": null,
-      "review": null,
-      "status": "pending"
+      "attempt_budget_extensions": 0,
+      "attempts": 1,
+      "author": {
+        "execution_id": "LOT-1-author-001",
+        "model": {
+          "model_family": "gpt-5",
+          "planned": "expert",
+          "requested": "gpt-5",
+          "used": "gpt-5"
+        }
+      },
+      "changed_paths": [
+        "schemas/factory-learning.yaml.schema.yaml",
+        "scripts/factory-fixtures/catalog.json",
+        "scripts/test-factory-learning.mjs",
+        "scripts/test-factory-suite.mjs"
+      ],
+      "diff_budget_override": null,
+      "diff_sha256": "85eeb541e51d8548d7a44bc4b1d91f6ba5a0a8aaf48620a40237b28e4a5fde7f",
+      "effective_max_attempts": 2,
+      "preimplementation_contract": {
+        "algorithm": "sha256-canonical-json-v1",
+        "contract_sha256": "65faa1c96c7d7ae9de49cb8a15bed7ecb5160ac9f1dd14df7cd239ebeca43377",
+        "event_id": "EVT-000026",
+        "observed_conventions": [
+          {
+            "examples": [
+              {
+                "bytes": 810,
+                "path": "scripts/factory-fixtures/v3/legacy-release-ready/factory-state.yaml",
+                "sha256": "6df014793d73472201e3e0714d4f28430fa25d6be343b98e61027b7d6ccf82da"
+              }
+            ],
+            "id": "approved-spec-and-repository-conventions",
+            "rule": "Implement only the approved observable contract and preserve observed repository conventions."
+          }
+        ],
+        "plan_sha256": "694952924c26a11a9179a087d496ef05b68f0e21de88a501eff51b67379892d4",
+        "source_revision": "559176a118bc6ea70afc5548c21ccd1ffbb00796"
+      },
+      "refactor_approval": null,
+      "refactor_escalation": null,
+      "reservation_id": "RES-LOT-1",
+      "review": {
+        "actor": {
+          "capabilities": [
+            "read",
+            "execute"
+          ],
+          "capability_grants": [],
+          "execution_id": "LOT-1-reviewer-001",
+          "model": {
+            "model_family": "gpt-5",
+            "planned": "reviewer",
+            "requested": "gpt-5",
+            "used": "gpt-5"
+          },
+          "role": "reviewer"
+        },
+        "event_id": "EVT-000032",
+        "findings": [],
+        "status": "passed",
+        "verdict": "passed"
+      },
+      "status": "integrated",
+      "workspace_snapshot": {
+        "algorithm": "sha256-git-dirty-snapshot-v1",
+        "attestation_mode": "live",
+        "base_revision": "559176a118bc6ea70afc5548c21ccd1ffbb00796",
+        "entries": [],
+        "exclusions": [
+          "doc/spec/1.2.0/software-factory-v3/acceptance/runs",
+          "doc/spec/1.2.0/software-factory-v3/factory/events.v3.jsonl",
+          "doc/spec/1.2.0/software-factory-v3/factory/state.v3.json"
+        ],
+        "snapshot_sha256": "05d02cf11a17e61f7e7e8f628592c4f52d76c47a1e37ccd743ff1ee81407158c",
+        "v": 1,
+        "workspace_id": "224f89b1cba73a1791cd70fc03642e3a5416e2bc7335b5f8a23f1579f3709b46",
+        "workspace_mode": "isolated_worktree"
+      }
     },
     "LOT-2": {
-      "attempts": 0,
-      "diff_sha256": null,
-      "reservation_id": null,
-      "review": null,
-      "status": "pending"
+      "attempt_budget_extensions": 0,
+      "attempts": 1,
+      "author": {
+        "execution_id": "LOT-2-author-001",
+        "model": {
+          "model_family": "gpt-5",
+          "planned": "expert",
+          "requested": "gpt-5",
+          "used": "gpt-5"
+        }
+      },
+      "changed_paths": [
+        "schemas/factory/v3/event.schema.json",
+        "schemas/factory/v3/role-capabilities.schema.json",
+        "schemas/factory/v3/state.schema.json",
+        "scripts/factory-control.mjs",
+        "scripts/factory-fixtures/v3/blocking-cases.json",
+        "scripts/lib/factory-v3/artifact-digest.mjs",
+        "scripts/lib/factory-v3/capabilities.mjs",
+        "scripts/lib/factory-v3/contract.mjs",
+        "scripts/lib/factory-v3/corpus-attestation.mjs",
+        "scripts/lib/factory-v3/diff-budget.mjs",
+        "scripts/lib/factory-v3/event-log.mjs",
+        "scripts/lib/factory-v3/git-review-attestation.mjs",
+        "scripts/lib/factory-v3/invalidation.mjs",
+        "scripts/lib/factory-v3/legacy-v1.mjs",
+        "scripts/lib/factory-v3/package-io.mjs",
+        "scripts/lib/factory-v3/proof-contracts.mjs",
+        "scripts/lib/factory-v3/provenance.mjs",
+        "scripts/lib/factory-v3/reducer.mjs",
+        "scripts/lib/factory-v3/review-contracts.mjs",
+        "scripts/lib/factory-v3/safe-path.mjs",
+        "scripts/lib/factory-v3/scheduler.mjs",
+        "scripts/lib/factory-v3/verification-receipt.mjs",
+        "scripts/lib/factory-v3/workspace-attestation.mjs",
+        "scripts/test-factory-v3.mjs",
+        "scripts/validate-factory.mjs"
+      ],
+      "diff_budget_override": {
+        "approved_at": "2026-08-26T21:59:28+02:00",
+        "approved_by": "operator",
+        "event_id": "EVT-000008",
+        "max_added_lines": 5675,
+        "max_binary_files": 0,
+        "max_deleted_lines": 322,
+        "max_files": 25,
+        "reason": "Operator-approved exact diff budget for LOT-2 after review of the bounded implementation inventory."
+      },
+      "diff_sha256": "5ebdfa9c94663fa4db1e9157d1cbacc38a1f0c114b0a925ade414f1e31a8a8f5",
+      "effective_max_attempts": 2,
+      "preimplementation_contract": {
+        "algorithm": "sha256-canonical-json-v1",
+        "contract_sha256": "08dcd1bbff3b5d79dec1f1800e4fc5976fd093d373523ec70fa57c9f0c2ebd6d",
+        "event_id": "EVT-000007",
+        "observed_conventions": [
+          {
+            "examples": [
+              {
+                "bytes": 880,
+                "path": "doc/spec/1.2.0/software-factory-v3/SUGGESTIONS.md",
+                "sha256": "e87935f415b6027de91f0d08be033883da824ab46cdfa96eab79ab95fdf91957"
+              }
+            ],
+            "id": "approved-spec-and-repository-conventions",
+            "rule": "Implement only the approved observable contract and preserve observed repository conventions."
+          }
+        ],
+        "plan_sha256": "694952924c26a11a9179a087d496ef05b68f0e21de88a501eff51b67379892d4",
+        "source_revision": "559176a118bc6ea70afc5548c21ccd1ffbb00796"
+      },
+      "refactor_approval": null,
+      "refactor_escalation": null,
+      "reservation_id": "RES-LOT-2",
+      "review": {
+        "actor": {
+          "capabilities": [
+            "read",
+            "execute"
+          ],
+          "capability_grants": [],
+          "execution_id": "LOT-2-reviewer-001",
+          "model": {
+            "model_family": "gpt-5",
+            "planned": "reviewer",
+            "requested": "gpt-5",
+            "used": "gpt-5"
+          },
+          "role": "reviewer"
+        },
+        "event_id": "EVT-000013",
+        "findings": [],
+        "status": "passed",
+        "verdict": "passed"
+      },
+      "status": "integrated",
+      "workspace_snapshot": {
+        "algorithm": "sha256-git-dirty-snapshot-v1",
+        "attestation_mode": "live",
+        "base_revision": "559176a118bc6ea70afc5548c21ccd1ffbb00796",
+        "entries": [],
+        "exclusions": [
+          "doc/spec/1.2.0/software-factory-v3/acceptance/runs",
+          "doc/spec/1.2.0/software-factory-v3/factory/events.v3.jsonl",
+          "doc/spec/1.2.0/software-factory-v3/factory/state.v3.json"
+        ],
+        "snapshot_sha256": "2d33cb1cb27ab347a5ce80d8829ad75df3c81a3b9d58a2331db24eb031a37e33",
+        "v": 1,
+        "workspace_id": "a5b82b68bc1e900c68df5cc9e3d9750f3cc5ed636683f29cc9d9c89099ff4b56",
+        "workspace_mode": "isolated_worktree"
+      }
     },
     "LOT-3": {
-      "attempts": 0,
-      "diff_sha256": null,
-      "reservation_id": null,
-      "review": null,
-      "status": "pending"
+      "attempt_budget_extensions": 0,
+      "attempts": 1,
+      "author": {
+        "execution_id": "LOT-3-author-001",
+        "model": {
+          "model_family": "gpt-5",
+          "planned": "standard",
+          "requested": "gpt-5",
+          "used": "gpt-5"
+        }
+      },
+      "changed_paths": [
+        ".github/skills/governance/pack-upgrade/SKILL.md",
+        ".github/skills/governance/safe-operation-guardrails/SKILL.md",
+        "schemas/source-contract.yaml.schema.yaml",
+        "scripts/check-runtime-sources.mjs",
+        "scripts/runtime-source-fixtures/durable-runtime-aliases.json",
+        "scripts/runtime-source-fixtures/durable-runtime-aliases.yaml",
+        "scripts/runtime-source-fixtures/durable-source-history-vocabulary.json",
+        "scripts/runtime-source-fixtures/durable-source-history-vocabulary.yaml",
+        "scripts/test-runtime-sources.mjs",
+        "scripts/validate-corpus.mjs"
+      ],
+      "diff_budget_override": null,
+      "diff_sha256": "c42c7b9088cf9d467893bf74c8b3951587e2eb9817d5f7ad605dcb3dbc9ee9ed",
+      "effective_max_attempts": 2,
+      "preimplementation_contract": {
+        "algorithm": "sha256-canonical-json-v1",
+        "contract_sha256": "f22136134385151d28c70bee2d7c2100d42acb3b68e1e3af4501335d1058c51b",
+        "event_id": "EVT-000009",
+        "observed_conventions": [
+          {
+            "examples": [
+              {
+                "bytes": 2038,
+                "path": "doc/_meta/actionable-readiness.md",
+                "sha256": "4bdc0d95ad4c69100a9ea5361c3aab22d5d702f5b9cc93a0a35e156ba7fc7d12"
+              }
+            ],
+            "id": "approved-spec-and-repository-conventions",
+            "rule": "Implement only the approved observable contract and preserve observed repository conventions."
+          }
+        ],
+        "plan_sha256": "694952924c26a11a9179a087d496ef05b68f0e21de88a501eff51b67379892d4",
+        "source_revision": "559176a118bc6ea70afc5548c21ccd1ffbb00796"
+      },
+      "refactor_approval": null,
+      "refactor_escalation": null,
+      "reservation_id": "RES-LOT-3",
+      "review": {
+        "actor": {
+          "capabilities": [
+            "read",
+            "execute"
+          ],
+          "capability_grants": [],
+          "execution_id": "LOT-3-reviewer-001",
+          "model": {
+            "model_family": "gpt-5",
+            "planned": "reviewer",
+            "requested": "gpt-5",
+            "used": "gpt-5"
+          },
+          "role": "reviewer"
+        },
+        "event_id": "EVT-000017",
+        "findings": [],
+        "status": "passed",
+        "verdict": "passed"
+      },
+      "status": "integrated",
+      "workspace_snapshot": {
+        "algorithm": "sha256-git-dirty-snapshot-v1",
+        "attestation_mode": "live",
+        "base_revision": "559176a118bc6ea70afc5548c21ccd1ffbb00796",
+        "entries": [],
+        "exclusions": [
+          "doc/spec/1.2.0/software-factory-v3/acceptance/runs",
+          "doc/spec/1.2.0/software-factory-v3/factory/events.v3.jsonl",
+          "doc/spec/1.2.0/software-factory-v3/factory/state.v3.json"
+        ],
+        "snapshot_sha256": "c9e155545bc67323c4a97624f93599ef97054ace08499881f68c16abc6518ae7",
+        "v": 1,
+        "workspace_id": "8c8394b1254028d85721dadb1d35556c70227759d4d670d0e60e01bb5e0e93bd",
+        "workspace_mode": "isolated_worktree"
+      }
     },
     "LOT-4": {
-      "attempts": 0,
-      "diff_sha256": null,
-      "reservation_id": null,
-      "review": null,
-      "status": "pending"
+      "attempt_budget_extensions": 0,
+      "attempts": 1,
+      "author": {
+        "execution_id": "LOT-4-author-001",
+        "model": {
+          "model_family": "gpt-5",
+          "planned": "expert",
+          "requested": "gpt-5",
+          "used": "gpt-5"
+        }
+      },
+      "changed_paths": [
+        ".github/templates/software-factory/acceptance/README.md",
+        ".github/templates/software-factory/acceptance/acceptance-plan.yaml",
+        ".github/templates/software-factory/acceptance/playwright.config.mjs",
+        ".github/templates/software-factory/acceptance/tests/feature.spec.mjs",
+        ".github/templates/software-factory/delivery/README.md",
+        ".github/templates/software-factory/delivery/factory-acceptance.workflow.yml",
+        ".github/templates/software-factory/delivery/factory-ci.yaml",
+        ".github/templates/software-factory/delivery/factory-draft-pr.workflow.yml",
+        ".github/templates/software-factory/delivery/factory-policy.workflow.yml",
+        ".github/templates/software-factory/delivery/factory-release.workflow.yml",
+        ".github/templates/software-factory/delivery/pr-draft.yaml",
+        ".github/templates/software-factory/environment/environment-contract.yaml",
+        "schemas/acceptance-plan.yaml.schema.yaml",
+        "schemas/acceptance-results.yaml.schema.yaml",
+        "schemas/environment-contract.yaml.schema.yaml",
+        "schemas/evidence-manifest.yaml.schema.yaml",
+        "schemas/factory-ci.yaml.schema.yaml",
+        "schemas/pr-draft.yaml.schema.yaml",
+        "scripts/adapters/command/results.mjs",
+        "scripts/adapters/command/run.mjs",
+        "scripts/adapters/playwright/discovery.mjs",
+        "scripts/adapters/playwright/policy.mjs",
+        "scripts/adapters/playwright/recording.mjs",
+        "scripts/adapters/playwright/reporter.mjs",
+        "scripts/adapters/playwright/run.mjs",
+        "scripts/adapters/playwright/storage.mjs",
+        "scripts/factory-acceptance.mjs",
+        "scripts/factory-actions-attestation.mjs",
+        "scripts/factory-ci-check.mjs",
+        "scripts/factory-evidence.mjs",
+        "scripts/factory-pr.mjs",
+        "scripts/factory-release.mjs",
+        "scripts/factory-report.mjs",
+        "scripts/factory-stage-evidence.mjs",
+        "scripts/factory-workflow-context.mjs",
+        "scripts/fixtures/factory-delivery/acceptance-plan.yaml",
+        "scripts/fixtures/factory-delivery/ci.yaml",
+        "scripts/fixtures/factory-delivery/delivery-public-key.pem",
+        "scripts/fixtures/factory-delivery/environment.yaml",
+        "scripts/fixtures/factory-delivery/factory/plan.v3.json",
+        "scripts/fixtures/factory-delivery/observation.json",
+        "scripts/fixtures/factory-delivery/playwright.config.mjs",
+        "scripts/fixtures/factory-delivery/pr-draft.yaml",
+        "scripts/fixtures/factory-delivery/results.json",
+        "scripts/fixtures/factory-delivery/technical-plan.yaml",
+        "scripts/fixtures/factory-delivery/tests/feature.spec.mjs",
+        "scripts/lib/factory-delivery/authorization.mjs",
+        "scripts/lib/factory-delivery/capabilities.mjs",
+        "scripts/lib/factory-delivery/cleanup.mjs",
+        "scripts/lib/factory-delivery/evidence.mjs",
+        "scripts/lib/factory-delivery/execution-boundary.mjs",
+        "scripts/lib/factory-delivery/minimize.mjs",
+        "scripts/lib/factory-delivery/operations.mjs",
+        "scripts/lib/factory-delivery/provenance.mjs",
+        "scripts/lib/factory-delivery/release.mjs",
+        "scripts/lib/factory-delivery/report.mjs",
+        "scripts/lib/factory-delivery/validation.mjs",
+        "scripts/test-factory-delivery.mjs",
+        "scripts/validate-delivery.mjs"
+      ],
+      "diff_budget_override": {
+        "approved_at": "2026-08-26T21:59:28+02:00",
+        "approved_by": "operator",
+        "event_id": "EVT-000020",
+        "max_added_lines": 6863,
+        "max_binary_files": 0,
+        "max_deleted_lines": 268,
+        "max_files": 59,
+        "reason": "Operator-approved exact diff budget for LOT-4 after review of the bounded implementation inventory."
+      },
+      "diff_sha256": "28bd24a33587967dd36b89b1d61cd758f2484526e5114f69ed00533c04bcba4d",
+      "effective_max_attempts": 2,
+      "preimplementation_contract": {
+        "algorithm": "sha256-canonical-json-v1",
+        "contract_sha256": "bfcc5bd69017fc46d43b3f2205407f4fb319ab2efa5cad37906a6a656f70929a",
+        "event_id": "EVT-000019",
+        "observed_conventions": [
+          {
+            "examples": [
+              {
+                "bytes": 539,
+                "path": "doc/project/cicd/PIPELINES.md",
+                "sha256": "d3326f2ef8f62d8bdbff727b9f50af4091ab70d2c7df16eededd3428da4111f0"
+              }
+            ],
+            "id": "approved-spec-and-repository-conventions",
+            "rule": "Implement only the approved observable contract and preserve observed repository conventions."
+          }
+        ],
+        "plan_sha256": "694952924c26a11a9179a087d496ef05b68f0e21de88a501eff51b67379892d4",
+        "source_revision": "559176a118bc6ea70afc5548c21ccd1ffbb00796"
+      },
+      "refactor_approval": null,
+      "refactor_escalation": null,
+      "reservation_id": "RES-LOT-4",
+      "review": {
+        "actor": {
+          "capabilities": [
+            "read",
+            "execute"
+          ],
+          "capability_grants": [],
+          "execution_id": "LOT-4-reviewer-001",
+          "model": {
+            "model_family": "gpt-5",
+            "planned": "reviewer",
+            "requested": "gpt-5",
+            "used": "gpt-5"
+          },
+          "role": "reviewer"
+        },
+        "event_id": "EVT-000024",
+        "findings": [],
+        "status": "passed",
+        "verdict": "passed"
+      },
+      "status": "integrated",
+      "workspace_snapshot": {
+        "algorithm": "sha256-git-dirty-snapshot-v1",
+        "attestation_mode": "live",
+        "base_revision": "559176a118bc6ea70afc5548c21ccd1ffbb00796",
+        "entries": [],
+        "exclusions": [
+          "doc/spec/1.2.0/software-factory-v3/acceptance/runs",
+          "doc/spec/1.2.0/software-factory-v3/factory/events.v3.jsonl",
+          "doc/spec/1.2.0/software-factory-v3/factory/state.v3.json"
+        ],
+        "snapshot_sha256": "4d48583e7bdc320158b5c1750bd3ad4d8abfcbb3a64fa089efa3d122b5b6274f",
+        "v": 1,
+        "workspace_id": "0136ff4ee2f66aab7ed9d6280fd65c1347cf5209f6b49ac80a4c2ade41caaaa5",
+        "workspace_mode": "isolated_worktree"
+      }
     },
     "LOT-5": {
-      "attempts": 0,
-      "diff_sha256": null,
-      "reservation_id": null,
-      "review": null,
-      "status": "pending"
+      "attempt_budget_extensions": 0,
+      "attempts": 1,
+      "author": {
+        "execution_id": "LOT-5-author-001",
+        "model": {
+          "model_family": "gpt-5",
+          "planned": "expert",
+          "requested": "gpt-5",
+          "used": "gpt-5"
+        }
+      },
+      "changed_paths": [
+        ".github/agents/acceptance.agent.md",
+        ".github/agents/delivery.agent.md",
+        ".github/agents/developer.agent.md",
+        ".github/agents/factory-controller.agent.md",
+        ".github/agents/functional-analyst.agent.md",
+        ".github/agents/reliability-analyst.agent.md",
+        ".github/copilot-instructions.md",
+        ".github/skills/SKILLS_MAP.md",
+        ".github/skills/authoring/implement-spec/SKILL.md",
+        ".github/skills/authoring/implementation-guard/SKILL.md",
+        ".github/skills/development/acceptance-evidence/SKILL.md",
+        ".github/skills/development/agent-handoff/SKILL.md",
+        ".github/skills/development/capability-contract/SKILL.md",
+        ".github/skills/development/change-triage/SKILL.md",
+        ".github/skills/development/clarify/SKILL.md",
+        ".github/skills/development/corpus-closeout-delegation/SKILL.md",
+        ".github/skills/development/draft-pr-delivery/SKILL.md",
+        ".github/skills/development/existing-code-integration/SKILL.md",
+        ".github/skills/development/factory-control-plane/SKILL.md",
+        ".github/skills/development/factory-release-readiness/SKILL.md",
+        ".github/skills/development/model-routing/SKILL.md",
+        ".github/skills/development/pr-readiness/SKILL.md",
+        ".github/skills/development/pr-review-response/SKILL.md",
+        ".github/skills/development/pre-commit-review/SKILL.md",
+        ".github/skills/development/verify-by-change-type/SKILL.md",
+        ".github/templates/software-factory/roles/role-capabilities.yaml",
+        ".github/workflows/factory-acceptance.yml",
+        ".github/workflows/factory-draft-pr.yml",
+        ".github/workflows/factory-ordinary-ci.yml",
+        ".github/workflows/factory-policy.yml",
+        ".github/workflows/factory-release.yml",
+        "AGENTS.md",
+        "docs/agents-and-workflow.md",
+        "docs/installation.md",
+        "docs/software-factory.md"
+      ],
+      "diff_budget_override": {
+        "approved_at": "2026-08-26T21:59:28+02:00",
+        "approved_by": "operator",
+        "event_id": "EVT-000028",
+        "max_added_lines": 1268,
+        "max_binary_files": 0,
+        "max_deleted_lines": 410,
+        "max_files": 35,
+        "reason": "Operator-approved exact diff budget for LOT-5 after review of the bounded implementation inventory."
+      },
+      "diff_sha256": "a7700456ab0031d1f03ab123acc6ea626c8275b88c15a5b9ca1fed7304fd9bd7",
+      "effective_max_attempts": 2,
+      "preimplementation_contract": {
+        "algorithm": "sha256-canonical-json-v1",
+        "contract_sha256": "6763ed28577eb092ded01ffd29222772e7e4930fc2b938098292a8cb6a573c4c",
+        "event_id": "EVT-000027",
+        "observed_conventions": [
+          {
+            "examples": [
+              {
+                "bytes": 6117,
+                "path": "doc/_meta/information-sources.yaml",
+                "sha256": "829ba5334b1e1a72e02dcc2dfa6ad1c2a06caa202261c17ed301303d716f0590"
+              }
+            ],
+            "id": "approved-spec-and-repository-conventions",
+            "rule": "Implement only the approved observable contract and preserve observed repository conventions."
+          }
+        ],
+        "plan_sha256": "694952924c26a11a9179a087d496ef05b68f0e21de88a501eff51b67379892d4",
+        "source_revision": "559176a118bc6ea70afc5548c21ccd1ffbb00796"
+      },
+      "refactor_approval": null,
+      "refactor_escalation": null,
+      "reservation_id": "RES-LOT-5",
+      "review": {
+        "actor": {
+          "capabilities": [
+            "read",
+            "execute"
+          ],
+          "capability_grants": [],
+          "execution_id": "LOT-5-reviewer-001",
+          "model": {
+            "model_family": "gpt-5",
+            "planned": "reviewer",
+            "requested": "gpt-5",
+            "used": "gpt-5"
+          },
+          "role": "reviewer"
+        },
+        "event_id": "EVT-000036",
+        "findings": [],
+        "status": "passed",
+        "verdict": "passed"
+      },
+      "status": "integrated",
+      "workspace_snapshot": {
+        "algorithm": "sha256-git-dirty-snapshot-v1",
+        "attestation_mode": "live",
+        "base_revision": "559176a118bc6ea70afc5548c21ccd1ffbb00796",
+        "entries": [],
+        "exclusions": [
+          "doc/spec/1.2.0/software-factory-v3/acceptance/runs",
+          "doc/spec/1.2.0/software-factory-v3/factory/events.v3.jsonl",
+          "doc/spec/1.2.0/software-factory-v3/factory/state.v3.json"
+        ],
+        "snapshot_sha256": "a5d184efa13c422a2007b887bddbe5c9bb1e77e4cdeded0c8585f47ce46e6026",
+        "v": 1,
+        "workspace_id": "611ea7b2b1fcc058a5c9508d30fb35cf7af9d79adacadfdbf0f138a670c525cf",
+        "workspace_mode": "isolated_worktree"
+      }
     },
     "LOT-6": {
-      "attempts": 0,
-      "diff_sha256": null,
-      "reservation_id": null,
-      "review": null,
-      "status": "pending"
+      "attempt_budget_extensions": 0,
+      "attempts": 1,
+      "author": {
+        "execution_id": "LOT-6-author-001",
+        "model": {
+          "model_family": "gpt-5",
+          "planned": "expert",
+          "requested": "gpt-5",
+          "used": "gpt-5"
+        }
+      },
+      "changed_paths": [
+        "README.md",
+        "doc/spec/template/README.md",
+        "doc/spec/template/SUMMARY.md",
+        "doc/spec/template/TECHNICAL_PLAN.md",
+        "doc/spec/template/factory/plan.v3.json",
+        "doc/spec/template/factory/state.v3.json",
+        "examples/demo-corpus/doc/spec/template/JOURNAL.md",
+        "examples/demo-corpus/doc/spec/template/README.md",
+        "examples/demo-corpus/doc/spec/template/SPECIFICATION.md",
+        "examples/demo-corpus/doc/spec/template/SUMMARY.md",
+        "examples/demo-corpus/doc/spec/template/TECHNICAL_PLAN.md",
+        "examples/demo-corpus/doc/spec/template/factory/events.v3.jsonl",
+        "examples/demo-corpus/doc/spec/template/factory/plan.v3.json",
+        "examples/demo-corpus/doc/spec/template/factory/state.v3.json",
+        "package.json",
+        "scripts/cli.mjs",
+        "scripts/lib/upgrade-core.mjs",
+        "scripts/test-upgrade.mjs",
+        "scripts/update-pack.mjs"
+      ],
+      "diff_budget_override": null,
+      "diff_sha256": "fe9630a593ed6f339dd7cb297e4722c49856898d8149fba27dc92b62f008895f",
+      "effective_max_attempts": 2,
+      "preimplementation_contract": {
+        "algorithm": "sha256-canonical-json-v1",
+        "contract_sha256": "d9e247eefb317da7904fc9ba32e3333a4bcc1dc4d205123c19c418e12fe5d51d",
+        "event_id": "EVT-000038",
+        "observed_conventions": [
+          {
+            "examples": [
+              {
+                "bytes": 986,
+                "path": ".github/agents/code-reviewer.agent.md",
+                "sha256": "570f1d5632514e37ff09eda889a2b6fa85b98dfe99da95a56690900c4f4de58f"
+              }
+            ],
+            "id": "approved-spec-and-repository-conventions",
+            "rule": "Implement only the approved observable contract and preserve observed repository conventions."
+          }
+        ],
+        "plan_sha256": "694952924c26a11a9179a087d496ef05b68f0e21de88a501eff51b67379892d4",
+        "source_revision": "559176a118bc6ea70afc5548c21ccd1ffbb00796"
+      },
+      "refactor_approval": null,
+      "refactor_escalation": null,
+      "reservation_id": "RES-LOT-6",
+      "review": {
+        "actor": {
+          "capabilities": [
+            "read",
+            "execute"
+          ],
+          "capability_grants": [],
+          "execution_id": "LOT-6-reviewer-001",
+          "model": {
+            "model_family": "gpt-5",
+            "planned": "reviewer",
+            "requested": "gpt-5",
+            "used": "gpt-5"
+          },
+          "role": "reviewer"
+        },
+        "event_id": "EVT-000042",
+        "findings": [],
+        "status": "passed",
+        "verdict": "passed"
+      },
+      "status": "integrated",
+      "workspace_snapshot": {
+        "algorithm": "sha256-git-dirty-snapshot-v1",
+        "attestation_mode": "live",
+        "base_revision": "559176a118bc6ea70afc5548c21ccd1ffbb00796",
+        "entries": [],
+        "exclusions": [
+          "doc/spec/1.2.0/software-factory-v3/acceptance/runs",
+          "doc/spec/1.2.0/software-factory-v3/factory/events.v3.jsonl",
+          "doc/spec/1.2.0/software-factory-v3/factory/state.v3.json"
+        ],
+        "snapshot_sha256": "774b2e40bcedd93d85680abc758292922f6395190cb65bd1c5a74c6103205064",
+        "v": 1,
+        "workspace_id": "90315c99a6a7970b375b22ad7c13820beccd560926fe85d5f13a5a77b9a5280f",
+        "workspace_mode": "isolated_worktree"
+      }
     }
   },
-  "phase": "plan_approved",
+  "phase": "executing",
   "provenance": {
+    "candidate_binding": null,
     "candidate_sha": null,
+    "consolidated_snapshot": null,
     "evidence_sha": null,
+    "integration_snapshot": null,
     "publication": null,
     "tested_sha": null
   },
-  "ready_lots": [
-    "LOT-1"
-  ],
-  "reservations": {},
-  "run_id": "factory-v3-2026-08-26",
+  "ready_lots": [],
+  "reservations": {
+    "RES-LOT-1": {
+      "basis_event": "EVT-000029",
+      "claims": [
+        {
+          "kind": "exact",
+          "path": "schemas/factory-learning.yaml.schema.yaml"
+        },
+        {
+          "kind": "exact",
+          "path": "scripts/factory-fixtures/catalog.json"
+        },
+        {
+          "kind": "exact",
+          "path": "scripts/test-factory-learning.mjs"
+        },
+        {
+          "kind": "exact",
+          "path": "scripts/test-factory-suite.mjs"
+        }
+      ],
+      "controller_id": "factory-controller-software-factory-v3",
+      "lot_id": "LOT-1",
+      "reservation_id": "RES-LOT-1",
+      "status": "released"
+    },
+    "RES-LOT-2": {
+      "basis_event": "EVT-000010",
+      "claims": [
+        {
+          "kind": "prefix",
+          "path": "schemas/factory/v3"
+        },
+        {
+          "kind": "prefix",
+          "path": "scripts/lib/factory-v3"
+        },
+        {
+          "kind": "exact",
+          "path": "scripts/factory-control.mjs"
+        },
+        {
+          "kind": "exact",
+          "path": "scripts/migrate-factory-v1-to-v3.mjs"
+        },
+        {
+          "kind": "exact",
+          "path": "scripts/test-factory-v3.mjs"
+        },
+        {
+          "kind": "exact",
+          "path": "scripts/validate-factory.mjs"
+        },
+        {
+          "kind": "prefix",
+          "path": "scripts/factory-fixtures/v3"
+        }
+      ],
+      "controller_id": "factory-controller-software-factory-v3",
+      "lot_id": "LOT-2",
+      "reservation_id": "RES-LOT-2",
+      "status": "released"
+    },
+    "RES-LOT-3": {
+      "basis_event": "EVT-000010",
+      "claims": [
+        {
+          "kind": "prefix",
+          "path": ".github/skills/sources"
+        },
+        {
+          "kind": "prefix",
+          "path": ".github/skills/actionable"
+        },
+        {
+          "kind": "prefix",
+          "path": ".github/skills/continuous"
+        },
+        {
+          "kind": "prefix",
+          "path": ".github/skills/exploration"
+        },
+        {
+          "kind": "prefix",
+          "path": ".github/skills/foundations"
+        },
+        {
+          "kind": "prefix",
+          "path": ".github/skills/governance"
+        },
+        {
+          "kind": "prefix",
+          "path": ".github/skills/modes"
+        },
+        {
+          "kind": "exact",
+          "path": ".github/templates/prod-knowledge/production-discovery-report-template.md"
+        },
+        {
+          "kind": "exact",
+          "path": "schemas/README.md"
+        },
+        {
+          "kind": "exact",
+          "path": "schemas/source-contract.yaml.schema.yaml"
+        },
+        {
+          "kind": "exact",
+          "path": "schemas/source-coverage.yaml.schema.yaml"
+        },
+        {
+          "kind": "exact",
+          "path": "schemas/runtime-source-observation.schema.yaml"
+        },
+        {
+          "kind": "prefix",
+          "path": "scripts/runtime-source-fixtures"
+        },
+        {
+          "kind": "exact",
+          "path": "scripts/check-runtime-sources.mjs"
+        },
+        {
+          "kind": "exact",
+          "path": "scripts/test-runtime-sources.mjs"
+        },
+        {
+          "kind": "exact",
+          "path": "scripts/validate-corpus.mjs"
+        },
+        {
+          "kind": "exact",
+          "path": "scripts/build-corpus-site.mjs"
+        },
+        {
+          "kind": "exact",
+          "path": "docs/continuous-enrichment.md"
+        },
+        {
+          "kind": "exact",
+          "path": "docs/sources-and-mcp.md"
+        },
+        {
+          "kind": "exact",
+          "path": "examples/demo-corpus/doc/CORPUS_MANIFEST.md"
+        },
+        {
+          "kind": "exact",
+          "path": "examples/demo-corpus/doc/CORPUS_MAP.md"
+        },
+        {
+          "kind": "exact",
+          "path": "examples/demo-corpus/doc/README.md"
+        },
+        {
+          "kind": "exact",
+          "path": "examples/demo-corpus/doc/_agents/operator-onboarding.md"
+        },
+        {
+          "kind": "exact",
+          "path": "examples/demo-corpus/doc/_indexes/by-source.md"
+        },
+        {
+          "kind": "prefix",
+          "path": "examples/demo-corpus/doc/_meta"
+        },
+        {
+          "kind": "prefix",
+          "path": "examples/demo-corpus/doc/_roadmap"
+        },
+        {
+          "kind": "prefix",
+          "path": "examples/demo-corpus/doc/_runs"
+        },
+        {
+          "kind": "prefix",
+          "path": "examples/demo-corpus/doc/mcp"
+        },
+        {
+          "kind": "prefix",
+          "path": "examples/demo-corpus/doc/prod/snapshots"
+        },
+        {
+          "kind": "prefix",
+          "path": "examples/demo-corpus/doc/project/activity"
+        }
+      ],
+      "controller_id": "factory-controller-software-factory-v3",
+      "lot_id": "LOT-3",
+      "reservation_id": "RES-LOT-3",
+      "status": "released"
+    },
+    "RES-LOT-4": {
+      "basis_event": "EVT-000021",
+      "claims": [
+        {
+          "kind": "prefix",
+          "path": ".github/templates/software-factory/acceptance"
+        },
+        {
+          "kind": "prefix",
+          "path": ".github/templates/software-factory/delivery"
+        },
+        {
+          "kind": "prefix",
+          "path": ".github/templates/software-factory/environment"
+        },
+        {
+          "kind": "prefix",
+          "path": "scripts/lib/factory-delivery"
+        },
+        {
+          "kind": "prefix",
+          "path": "scripts/adapters"
+        },
+        {
+          "kind": "exact",
+          "path": "scripts/test-factory-delivery.mjs"
+        },
+        {
+          "kind": "prefix",
+          "path": "scripts/fixtures/factory-delivery"
+        },
+        {
+          "kind": "exact",
+          "path": "scripts/validate-delivery.mjs"
+        },
+        {
+          "kind": "exact",
+          "path": "scripts/factory-preflight.mjs"
+        },
+        {
+          "kind": "exact",
+          "path": "scripts/factory-acceptance.mjs"
+        },
+        {
+          "kind": "exact",
+          "path": "scripts/factory-workflow-context.mjs"
+        },
+        {
+          "kind": "exact",
+          "path": "scripts/factory-evidence.mjs"
+        },
+        {
+          "kind": "exact",
+          "path": "scripts/factory-report.mjs"
+        },
+        {
+          "kind": "exact",
+          "path": "scripts/factory-pr.mjs"
+        },
+        {
+          "kind": "exact",
+          "path": "scripts/factory-actions-attestation.mjs"
+        },
+        {
+          "kind": "exact",
+          "path": "scripts/factory-ci-check.mjs"
+        },
+        {
+          "kind": "exact",
+          "path": "scripts/factory-release.mjs"
+        },
+        {
+          "kind": "exact",
+          "path": "scripts/factory-stage-evidence.mjs"
+        },
+        {
+          "kind": "exact",
+          "path": "schemas/acceptance-plan.yaml.schema.yaml"
+        },
+        {
+          "kind": "exact",
+          "path": "schemas/acceptance-results.yaml.schema.yaml"
+        },
+        {
+          "kind": "exact",
+          "path": "schemas/environment-contract.yaml.schema.yaml"
+        },
+        {
+          "kind": "exact",
+          "path": "schemas/environment-observation.yaml.schema.yaml"
+        },
+        {
+          "kind": "exact",
+          "path": "schemas/evidence-manifest.yaml.schema.yaml"
+        },
+        {
+          "kind": "exact",
+          "path": "schemas/factory-ci.yaml.schema.yaml"
+        },
+        {
+          "kind": "exact",
+          "path": "schemas/pr-draft.yaml.schema.yaml"
+        }
+      ],
+      "controller_id": "factory-controller-software-factory-v3",
+      "lot_id": "LOT-4",
+      "reservation_id": "RES-LOT-4",
+      "status": "released"
+    },
+    "RES-LOT-5": {
+      "basis_event": "EVT-000029",
+      "claims": [
+        {
+          "kind": "prefix",
+          "path": ".github/agents"
+        },
+        {
+          "kind": "prefix",
+          "path": ".github/skills/development"
+        },
+        {
+          "kind": "exact",
+          "path": ".github/skills/authoring/implement-spec/SKILL.md"
+        },
+        {
+          "kind": "exact",
+          "path": ".github/skills/authoring/implementation-guard/SKILL.md"
+        },
+        {
+          "kind": "exact",
+          "path": ".github/skills/SKILLS_MAP.md"
+        },
+        {
+          "kind": "exact",
+          "path": ".github/copilot-instructions.md"
+        },
+        {
+          "kind": "prefix",
+          "path": ".github/workflows"
+        },
+        {
+          "kind": "prefix",
+          "path": ".github/templates/software-factory/roles"
+        },
+        {
+          "kind": "exact",
+          "path": "docs/agents-and-workflow.md"
+        },
+        {
+          "kind": "exact",
+          "path": "docs/factory-design-notes.md"
+        },
+        {
+          "kind": "exact",
+          "path": "docs/installation.md"
+        },
+        {
+          "kind": "exact",
+          "path": "docs/software-factory.md"
+        },
+        {
+          "kind": "exact",
+          "path": "docs/standards.md"
+        },
+        {
+          "kind": "exact",
+          "path": "AGENTS.md"
+        }
+      ],
+      "controller_id": "factory-controller-software-factory-v3",
+      "lot_id": "LOT-5",
+      "reservation_id": "RES-LOT-5",
+      "status": "released"
+    },
+    "RES-LOT-6": {
+      "basis_event": "EVT-000039",
+      "claims": [
+        {
+          "kind": "prefix",
+          "path": "doc/spec/template"
+        },
+        {
+          "kind": "prefix",
+          "path": "examples/demo-corpus/doc/spec/template"
+        },
+        {
+          "kind": "exact",
+          "path": "schemas/corpus-paths.yaml"
+        },
+        {
+          "kind": "exact",
+          "path": "schemas/corpus-state.yaml.template"
+        },
+        {
+          "kind": "exact",
+          "path": "scripts/cli.mjs"
+        },
+        {
+          "kind": "exact",
+          "path": "scripts/lib/upgrade-core.mjs"
+        },
+        {
+          "kind": "exact",
+          "path": "scripts/test-upgrade.mjs"
+        },
+        {
+          "kind": "exact",
+          "path": "scripts/update-pack.mjs"
+        },
+        {
+          "kind": "exact",
+          "path": "README.md"
+        },
+        {
+          "kind": "exact",
+          "path": "package.json"
+        },
+        {
+          "kind": "exact",
+          "path": "PACK_VERSION"
+        }
+      ],
+      "controller_id": "factory-controller-software-factory-v3",
+      "lot_id": "LOT-6",
+      "reservation_id": "RES-LOT-6",
+      "status": "released"
+    }
+  },
+  "reviews": {
+    "consolidated": null,
+    "release": null
+  },
+  "run_id": "software-factory-v3-2026-08-26",
+  "run_mode": "live",
   "v": 3
 }

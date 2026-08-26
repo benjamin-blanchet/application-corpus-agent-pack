@@ -59,14 +59,24 @@ export function invalidateState(state, classes, reason, affectedLots = [], plan 
   const invalidatesImplementation = invalidatesAllLots || normalized.includes('implementation');
   if (invalidatesImplementation) {
     const target = affectedLots.length ? transitiveDependents(affectedLots, plan) : null;
+    const runningLots = new Set();
     for (const [lotId, lot] of Object.entries(state.lots)) {
       if (!target || target.has(lotId) || invalidatesAllLots) {
-        if (lot.status !== 'pending') lot.status = 'stale';
+        // A running worker remains the sole owner of its reservation until it
+        // reports a typed terminal result or the controller records recovery.
+        // Reclassifying it as stale here would make the same paths schedulable
+        // in parallel while the original worker can still write to them.
+        if (lot.status === 'running') runningLots.add(lotId);
+        else if (lot.status !== 'pending') lot.status = 'stale';
         if (lot.review) lot.review.status = 'stale';
       }
     }
     for (const reservation of Object.values(state.reservations)) {
-      if (reservation.status === 'active' && (!target || target.has(reservation.lot_id) || invalidatesAllLots)) reservation.status = 'stale';
+      if (
+        reservation.status === 'active'
+        && !runningLots.has(reservation.lot_id)
+        && (!target || target.has(reservation.lot_id) || invalidatesAllLots)
+      ) reservation.status = 'stale';
     }
   }
   return gates;

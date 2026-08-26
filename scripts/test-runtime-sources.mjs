@@ -17,7 +17,25 @@ import {
 } from './check-runtime-sources.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const repoRoot = path.resolve(here, '..');
+
+function argumentValue(name) {
+  const exact = process.argv.indexOf(name);
+  if (exact >= 0) return process.argv[exact + 1] || null;
+  const prefixed = process.argv.find((value) => value.startsWith(`${name}=`));
+  return prefixed ? prefixed.slice(name.length + 1) : null;
+}
+
+const requestedRoot = path.resolve(argumentValue('--root') || path.resolve(here, '..'));
+const repoRoot = fs.realpathSync(requestedRoot);
+if (requestedRoot !== repoRoot || !fs.statSync(repoRoot).isDirectory()) {
+  throw new Error('--root must be a real directory without symbolic-link indirection');
+}
+const portable = process.argv.includes('--portable');
+const learningTestsArg = process.argv.indexOf('--learning-tests-json');
+const selectedLearningTests = learningTestsArg >= 0
+  ? new Set(JSON.parse(process.argv[learningTestsArg + 1] || '[]'))
+  : null;
+const discoveredLearningTests = new Set();
 const script = path.join(here, 'check-runtime-sources.mjs');
 const fixtures = path.join(here, 'runtime-source-fixtures');
 const contractText = fs.readFileSync(path.join(repoRoot, 'doc/_meta/information-sources.yaml'), 'utf8');
@@ -30,6 +48,8 @@ function assert(condition, message) {
 }
 
 function test(name, fn) {
+  discoveredLearningTests.add(name);
+  if (selectedLearningTests && !selectedLearningTests.has(name)) return;
   ran += 1;
   try {
     fn();
@@ -91,6 +111,47 @@ test('durable-state-scanner-catches-yaml-and-json-runtime-bypasses', () => {
   assert(hasGlobalRuntimeObservation(json), 'JSON global observation bypassed scanner');
   assert(hasGlobalRuntimeObservation('observed_at: 2026-08-26T12:00:00Z\nobservations:\n  []\n'), 'YAML global observation bypassed scanner');
   assert(!hasGlobalRuntimeObservation(fs.readFileSync(path.join(repoRoot, 'doc/_meta/source-coverage.yaml'), 'utf8')), 'historical coverage was mistaken for current runtime state');
+});
+
+test('durable-state-scanner-normalizes-camel-case-and-separator-free-aliases', () => {
+  const yaml = fs.readFileSync(path.join(fixtures, 'durable-runtime-aliases.yaml'), 'utf8');
+  const yamlFields = findForbiddenDurableRuntimeFields(yaml);
+  for (const field of [
+    'current_availability',
+    'current_source_capabilities',
+    'runtime_transport_state',
+    'runtime_adapter_observation',
+    'github_mcp_status',
+    'server_running',
+  ]) {
+    assert(yamlFields.includes(field), `YAML alias ${field} bypassed durable scanner: ${yamlFields.join(', ')}`);
+  }
+
+  const json = fs.readFileSync(path.join(fixtures, 'durable-runtime-aliases.json'), 'utf8');
+  const jsonFields = findForbiddenDurableRuntimeFields(json);
+  for (const field of ['current_availability', 'currentavailability', 'runtime_transport_state', 'runtimeadapterobservation', 'tools_attached_to_agent', 'authentication_status']) {
+    assert(jsonFields.includes(field), `JSON alias ${field} bypassed durable scanner: ${jsonFields.join(', ')}`);
+  }
+});
+
+test('durable-state-scanner-allows-historical-and-contractual-vocabulary', () => {
+  for (const fixture of ['durable-source-history-vocabulary.yaml', 'durable-source-history-vocabulary.json']) {
+    const history = fs.readFileSync(path.join(fixtures, fixture), 'utf8');
+    const fields = findForbiddenDurableRuntimeFields(history);
+    assert(fields.length === 0, `${fixture} historical or contractual vocabulary was mistaken for current runtime state: ${fields.join(', ')}`);
+  }
+  const durableContractFiles = [
+    'doc/_meta/information-sources.yaml',
+    'doc/_meta/source-coverage.yaml',
+  ];
+  if (!portable) durableContractFiles.push(
+    'examples/demo-corpus/doc/_meta/information-sources.yaml',
+    'examples/demo-corpus/doc/_meta/source-coverage.yaml',
+  );
+  for (const relative of durableContractFiles) {
+    const fields = findForbiddenDurableRuntimeFields(fs.readFileSync(path.join(repoRoot, relative), 'utf8'));
+    assert(fields.length === 0, `${relative} produced false positives: ${fields.join(', ')}`);
+  }
 });
 
 test('transport-semantics-priority-fallback-and-consent-are-explicit', () => {
@@ -237,7 +298,7 @@ test('source-coverage-denies-runtime-fields-and-incomplete-target-evidence', () 
   assert(errors.some((error) => error.includes('target requires evidence_refs')), 'covered target without evidence passed');
 });
 
-test('demo-source-contract-coverage-run-and-human-view-stay-in-parity', () => {
+if (!portable) test('demo-source-contract-coverage-run-and-human-view-stay-in-parity', () => {
   const demoRoot = path.join(repoRoot, 'examples/demo-corpus');
   const demoDoc = path.join(demoRoot, 'doc');
   const demoContract = parseSourceContracts(fs.readFileSync(path.join(demoDoc, '_meta/information-sources.yaml'), 'utf8'));
@@ -299,7 +360,7 @@ test('cli-prints-plan-and-never-creates-global-runtime-state', () => {
   }
 });
 
-test('dashboard-separates-contract-lifecycle-from-historical-coverage', () => {
+if (!portable) test('dashboard-separates-contract-lifecycle-from-historical-coverage', () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'runtime-source-dashboard-'));
   try {
     const out = path.join(tmp, 'demo.html');
@@ -347,6 +408,16 @@ test('implementation-has-no-filesystem-write-api', () => {
   const source = fs.readFileSync(script, 'utf8');
   assert(!/writeFile|appendFile|createWriteStream/.test(source), 'runtime checker contains a filesystem write path');
 });
+
+if (selectedLearningTests) {
+  for (const name of selectedLearningTests) {
+    if (!discoveredLearningTests.has(name)) {
+      failed += 1;
+      console.log(`FAIL  ${name}`);
+      console.log('        requested learning fixture test is not registered');
+    }
+  }
+}
 
 console.log(`\n${ran - failed}/${ran} passing`);
 process.exitCode = failed > 0 ? 1 : 0;

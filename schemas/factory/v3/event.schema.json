@@ -12,119 +12,174 @@
     "event_id": { "type": "string", "pattern": "^EVT-[0-9]{6,}$" },
     "type": {
       "enum": [
-        "package_initialized", "legacy_v1_imported",
-        "spec_proposed", "spec_approved", "plan_proposed", "plan_approved", "execution_policy_resolved",
-        "wave_reserved", "lot_started", "lot_result_reported", "lot_reviewed", "lot_integrated", "lot_blocked", "reservation_released",
-        "integration_verified", "consolidated_reviewed", "corpus_closed", "candidate_frozen",
-        "acceptance_started", "acceptance_completed", "acceptance_waived", "evidence_committed", "release_reviewed",
-        "draft_pr_planned", "draft_pr_created", "artifact_change_observed", "controller_recovery_approved"
+        "package_initialized", "legacy_v1_imported", "spec_proposed", "spec_approved", "plan_proposed", "plan_approved", "execution_policy_resolved",
+        "lot_conventions_observed", "wave_reserved", "attempt_budget_extended", "diff_budget_overridden", "refactor_approved", "lot_started", "lot_result_reported", "lot_reviewed", "lot_integrated", "lot_blocked", "reservation_released",
+        "integration_verified", "consolidated_reviewed", "corpus_closed", "candidate_frozen", "acceptance_started", "acceptance_completed", "acceptance_waived",
+        "evidence_committed", "release_reviewed", "draft_pr_planned", "draft_pr_created", "artifact_change_observed", "controller_recovery_approved"
       ]
     },
     "at": { "type": "string", "format": "date-time" },
     "controller_id": { "type": "string", "minLength": 1 },
     "expected_previous_seq": { "type": "integer", "minimum": 0 },
-    "previous_event_sha256": { "oneOf": [{ "const": "GENESIS" }, { "type": "string", "pattern": "^[0-9a-f]{64}$" }] },
+    "previous_event_sha256": { "oneOf": [{ "const": "GENESIS" }, { "$ref": "#/$defs/sha256" }] },
     "actor": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["role", "execution_id", "model", "capabilities"],
+      "type": "object", "additionalProperties": false, "required": ["role", "execution_id", "model", "capabilities"],
       "properties": {
         "role": { "enum": ["controller", "implementer", "reviewer", "acceptance", "delivery", "migration"] },
         "execution_id": { "type": "string", "minLength": 1 },
-        "capabilities": {
+        "capabilities": { "type": "array", "uniqueItems": true, "items": { "enum": ["read", "write", "execute", "network", "open_pr", "data_mutation"] } },
+        "capability_grants": {
+          "description": "Reserved for a future machine-verifying isolated-executor integration. The shipped V3 control plane accepts only an empty array and never treats approvals, environment gates or receipt strings as grants.",
           "type": "array",
-          "items": { "enum": ["read", "write", "execute", "network", "open_pr", "data_mutation"] },
-          "uniqueItems": true
+          "maxItems": 0
         },
-        "model": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["planned", "requested", "used"],
-          "properties": {
-            "planned": { "type": ["string", "null"] },
-            "requested": { "type": ["string", "null"] },
-            "used": { "type": ["string", "null"] }
-          }
-        }
+        "model": { "type": "object", "additionalProperties": false, "required": ["planned", "requested", "used", "model_family"], "properties": { "planned": { "type": ["string", "null"] }, "requested": { "type": ["string", "null"] }, "used": { "type": ["string", "null"] }, "model_family": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$" } } }
       }
     },
     "subject": { "type": "object", "additionalProperties": false, "required": ["package", "lot_id"], "properties": { "package": { "type": "string", "minLength": 1 }, "lot_id": { "type": ["string", "null"] } } },
-    "basis": { "type": "object", "additionalProperties": false, "properties": { "spec_sha256": { "type": ["string", "null"], "pattern": "^[0-9a-f]{64}$" }, "plan_sha256": { "type": ["string", "null"], "pattern": "^[0-9a-f]{64}$" }, "candidate_sha": { "type": ["string", "null"], "pattern": "^([0-9a-f]{40}|[0-9a-f]{64})$" }, "diff_sha256": { "type": ["string", "null"], "pattern": "^[0-9a-f]{64}$" } } },
+    "basis": { "type": "object", "additionalProperties": false, "properties": { "spec_sha256": { "$ref": "#/$defs/nullableSha256" }, "plan_sha256": { "$ref": "#/$defs/nullableSha256" }, "candidate_sha": { "$ref": "#/$defs/nullableGitSha" }, "diff_sha256": { "$ref": "#/$defs/nullableSha256" } } },
     "data": { "type": "object" }
   },
-  "allOf": [
-    {
-      "if": { "properties": { "type": { "const": "draft_pr_planned" } }, "required": ["type"] },
-      "then": { "properties": { "data": { "$ref": "#/$defs/draftPrPlan" } } }
-    },
-    {
-      "if": { "properties": { "type": { "const": "draft_pr_created" } }, "required": ["type"] },
-      "then": { "properties": { "data": { "$ref": "#/$defs/draftPrResult" } } }
-    },
-    {
-      "if": { "properties": { "type": { "const": "evidence_committed" } }, "required": ["type"] },
-      "then": { "properties": { "data": { "$ref": "#/$defs/evidencePublication" } } }
-    }
+  "oneOf": [
+    { "$ref": "#/$defs/eventPackageInitialized" }, { "$ref": "#/$defs/eventLegacyV1Imported" },
+    { "$ref": "#/$defs/eventSpecProposed" }, { "$ref": "#/$defs/eventSpecApproved" }, { "$ref": "#/$defs/eventPlanProposed" }, { "$ref": "#/$defs/eventPlanApproved" },
+    { "$ref": "#/$defs/eventExecutionPolicyResolved" }, { "$ref": "#/$defs/eventLotConventionsObserved" }, { "$ref": "#/$defs/eventWaveReserved" }, { "$ref": "#/$defs/eventAttemptBudgetExtended" }, { "$ref": "#/$defs/eventDiffBudgetOverridden" }, { "$ref": "#/$defs/eventRefactorApproved" },
+    { "$ref": "#/$defs/eventLotStarted" }, { "$ref": "#/$defs/eventLotResultReported" }, { "$ref": "#/$defs/eventLotReviewed" }, { "$ref": "#/$defs/eventLotIntegrated" },
+    { "$ref": "#/$defs/eventLotBlocked" }, { "$ref": "#/$defs/eventReservationReleased" }, { "$ref": "#/$defs/eventIntegrationVerified" },
+    { "$ref": "#/$defs/eventConsolidatedReviewed" }, { "$ref": "#/$defs/eventCorpusClosed" }, { "$ref": "#/$defs/eventCandidateFrozen" },
+    { "$ref": "#/$defs/eventAcceptanceStarted" }, { "$ref": "#/$defs/eventAcceptanceCompleted" }, { "$ref": "#/$defs/eventAcceptanceWaived" },
+    { "$ref": "#/$defs/eventEvidenceCommitted" }, { "$ref": "#/$defs/eventReleaseReviewed" }, { "$ref": "#/$defs/eventDraftPrPlanned" },
+    { "$ref": "#/$defs/eventDraftPrCreated" }, { "$ref": "#/$defs/eventArtifactChangeObserved" }, { "$ref": "#/$defs/eventControllerRecoveryApproved" }
   ],
   "$defs": {
-    "draftActions": {
-      "type": "array",
-      "minItems": 1,
-      "uniqueItems": true,
-      "items": { "enum": ["open_draft_pr", "update_draft_pr"] }
-    },
-    "draftPrPlan": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["draft", "actions", "candidate_sha", "payload_sha256"],
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "nullableSha256": { "type": ["string", "null"], "pattern": "^[0-9a-f]{64}$" },
+    "gitSha": { "type": "string", "pattern": "^([0-9a-f]{40}|[0-9a-f]{64})$" },
+    "nullableGitSha": { "type": ["string", "null"], "pattern": "^([0-9a-f]{40}|[0-9a-f]{64})$" },
+    "repoPath": { "type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!\\./)[^*?\\[\\]\\\\]+$" },
+    "empty": { "type": "object", "additionalProperties": false, "maxProperties": 0 },
+    "reasonOnly": { "type": "object", "additionalProperties": false, "required": ["reason"], "properties": { "reason": { "type": "string", "minLength": 1 } } },
+    "approvalWithReason": { "type": "object", "additionalProperties": false, "required": ["reason", "approved_by", "approved_at"], "properties": { "reason": { "type": "string", "minLength": 1 }, "approved_by": { "type": "string", "minLength": 1 }, "approved_at": { "type": "string", "format": "date-time" } } },
+    "packageInitialized": { "type": "object", "additionalProperties": false, "required": ["schema_version", "run_mode"], "properties": { "schema_version": { "const": 3 }, "run_mode": { "enum": ["live", "retrospective_attestation"] } } },
+    "legacyV1Imported": {
+      "type": "object", "additionalProperties": false, "required": ["source", "snapshot", "legacy_paths", "migration_status", "blockers"],
       "properties": {
-        "draft": { "const": true },
-        "actions": { "$ref": "#/$defs/draftActions" },
-        "candidate_sha": { "type": "string", "pattern": "^([0-9a-f]{40}|[0-9a-f]{64})$" },
-        "payload_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+        "source": { "type": "object", "additionalProperties": false, "required": ["factory_state_sha256", "technical_plan_sha256"], "properties": { "factory_state_sha256": { "$ref": "#/$defs/sha256" }, "technical_plan_sha256": { "$ref": "#/$defs/sha256" } } },
+        "snapshot": { "$ref": "#/$defs/legacySnapshot" },
+        "legacy_paths": { "type": "object", "additionalProperties": { "type": "array", "items": { "type": "string", "minLength": 1 } } },
+        "migration_status": { "const": "review_required" },
+        "blockers": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
       }
     },
-    "draftPrResult": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["draft", "actions", "candidate_sha", "pr_url"],
+    "legacySnapshot": {
+      "type": "object", "additionalProperties": false, "required": ["version", "state", "spec", "technical_plan", "execution_policy", "gates", "lots", "tested_code_sha", "evidence_commit_sha"],
       "properties": {
-        "draft": { "const": true },
-        "actions": { "$ref": "#/$defs/draftActions" },
-        "candidate_sha": { "type": "string", "pattern": "^([0-9a-f]{40}|[0-9a-f]{64})$" },
-        "pr_url": { "type": "string", "pattern": "^https://" }
+        "version": { "const": 1 }, "state": { "type": "string", "minLength": 1 },
+        "spec": { "$ref": "#/$defs/legacyApproval" }, "technical_plan": { "$ref": "#/$defs/legacyApproval" },
+        "execution_policy": { "type": "object", "additionalProperties": false, "required": ["mode", "catalogue_observed_at", "advanced_model", "bounded_implementation_model", "reviewer_model"], "properties": { "mode": { "$ref": "#/$defs/nullableString" }, "catalogue_observed_at": { "$ref": "#/$defs/nullableString" }, "advanced_model": { "$ref": "#/$defs/nullableString" }, "bounded_implementation_model": { "$ref": "#/$defs/nullableString" }, "reviewer_model": { "$ref": "#/$defs/nullableString" } } },
+        "gates": { "type": "object", "additionalProperties": false, "required": ["implementation", "consolidated_review", "corpus_closeout", "acceptance", "final_release_readiness"], "properties": { "implementation": { "$ref": "#/$defs/nullableString" }, "consolidated_review": { "$ref": "#/$defs/nullableString" }, "corpus_closeout": { "$ref": "#/$defs/nullableString" }, "acceptance": { "$ref": "#/$defs/nullableString" }, "final_release_readiness": { "$ref": "#/$defs/nullableString" } } },
+        "lots": { "type": "object", "additionalProperties": { "type": "object", "additionalProperties": false, "required": ["status", "model_planned", "model_requested", "model_used"], "properties": { "status": { "$ref": "#/$defs/nullableString" }, "model_planned": { "$ref": "#/$defs/nullableString" }, "model_requested": { "$ref": "#/$defs/nullableString" }, "model_used": { "$ref": "#/$defs/nullableString" } } } },
+        "tested_code_sha": { "$ref": "#/$defs/nullableGitSha" }, "evidence_commit_sha": { "$ref": "#/$defs/nullableGitSha" }
       }
     },
-    "evidencePublication": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["evidence_manifest_path", "evidence_manifest_sha256", "publication"],
-      "properties": {
-        "evidence_manifest_path": { "type": "string", "minLength": 1 },
-        "evidence_manifest_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
-        "evidence_sha": { "type": "string", "pattern": "^([0-9a-f]{40}|[0-9a-f]{64})$" },
-        "publication": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["mode"],
-          "properties": {
-            "mode": { "enum": ["ci_artifact", "evidence_only_commit"] },
-            "artifact_locator": { "type": "string", "minLength": 1 },
-            "artifact_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
-            "media_type": { "type": "string", "minLength": 1 }
-          }
-        }
-      },
-      "allOf": [
-        {
-          "if": { "properties": { "publication": { "properties": { "mode": { "const": "ci_artifact" } }, "required": ["mode"] } } },
-          "then": {
-            "not": { "required": ["evidence_sha"] },
-            "properties": { "publication": { "required": ["mode", "artifact_locator", "artifact_digest", "media_type"] } }
-          },
-          "else": { "required": ["evidence_sha"] }
-        }
-      ]
-    }
+    "nullableString": { "type": ["string", "null"] },
+    "legacyApproval": { "type": "object", "additionalProperties": false, "required": ["status", "approved_by", "approved_at"], "properties": { "status": { "$ref": "#/$defs/nullableString" }, "approved_by": { "$ref": "#/$defs/nullableString" }, "approved_at": { "$ref": "#/$defs/nullableString" } } },
+    "specProposal": { "type": "object", "additionalProperties": false, "required": ["spec_sha256"], "properties": { "spec_sha256": { "$ref": "#/$defs/sha256" } } },
+    "specApproval": { "type": "object", "additionalProperties": false, "required": ["spec_sha256", "approved_by", "approved_at"], "properties": { "spec_sha256": { "$ref": "#/$defs/sha256" }, "approved_by": { "type": "string", "minLength": 1 }, "approved_at": { "type": "string", "format": "date-time" } } },
+    "planProposal": { "type": "object", "additionalProperties": false, "required": ["plan_sha256"], "properties": { "plan_sha256": { "$ref": "#/$defs/sha256" } } },
+    "planApproval": { "type": "object", "additionalProperties": false, "required": ["plan_sha256", "approved_by", "approved_at"], "properties": { "plan_sha256": { "$ref": "#/$defs/sha256" }, "approved_by": { "type": "string", "minLength": 1 }, "approved_at": { "type": "string", "format": "date-time" } } },
+    "modelFamilyMap": { "type": "object", "additionalProperties": false, "required": ["economy", "standard", "expert", "reviewer"], "properties": { "economy": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$" }, "standard": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$" }, "expert": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$" }, "reviewer": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$" } } },
+    "executionPolicy": { "type": "object", "additionalProperties": false, "required": ["mode", "observed_at", "models", "model_families"], "properties": { "mode": { "enum": ["balanced", "maximum_quality", "economical", "manual"] }, "observed_at": { "type": "string", "format": "date-time" }, "models": { "type": "object", "additionalProperties": false, "required": ["economy", "standard", "expert", "reviewer"], "properties": { "economy": { "type": "string", "minLength": 1 }, "standard": { "type": "string", "minLength": 1 }, "expert": { "type": "string", "minLength": 1 }, "reviewer": { "type": "string", "minLength": 1 } } }, "model_families": { "$ref": "#/$defs/modelFamilyMap" } } },
+    "preimplementationConventionContract": { "type": "object", "additionalProperties": false, "required": ["algorithm", "source_revision", "observed_conventions", "contract_sha256"], "properties": { "algorithm": { "const": "sha256-canonical-json-v1" }, "source_revision": { "$ref": "#/$defs/gitSha" }, "observed_conventions": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/observedConvention" } }, "contract_sha256": { "$ref": "#/$defs/sha256" } } },
+    "waveReserved": { "type": "object", "additionalProperties": false, "required": ["reservations"], "properties": { "reservations": { "type": "array", "minItems": 1, "items": { "type": "object", "additionalProperties": false, "required": ["reservation_id", "lot_id"], "properties": { "reservation_id": { "type": "string", "minLength": 1 }, "lot_id": { "type": "string", "minLength": 1 } } } } } },
+    "reservationReference": { "type": "object", "additionalProperties": false, "required": ["reservation_id"], "properties": { "reservation_id": { "type": "string", "minLength": 1 } } },
+    "workspaceEntry": { "oneOf": [{ "type": "object", "additionalProperties": false, "required": ["path", "origin", "status", "sha256"], "properties": { "path": { "$ref": "#/$defs/repoPath" }, "origin": { "enum": ["tracked", "untracked"] }, "status": { "const": "present" }, "sha256": { "$ref": "#/$defs/sha256" } } }, { "type": "object", "additionalProperties": false, "required": ["path", "origin", "status"], "properties": { "path": { "$ref": "#/$defs/repoPath" }, "origin": { "const": "tracked" }, "status": { "const": "deleted" }, "sha256": { "type": "null" } } }] },
+    "workspaceSnapshot": { "type": "object", "additionalProperties": false, "required": ["v", "algorithm", "workspace_id", "workspace_mode", "attestation_mode", "base_revision", "exclusions", "entries", "snapshot_sha256"], "properties": { "v": { "const": 1 }, "algorithm": { "const": "sha256-git-dirty-snapshot-v1" }, "workspace_id": { "$ref": "#/$defs/sha256" }, "workspace_mode": { "enum": ["repository", "isolated_worktree"] }, "attestation_mode": { "enum": ["live", "retrospective_attestation"] }, "base_revision": { "$ref": "#/$defs/gitSha" }, "exclusions": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/repoPath" } }, "entries": { "type": "array", "items": { "$ref": "#/$defs/workspaceEntry" } }, "snapshot_sha256": { "$ref": "#/$defs/sha256" } } },
+    "changeMetrics": { "type": "object", "additionalProperties": false, "required": ["algorithm", "files", "added_lines", "deleted_lines", "binary_files"], "properties": { "algorithm": { "const": "git-numstat-plus-untracked-v1" }, "files": { "type": "integer", "minimum": 0 }, "added_lines": { "type": "integer", "minimum": 0 }, "deleted_lines": { "type": "integer", "minimum": 0 }, "binary_files": { "type": "integer", "minimum": 0 } } },
+    "diffBudgetProof": { "type": "object", "additionalProperties": false, "required": ["source", "max_files", "max_added_lines", "max_deleted_lines", "max_binary_files", "override_event_id"], "properties": { "source": { "enum": ["policy_default", "operator_override"] }, "max_files": { "type": "integer", "minimum": 1 }, "max_added_lines": { "type": "integer", "minimum": 1 }, "max_deleted_lines": { "type": "integer", "minimum": 1 }, "max_binary_files": { "type": "integer", "minimum": 0 }, "override_event_id": { "type": ["string", "null"], "pattern": "^EVT-[0-9]{6,}$" } } },
+    "workspaceDelta": { "type": "object", "additionalProperties": false, "required": ["algorithm", "from_snapshot_sha256", "to_snapshot", "files_sha256", "metrics", "budget"], "properties": { "algorithm": { "const": "sha256-git-workspace-delta-v1" }, "from_snapshot_sha256": { "$ref": "#/$defs/sha256" }, "to_snapshot": { "$ref": "#/$defs/workspaceSnapshot" }, "files_sha256": { "$ref": "#/$defs/sha256" }, "metrics": { "$ref": "#/$defs/changeMetrics" }, "budget": { "$ref": "#/$defs/diffBudgetProof" } } },
+    "lotStarted": { "type": "object", "additionalProperties": false, "required": ["reservation_id", "workspace_snapshot"], "properties": { "reservation_id": { "type": "string", "minLength": 1 }, "workspace_snapshot": { "$ref": "#/$defs/workspaceSnapshot" } } },
+    "fileDigest": { "oneOf": [{ "type": "object", "additionalProperties": false, "required": ["path", "status", "sha256"], "properties": { "path": { "$ref": "#/$defs/repoPath" }, "status": { "const": "present" }, "sha256": { "$ref": "#/$defs/sha256" } } }, { "type": "object", "additionalProperties": false, "required": ["path", "status"], "properties": { "path": { "$ref": "#/$defs/repoPath" }, "status": { "const": "deleted" }, "sha256": { "type": "null" } } }] },
+    "outputDigest": { "oneOf": [{ "type": "object", "additionalProperties": false, "required": ["id", "path", "kind", "algorithm", "sha256"], "properties": { "id": { "type": "string", "minLength": 1 }, "path": { "$ref": "#/$defs/repoPath" }, "kind": { "const": "file" }, "algorithm": { "const": "sha256-file-bytes-v1" }, "sha256": { "$ref": "#/$defs/sha256" } } }, { "type": "object", "additionalProperties": false, "required": ["id", "path", "kind", "algorithm", "sha256"], "properties": { "id": { "type": "string", "minLength": 1 }, "path": { "$ref": "#/$defs/repoPath" }, "kind": { "const": "tree" }, "algorithm": { "const": "sha256-tree-inventory-v1" }, "sha256": { "$ref": "#/$defs/sha256" } } }] },
+    "byteReference": { "type": "object", "additionalProperties": false, "required": ["path", "sha256", "bytes"], "properties": { "path": { "$ref": "#/$defs/repoPath" }, "sha256": { "$ref": "#/$defs/sha256" }, "bytes": { "type": "integer", "minimum": 0 } } },
+    "verificationRunner": { "type": "object", "additionalProperties": false, "required": ["kind", "id", "version", "attestation_ref"], "properties": { "kind": { "enum": ["controller_observed", "protected_ci"] }, "id": { "type": "string", "minLength": 1 }, "version": { "type": "integer", "minimum": 1 }, "attestation_ref": { "type": "string", "minLength": 1 } } },
+    "verificationDigest": { "type": "object", "additionalProperties": false, "required": ["algorithm", "id", "command", "status", "runner", "exit_code", "stdout", "stderr", "artifacts", "receipt_sha256"], "properties": { "algorithm": { "const": "sha256-verification-receipt-v1" }, "id": { "type": "string", "minLength": 1 }, "command": { "type": "string", "minLength": 1 }, "status": { "const": "passed" }, "runner": { "$ref": "#/$defs/verificationRunner" }, "exit_code": { "const": 0 }, "stdout": { "$ref": "#/$defs/byteReference" }, "stderr": { "$ref": "#/$defs/byteReference" }, "artifacts": { "type": "array", "items": { "$ref": "#/$defs/byteReference" } }, "receipt_sha256": { "$ref": "#/$defs/sha256" } } },
+    "observedConvention": { "type": "object", "additionalProperties": false, "required": ["id", "rule", "examples"], "properties": { "id": { "type": "string", "minLength": 1 }, "rule": { "type": "string", "minLength": 1 }, "examples": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/byteReference" } } } },
+    "operatorDecision": { "type": "object", "additionalProperties": false, "required": ["decision", "reason", "approved_by", "approved_at"], "properties": { "decision": { "const": "approved" }, "reason": { "type": "string", "minLength": 1 }, "approved_by": { "type": "string", "minLength": 1 }, "approved_at": { "type": "string", "format": "date-time" } } },
+    "refactorAssessment": { "oneOf": [
+      { "type": "object", "additionalProperties": false, "required": ["status", "reason"], "properties": { "status": { "const": "not_required" }, "reason": { "type": "string", "minLength": 1 } } },
+      { "type": "object", "additionalProperties": false, "required": ["status", "locations", "evidence", "why_blocking", "smallest_refactor", "alternatives", "blast_radius", "tests", "amendment_ref", "escalation_event_id", "approval_event_id"], "properties": { "status": { "const": "approved" }, "locations": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }, "evidence": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/byteReference" } }, "why_blocking": { "type": "string", "minLength": 1 }, "smallest_refactor": { "type": "string", "minLength": 1 }, "alternatives": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }, "blast_radius": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }, "tests": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }, "amendment_ref": { "type": "string", "minLength": 1 }, "escalation_event_id": { "type": "string", "pattern": "^EVT-[0-9]{6,}$" }, "approval_event_id": { "type": "string", "pattern": "^EVT-[0-9]{6,}$" } } }
+    ] },
+    "refactorEscalation": { "type": "object", "additionalProperties": false, "required": ["locations", "evidence", "why_blocking", "smallest_refactor", "alternatives", "blast_radius", "tests"], "properties": { "locations": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }, "evidence": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/byteReference" } }, "why_blocking": { "type": "string", "minLength": 1 }, "smallest_refactor": { "type": "string", "minLength": 1 }, "alternatives": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }, "blast_radius": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }, "tests": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } } } },
+    "lotBlocked": { "type": "object", "additionalProperties": false, "required": ["reason"], "properties": { "reason": { "type": "string", "minLength": 1 }, "refactor_escalation": { "$ref": "#/$defs/refactorEscalation" } } },
+    "lotResultReported": { "type": "object", "additionalProperties": false, "required": ["result"], "properties": { "result": { "$ref": "#/$defs/lotResult" } } },
+    "lotResult": { "type": "object", "additionalProperties": false, "required": ["algorithm", "base_revision", "changed_paths", "files", "workspace_delta", "diff_sha256", "outputs", "verification", "preimplementation_contract_sha256", "observed_conventions", "refactor_assessment", "blockers"], "properties": { "algorithm": { "const": "sha256-canonical-json-v1" }, "base_revision": { "$ref": "#/$defs/gitSha" }, "changed_paths": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/repoPath" } }, "files": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/fileDigest" } }, "workspace_delta": { "$ref": "#/$defs/workspaceDelta" }, "diff_sha256": { "$ref": "#/$defs/sha256" }, "outputs": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/outputDigest" } }, "verification": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/verificationDigest" } }, "preimplementation_contract_sha256": { "$ref": "#/$defs/sha256" }, "observed_conventions": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/observedConvention" } }, "refactor_assessment": { "$ref": "#/$defs/refactorAssessment" }, "blockers": { "type": "array", "maxItems": 0 } } },
+    "reviewResolution": { "type": "object", "additionalProperties": false, "required": ["diff_sha256", "evidence_sha256", "reviewed_at"], "properties": { "diff_sha256": { "$ref": "#/$defs/sha256" }, "evidence_sha256": { "$ref": "#/$defs/sha256" }, "reviewed_at": { "type": "string", "format": "date-time" } } },
+    "reviewWaiver": { "type": "object", "additionalProperties": false, "required": ["reason", "approved_by", "approved_at", "finding_sha256", "diff_sha256", "plan_sha256"], "properties": { "reason": { "type": "string", "minLength": 1 }, "approved_by": { "type": "string", "minLength": 1 }, "approved_at": { "type": "string", "format": "date-time" }, "finding_sha256": { "$ref": "#/$defs/sha256" }, "diff_sha256": { "$ref": "#/$defs/sha256" }, "plan_sha256": { "$ref": "#/$defs/sha256" } } },
+    "reviewFinding": { "oneOf": [
+      { "type": "object", "additionalProperties": false, "required": ["id", "severity", "rule", "location", "evidence", "impact", "status"], "properties": { "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$" }, "severity": { "enum": ["P0", "P1", "P2", "P3"] }, "rule": { "type": "string", "minLength": 1 }, "location": { "type": "string", "minLength": 1 }, "evidence": { "type": "string", "minLength": 1 }, "impact": { "type": "string", "minLength": 1 }, "status": { "const": "open" } } },
+      { "type": "object", "additionalProperties": false, "required": ["id", "severity", "rule", "location", "evidence", "impact", "status", "resolution"], "properties": { "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$" }, "severity": { "enum": ["P0", "P1", "P2", "P3"] }, "rule": { "type": "string", "minLength": 1 }, "location": { "type": "string", "minLength": 1 }, "evidence": { "type": "string", "minLength": 1 }, "impact": { "type": "string", "minLength": 1 }, "status": { "const": "resolved" }, "resolution": { "$ref": "#/$defs/reviewResolution" } } },
+      { "type": "object", "additionalProperties": false, "required": ["id", "severity", "rule", "location", "evidence", "impact", "status", "waiver"], "properties": { "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$" }, "severity": { "enum": ["P0", "P1", "P2", "P3"] }, "rule": { "type": "string", "minLength": 1 }, "location": { "type": "string", "minLength": 1 }, "evidence": { "type": "string", "minLength": 1 }, "impact": { "type": "string", "minLength": 1 }, "status": { "enum": ["accepted", "waived"] }, "waiver": { "$ref": "#/$defs/reviewWaiver" } } }
+    ] },
+    "modelIndependenceException": { "type": "object", "additionalProperties": false, "required": ["reason", "approved_by", "approved_at", "author_model_families", "reviewer_model_family", "plan_sha256"], "properties": { "reason": { "type": "string", "minLength": 1 }, "approved_by": { "type": "string", "minLength": 1 }, "approved_at": { "type": "string", "format": "date-time" }, "author_model_families": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$" } }, "reviewer_model_family": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$" }, "plan_sha256": { "$ref": "#/$defs/sha256" } } },
+    "reviewedSnapshot": { "type": "object", "additionalProperties": false, "required": ["algorithm", "commit_sha", "git_tree", "file_count", "tree_sha256", "snapshot_sha256"], "properties": { "algorithm": { "const": "sha256-git-tree-inventory-v1" }, "commit_sha": { "$ref": "#/$defs/gitSha" }, "git_tree": { "$ref": "#/$defs/gitSha" }, "file_count": { "type": "integer", "minimum": 1 }, "tree_sha256": { "$ref": "#/$defs/sha256" }, "snapshot_sha256": { "$ref": "#/$defs/sha256" } } },
+    "lotReviewed": { "type": "object", "additionalProperties": false, "required": ["diff_sha256", "verdict", "findings", "fresh_context"], "properties": { "diff_sha256": { "$ref": "#/$defs/sha256" }, "verdict": { "enum": ["passed", "failed"] }, "findings": { "type": "array", "items": { "$ref": "#/$defs/reviewFinding" } }, "fresh_context": { "const": true }, "independence_exception": { "$ref": "#/$defs/modelIndependenceException" } } },
+    "integrationVerified": { "type": "object", "additionalProperties": false, "required": ["status", "algorithm", "verifications", "reviewed_snapshot", "verification_sha256"], "properties": { "status": { "const": "passed" }, "algorithm": { "const": "sha256-canonical-json-v1" }, "verifications": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/verificationDigest" } }, "reviewed_snapshot": { "$ref": "#/$defs/reviewedSnapshot" }, "verification_sha256": { "$ref": "#/$defs/sha256" } } },
+    "consolidatedReviewed": { "type": "object", "additionalProperties": false, "required": ["verdict", "findings", "fresh_context", "reviewed_snapshot"], "properties": { "verdict": { "enum": ["passed", "failed"] }, "findings": { "type": "array", "items": { "$ref": "#/$defs/reviewFinding" } }, "fresh_context": { "const": true }, "reviewed_snapshot": { "$ref": "#/$defs/reviewedSnapshot" }, "independence_exception": { "$ref": "#/$defs/modelIndependenceException" } } },
+    "corpusTreeFile": { "type": "object", "additionalProperties": false, "required": ["path", "sha256"], "properties": { "path": { "$ref": "#/$defs/repoPath" }, "sha256": { "$ref": "#/$defs/sha256" } } },
+    "corpusValidation": { "type": "object", "additionalProperties": false, "required": ["algorithm", "validator_path", "validator_sha256", "arguments", "status", "result_sha256"], "properties": { "algorithm": { "const": "sha256-corpus-validator-result-v1" }, "validator_path": { "const": "scripts/validate-corpus.mjs" }, "validator_sha256": { "$ref": "#/$defs/sha256" }, "arguments": { "const": ["--json"] }, "status": { "const": "passed" }, "result_sha256": { "$ref": "#/$defs/sha256" } } },
+    "corpusClosed": { "type": "object", "additionalProperties": false, "required": ["root_path", "algorithm", "exclusions", "files", "corpus_tree_sha256", "validation"], "properties": { "root_path": { "const": "doc" }, "algorithm": { "const": "sha256-corpus-tree-v1" }, "exclusions": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/repoPath" } }, "files": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/corpusTreeFile" } }, "corpus_tree_sha256": { "$ref": "#/$defs/sha256" }, "validation": { "$ref": "#/$defs/corpusValidation" } } },
+    "controlTransition": { "type": "object", "additionalProperties": false, "required": ["algorithm", "events_path", "state_path", "base_commit_sha", "candidate_commit_sha", "base_events_sha256", "candidate_events_sha256", "base_state_sha256", "candidate_state_sha256", "base_event_count", "candidate_event_count", "appended_event_ids", "appended_events_sha256", "transition_sha256"], "properties": { "algorithm": { "const": "sha256-factory-control-transition-v1" }, "events_path": { "$ref": "#/$defs/repoPath" }, "state_path": { "$ref": "#/$defs/repoPath" }, "base_commit_sha": { "$ref": "#/$defs/gitSha" }, "candidate_commit_sha": { "$ref": "#/$defs/gitSha" }, "base_events_sha256": { "$ref": "#/$defs/sha256" }, "candidate_events_sha256": { "$ref": "#/$defs/sha256" }, "base_state_sha256": { "$ref": "#/$defs/sha256" }, "candidate_state_sha256": { "$ref": "#/$defs/sha256" }, "base_event_count": { "type": "integer", "minimum": 0 }, "candidate_event_count": { "type": "integer", "minimum": 3 }, "appended_event_ids": { "type": "array", "minItems": 3, "maxItems": 3, "uniqueItems": true, "items": { "type": "string", "pattern": "^EVT-[0-9]{6,}$" } }, "appended_events_sha256": { "$ref": "#/$defs/sha256" }, "transition_sha256": { "$ref": "#/$defs/sha256" } } },
+    "candidateBinding": { "type": "object", "additionalProperties": false, "required": ["algorithm", "reviewed_snapshot_sha256", "candidate_snapshot", "corpus_closeout_event_id", "corpus_tree_sha256", "authorized_paths", "control_transition", "binding_sha256"], "properties": { "algorithm": { "const": "sha256-reviewed-candidate-v2" }, "reviewed_snapshot_sha256": { "$ref": "#/$defs/sha256" }, "candidate_snapshot": { "$ref": "#/$defs/reviewedSnapshot" }, "corpus_closeout_event_id": { "type": "string", "pattern": "^EVT-[0-9]{6,}$" }, "corpus_tree_sha256": { "$ref": "#/$defs/sha256" }, "authorized_paths": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/repoPath" } }, "control_transition": { "$ref": "#/$defs/controlTransition" }, "binding_sha256": { "$ref": "#/$defs/sha256" } } },
+    "candidateFrozen": { "type": "object", "additionalProperties": false, "required": ["candidate_sha", "binding"], "properties": { "candidate_sha": { "$ref": "#/$defs/gitSha" }, "binding": { "$ref": "#/$defs/candidateBinding" } } },
+    "oracleResult": { "type": "object", "additionalProperties": false, "required": ["id", "outcome"], "properties": { "id": { "type": "string", "minLength": 1 }, "outcome": { "enum": ["passed", "failed", "blocked", "skipped", "waived"] } } },
+    "caseWaiver": { "type": "object", "additionalProperties": false, "required": ["reason", "approver_ref", "approved_at"], "properties": { "reason": { "type": "string", "minLength": 1 }, "approver_ref": { "type": "string", "minLength": 1 }, "approved_at": { "type": "string", "format": "date-time" } } },
+    "caseResult": { "type": "object", "additionalProperties": false, "required": ["id", "outcome", "oracle_results"], "properties": { "id": { "type": "string", "minLength": 1 }, "outcome": { "enum": ["passed", "failed", "blocked", "skipped", "waived"] }, "user_visible_error": { "type": "boolean" }, "oracle_results": { "type": "array", "items": { "$ref": "#/$defs/oracleResult" } }, "waiver": { "$ref": "#/$defs/caseWaiver" } } },
+    "acceptanceCompleted": { "type": "object", "additionalProperties": false, "required": ["status", "tested_sha"], "properties": { "status": { "enum": ["passed", "failed", "blocked"] }, "tested_sha": { "$ref": "#/$defs/nullableGitSha" }, "test_bundle_sha256": { "$ref": "#/$defs/nullableSha256" }, "case_results": { "type": "array", "items": { "$ref": "#/$defs/caseResult" } }, "reason": { "type": "string", "minLength": 1 } } },
+    "manifestLocator": { "oneOf": [
+      { "type": "object", "additionalProperties": false, "required": ["kind", "path", "digest_sha256"], "properties": { "kind": { "const": "repo_file" }, "path": { "$ref": "#/$defs/repoPath" }, "digest_sha256": { "$ref": "#/$defs/sha256" } } },
+      { "type": "object", "additionalProperties": false, "required": ["kind", "provider", "artifact_id", "name", "run_id", "path", "digest_sha256", "bundle_digest", "attestation_ref"], "properties": { "kind": { "const": "ci_artifact" }, "provider": { "const": "github_actions" }, "artifact_id": { "type": "string", "minLength": 1 }, "name": { "type": "string", "minLength": 1 }, "run_id": { "type": "string", "minLength": 1 }, "path": { "$ref": "#/$defs/repoPath" }, "digest_sha256": { "$ref": "#/$defs/sha256" }, "bundle_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }, "attestation_ref": { "type": "string", "minLength": 1 } } }
+    ] },
+    "evidencePublication": { "type": "object", "additionalProperties": false, "required": ["manifest_locator", "evidence_manifest_sha256", "publication"], "properties": { "manifest_locator": { "$ref": "#/$defs/manifestLocator" }, "evidence_manifest_sha256": { "$ref": "#/$defs/sha256" }, "evidence_sha": { "$ref": "#/$defs/gitSha" }, "publication": { "type": "object", "additionalProperties": false, "required": ["mode"], "properties": { "mode": { "enum": ["ci_artifact", "evidence_only_commit"] }, "media_type": { "type": "string", "minLength": 1 } } } }, "allOf": [{ "if": { "properties": { "publication": { "properties": { "mode": { "const": "ci_artifact" } }, "required": ["mode"] } } }, "then": { "not": { "required": ["evidence_sha"] }, "properties": { "manifest_locator": { "properties": { "kind": { "const": "ci_artifact" } }, "required": ["kind"] }, "publication": { "required": ["mode", "media_type"] } } }, "else": { "required": ["evidence_sha"], "properties": { "manifest_locator": { "properties": { "kind": { "const": "repo_file" } }, "required": ["kind"] }, "publication": { "not": { "required": ["media_type"] } } } } }] },
+    "releaseReviewed": { "type": "object", "additionalProperties": false, "required": ["verdict", "fresh_context", "findings"], "properties": { "verdict": { "const": "passed" }, "fresh_context": { "const": true }, "findings": { "type": "array", "items": { "$ref": "#/$defs/reviewFinding" } }, "independence_exception": { "$ref": "#/$defs/modelIndependenceException" } } },
+    "draftActions": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "enum": ["open_draft_pr", "update_draft_pr"] } },
+    "draftPrPlan": { "type": "object", "additionalProperties": false, "required": ["draft", "actions", "candidate_sha", "payload_sha256"], "properties": { "draft": { "const": true }, "actions": { "$ref": "#/$defs/draftActions" }, "candidate_sha": { "$ref": "#/$defs/gitSha" }, "payload_sha256": { "$ref": "#/$defs/sha256" } } },
+    "draftPrResult": { "type": "object", "additionalProperties": false, "required": ["draft", "actions", "candidate_sha", "pr_url"], "properties": { "draft": { "const": true }, "actions": { "$ref": "#/$defs/draftActions" }, "candidate_sha": { "$ref": "#/$defs/gitSha" }, "pr_url": { "type": "string", "pattern": "^https://" } } },
+    "artifactChange": { "type": "object", "additionalProperties": false, "required": ["classes", "affected_lots"], "properties": { "classes": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }, "affected_lots": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }, "reason": { "type": "string", "minLength": 1 } } },
+    "controllerRecovery": { "type": "object", "additionalProperties": false, "required": ["reason", "approved_by", "approved_at", "blocker_ids", "release_reservations"], "properties": { "reason": { "type": "string", "minLength": 1 }, "approved_by": { "type": "string", "minLength": 1 }, "approved_at": { "type": "string", "format": "date-time" }, "blocker_ids": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }, "release_reservations": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } } } },
+    "diffBudgetOverride": { "type": "object", "additionalProperties": false, "required": ["reason", "approved_by", "approved_at", "limits"], "properties": { "reason": { "type": "string", "minLength": 1 }, "approved_by": { "type": "string", "minLength": 1 }, "approved_at": { "type": "string", "format": "date-time" }, "limits": { "type": "object", "additionalProperties": false, "required": ["max_files", "max_added_lines", "max_deleted_lines", "max_binary_files"], "properties": { "max_files": { "type": "integer", "minimum": 1 }, "max_added_lines": { "type": "integer", "minimum": 1 }, "max_deleted_lines": { "type": "integer", "minimum": 1 }, "max_binary_files": { "type": "integer", "minimum": 0 } } } } },
+    "refactorApproval": { "type": "object", "additionalProperties": false, "required": ["escalation_event_id", "amendment_ref", "reason", "approved_by", "approved_at", "amended_plan_sha256"], "properties": { "escalation_event_id": { "type": "string", "pattern": "^EVT-[0-9]{6,}$" }, "amendment_ref": { "type": "string", "minLength": 1 }, "reason": { "type": "string", "minLength": 1 }, "approved_by": { "type": "string", "minLength": 1 }, "approved_at": { "type": "string", "format": "date-time" }, "amended_plan_sha256": { "$ref": "#/$defs/sha256" } } },
+
+    "eventPackageInitialized": { "properties": { "type": { "const": "package_initialized" }, "data": { "$ref": "#/$defs/packageInitialized" } }, "required": ["type", "data"] },
+    "eventLegacyV1Imported": { "properties": { "type": { "const": "legacy_v1_imported" }, "data": { "$ref": "#/$defs/legacyV1Imported" } }, "required": ["type", "data"] },
+    "eventSpecProposed": { "properties": { "type": { "const": "spec_proposed" }, "data": { "$ref": "#/$defs/specProposal" } }, "required": ["type", "data"] },
+    "eventSpecApproved": { "properties": { "type": { "const": "spec_approved" }, "data": { "$ref": "#/$defs/specApproval" } }, "required": ["type", "data"] },
+    "eventPlanProposed": { "properties": { "type": { "const": "plan_proposed" }, "data": { "$ref": "#/$defs/planProposal" } }, "required": ["type", "data"] },
+    "eventPlanApproved": { "properties": { "type": { "const": "plan_approved" }, "data": { "$ref": "#/$defs/planApproval" } }, "required": ["type", "data"] },
+    "eventExecutionPolicyResolved": { "properties": { "type": { "const": "execution_policy_resolved" }, "data": { "$ref": "#/$defs/executionPolicy" } }, "required": ["type", "data"] },
+    "eventLotConventionsObserved": { "properties": { "type": { "const": "lot_conventions_observed" }, "subject": { "properties": { "lot_id": { "type": "string", "minLength": 1 } }, "required": ["lot_id"] }, "basis": { "required": ["plan_sha256"] }, "data": { "$ref": "#/$defs/preimplementationConventionContract" } }, "required": ["type", "subject", "basis", "data"] },
+    "eventWaveReserved": { "properties": { "type": { "const": "wave_reserved" }, "data": { "$ref": "#/$defs/waveReserved" } }, "required": ["type", "data"] },
+    "eventAttemptBudgetExtended": { "properties": { "type": { "const": "attempt_budget_extended" }, "subject": { "properties": { "lot_id": { "type": "string", "minLength": 1 } }, "required": ["lot_id"] }, "basis": { "required": ["plan_sha256", "diff_sha256"] }, "data": { "$ref": "#/$defs/approvalWithReason" } }, "required": ["type", "subject", "basis", "data"] },
+    "eventDiffBudgetOverridden": { "properties": { "type": { "const": "diff_budget_overridden" }, "subject": { "properties": { "lot_id": { "type": "string", "minLength": 1 } }, "required": ["lot_id"] }, "basis": { "required": ["plan_sha256"] }, "data": { "$ref": "#/$defs/diffBudgetOverride" } }, "required": ["type", "subject", "basis", "data"] },
+    "eventRefactorApproved": { "properties": { "type": { "const": "refactor_approved" }, "subject": { "properties": { "lot_id": { "type": "string", "minLength": 1 } }, "required": ["lot_id"] }, "basis": { "required": ["plan_sha256"] }, "data": { "$ref": "#/$defs/refactorApproval" } }, "required": ["type", "subject", "basis", "data"] },
+    "eventLotStarted": { "properties": { "type": { "const": "lot_started" }, "data": { "$ref": "#/$defs/lotStarted" } }, "required": ["type", "data"] },
+    "eventLotResultReported": { "properties": { "type": { "const": "lot_result_reported" }, "data": { "$ref": "#/$defs/lotResultReported" } }, "required": ["type", "data"] },
+    "eventLotReviewed": { "properties": { "type": { "const": "lot_reviewed" }, "data": { "$ref": "#/$defs/lotReviewed" } }, "required": ["type", "data"] },
+    "eventLotIntegrated": { "properties": { "type": { "const": "lot_integrated" }, "data": { "$ref": "#/$defs/empty" } }, "required": ["type", "data"] },
+    "eventLotBlocked": { "properties": { "type": { "const": "lot_blocked" }, "data": { "$ref": "#/$defs/lotBlocked" } }, "required": ["type", "data"] },
+    "eventReservationReleased": { "properties": { "type": { "const": "reservation_released" }, "data": { "$ref": "#/$defs/reservationReference" } }, "required": ["type", "data"] },
+    "eventIntegrationVerified": { "properties": { "type": { "const": "integration_verified" }, "data": { "$ref": "#/$defs/integrationVerified" } }, "required": ["type", "data"] },
+    "eventConsolidatedReviewed": { "properties": { "type": { "const": "consolidated_reviewed" }, "data": { "$ref": "#/$defs/consolidatedReviewed" } }, "required": ["type", "data"] },
+    "eventCorpusClosed": { "properties": { "type": { "const": "corpus_closed" }, "data": { "$ref": "#/$defs/corpusClosed" } }, "required": ["type", "data"] },
+    "eventCandidateFrozen": { "properties": { "type": { "const": "candidate_frozen" }, "data": { "$ref": "#/$defs/candidateFrozen" } }, "required": ["type", "data"] },
+    "eventAcceptanceStarted": { "properties": { "type": { "const": "acceptance_started" }, "data": { "$ref": "#/$defs/empty" } }, "required": ["type", "data"] },
+    "eventAcceptanceCompleted": { "properties": { "type": { "const": "acceptance_completed" }, "data": { "$ref": "#/$defs/acceptanceCompleted" } }, "required": ["type", "data"] },
+    "eventAcceptanceWaived": { "properties": { "type": { "const": "acceptance_waived" }, "data": { "$ref": "#/$defs/approvalWithReason" } }, "required": ["type", "data"] },
+    "eventEvidenceCommitted": { "properties": { "type": { "const": "evidence_committed" }, "data": { "$ref": "#/$defs/evidencePublication" } }, "required": ["type", "data"] },
+    "eventReleaseReviewed": { "properties": { "type": { "const": "release_reviewed" }, "data": { "$ref": "#/$defs/releaseReviewed" } }, "required": ["type", "data"] },
+    "eventDraftPrPlanned": { "properties": { "type": { "const": "draft_pr_planned" }, "data": { "$ref": "#/$defs/draftPrPlan" } }, "required": ["type", "data"] },
+    "eventDraftPrCreated": { "properties": { "type": { "const": "draft_pr_created" }, "data": { "$ref": "#/$defs/draftPrResult" } }, "required": ["type", "data"] },
+    "eventArtifactChangeObserved": { "properties": { "type": { "const": "artifact_change_observed" }, "data": { "$ref": "#/$defs/artifactChange" } }, "required": ["type", "data"] },
+    "eventControllerRecoveryApproved": { "properties": { "type": { "const": "controller_recovery_approved" }, "data": { "$ref": "#/$defs/controllerRecovery" } }, "required": ["type", "data"] }
   }
 }

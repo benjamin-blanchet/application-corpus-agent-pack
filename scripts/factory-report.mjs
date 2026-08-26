@@ -11,12 +11,13 @@ const args = parseArgs(process.argv.slice(2));
 const root = path.resolve(args.root || process.cwd());
 
 try {
-  for (const required of ['manifest', 'plan', 'environment', 'artifacts-root', 'out']) {
+  for (const required of ['manifest', 'plan', 'environment', 'ci', 'artifacts-root', 'out']) {
     if (!args[required]) throw new Error(`--${required} is required`);
   }
   const manifest = readData(path.resolve(root, args.manifest));
   const planFile = path.resolve(root, args.plan);
   const environmentFile = path.resolve(root, args.environment);
+  const ciFile = path.resolve(root, args.ci);
   const findings = validateEvidence(manifest, readData(planFile), {
     file: args.manifest,
     artifactsRoot: path.resolve(root, args['artifacts-root']),
@@ -24,6 +25,7 @@ try {
     acceptancePlanFile: planFile,
     environmentContractFile: environmentFile,
     repositoryRoot: root,
+    ci: readData(ciFile),
   });
   const reportManifest = findings.length ? {
     ...manifest,

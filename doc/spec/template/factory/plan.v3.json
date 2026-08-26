@@ -60,7 +60,7 @@
         "inputs": [
           {
             "id": "approved-specification",
-            "path": "SPECIFICATION.md",
+            "path": "doc/spec/template/SPECIFICATION.md",
             "sha256": "1b6b97ac47bae578dc9e70bdba7354c78e3a0c8e4905d84e711174c536077203"
           }
         ],
@@ -79,7 +79,7 @@
       "read_claims": [
         {
           "kind": "exact",
-          "path": "SPECIFICATION.md"
+          "path": "doc/spec/template/SPECIFICATION.md"
         }
       ],
       "risk": "medium",

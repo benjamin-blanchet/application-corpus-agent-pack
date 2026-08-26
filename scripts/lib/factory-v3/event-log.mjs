@@ -1,8 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { canonicalHash, canonicalJson, sha256 } from './canonical-json.mjs';
 import { validateEventShape } from './contract.mjs';
 import { FactoryV3Error, fail } from './errors.mjs';
+import { appendConfinedFile, assertConfinedDirectory, readConfinedFile } from './safe-path.mjs';
 
 export const GENESIS_HASH = 'GENESIS';
 
@@ -88,71 +90,90 @@ export function buildEvent(events, input) {
   return event;
 }
 
-export function readEventFile(file) {
-  if (!fs.existsSync(file)) return [];
-  return assertEventChain(parseEventLog(fs.readFileSync(file, 'utf8')));
+export function readEventFile(file, { repoRoot = null } = {}) {
+  if (!repoRoot) {
+    if (!fs.existsSync(file)) return [];
+    return assertEventChain(parseEventLog(fs.readFileSync(file, 'utf8')));
+  }
+  const text = readConfinedFile({ repoRoot, file, encoding: 'utf8', allowMissing: true, label: 'factory event log' });
+  return text === null ? [] : assertEventChain(parseEventLog(text));
 }
 
-export function appendEventFile({ repoRoot, packageDir, eventInput, apply = false }) {
+export function appendEventFile({ repoRoot, packageDir, eventInput, apply = false, validateEvent = null }) {
   const eventFile = path.join(packageDir, 'factory', 'events.v3.jsonl');
-  const existing = readEventFile(eventFile);
+  assertConfinedDirectory({ repoRoot, directory: packageDir, label: 'factory package' });
+  assertConfinedDirectory({ repoRoot, directory: path.dirname(eventFile), label: 'factory control directory' });
+  const existing = readEventFile(eventFile, { repoRoot });
   const event = buildEvent(existing, eventInput);
   if (!apply) return { applied: false, event, events: [...existing, event] };
 
   const release = acquireControllerLock(repoRoot, packageDir, eventInput.controller_id);
   try {
-    const current = readEventFile(eventFile);
+    const current = readEventFile(eventFile, { repoRoot });
     const checked = buildEvent(current, eventInput);
     if (checked.seq !== event.seq || checked.previous_event_sha256 !== event.previous_event_sha256) {
       fail('factory-event-concurrent-append', 'event log advanced while the append was waiting for the controller lock');
     }
-    fs.mkdirSync(path.dirname(eventFile), { recursive: true });
-    const fd = fs.openSync(eventFile, 'a');
-    try {
-      writeAll(fd, `${canonicalJson(checked)}\n`);
-      fs.fsyncSync(fd);
-    } finally {
-      fs.closeSync(fd);
-    }
+    if (validateEvent) validateEvent(checked);
+    appendConfinedFile({ repoRoot, file: eventFile, value: `${canonicalJson(checked)}\n`, label: 'factory event log' });
     return { applied: true, event: checked, events: [...current, checked] };
   } finally {
     release();
   }
 }
 
-function writeAll(fd, value) {
-  const buffer = Buffer.from(value, 'utf8');
-  let offset = 0;
-  while (offset < buffer.length) offset += fs.writeSync(fd, buffer, offset, buffer.length - offset);
-}
-
 function acquireControllerLock(repoRoot, packageDir, controllerId) {
   const gitDir = resolveGitDir(repoRoot);
   const lockDir = path.join(gitDir, 'factory-locks');
-  fs.mkdirSync(lockDir, { recursive: true });
+  try {
+    const stat = fs.lstatSync(lockDir);
+    if (stat.isSymbolicLink() || !stat.isDirectory() || fs.realpathSync(lockDir) !== lockDir) fail('factory-controller-lock-directory', 'factory lock directory must be a real directory without symlink traversal');
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+    fs.mkdirSync(lockDir, { mode: 0o700 });
+  }
   const key = sha256(path.resolve(packageDir)).slice(0, 24);
   const lockFile = path.join(lockDir, `${key}.lock`);
   let fd;
   try {
-    fd = fs.openSync(lockFile, 'wx');
+    fd = fs.openSync(lockFile, fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constants.O_EXCL | (fs.constants.O_NOFOLLOW || 0), 0o600);
+    const opened = fs.fstatSync(fd);
+    const named = fs.lstatSync(lockFile);
+    if (!opened.isFile() || named.isSymbolicLink() || opened.dev !== named.dev || opened.ino !== named.ino) fail('factory-controller-lock-raced', 'factory lock path does not name the opened regular file');
     fs.writeFileSync(fd, `${controllerId}\n`, 'utf8');
     fs.fsyncSync(fd);
   } catch (error) {
     if (error.code === 'EEXIST') fail('factory-controller-lock-held', `another controller holds ${lockFile}`);
     throw error;
   }
+  const identity = fs.fstatSync(fd);
   return () => {
-    try { fs.closeSync(fd); } finally { fs.unlinkSync(lockFile); }
+    try { fs.closeSync(fd); } finally {
+      try {
+        const named = fs.lstatSync(lockFile);
+        if (!named.isSymbolicLink() && named.dev === identity.dev && named.ino === identity.ino) fs.unlinkSync(lockFile);
+      } catch {}
+    }
   };
 }
 
 function resolveGitDir(repoRoot) {
-  const marker = path.join(repoRoot, '.git');
+  const root = fs.realpathSync(path.resolve(repoRoot));
+  const marker = path.join(root, '.git');
   if (!fs.existsSync(marker)) fail('factory-controller-no-git-dir', `cannot acquire controller lock: ${marker} does not exist`);
-  if (fs.statSync(marker).isDirectory()) return marker;
-  const match = fs.readFileSync(marker, 'utf8').trim().match(/^gitdir:\s*(.+)$/);
-  if (!match) fail('factory-controller-git-dir-invalid', `${marker} is neither a Git directory nor a gitdir reference`);
-  return path.resolve(repoRoot, match[1]);
+  const markerStat = fs.lstatSync(marker);
+  if (markerStat.isSymbolicLink()) fail('factory-controller-git-dir-symlink', '.git must not be a symbolic link');
+  if (!markerStat.isDirectory() && !markerStat.isFile()) fail('factory-controller-git-dir-invalid', '.git must be a directory or regular gitdir file');
+  const result = spawnSync('git', ['-C', root, 'rev-parse', '--git-common-dir'], { encoding: 'utf8', stdio: 'pipe' });
+  if (result.status !== 0) fail('factory-controller-git-dir-invalid', `cannot resolve Git common directory: ${String(result.stderr || '').trim()}`);
+  const raw = result.stdout.trim();
+  const lexical = path.resolve(root, raw);
+  let stat;
+  try { stat = fs.lstatSync(lexical); } catch (error) { fail('factory-controller-git-dir-invalid', `cannot inspect Git common directory: ${error.message}`); }
+  if (stat.isSymbolicLink() || !stat.isDirectory()) fail('factory-controller-git-dir-symlink', 'Git common directory must be a real directory');
+  const real = fs.realpathSync(lexical);
+  if (real !== lexical) fail('factory-controller-git-dir-symlink', 'Git common directory path must not traverse symbolic links');
+  return real;
 }
 
 function finding(code, message, event) {

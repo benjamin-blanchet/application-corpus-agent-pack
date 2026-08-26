@@ -85,16 +85,21 @@ checks:
     operation: fixture-policy
     required: true
     secret_access: none
+  - id: factory-application-ci
+    provider_name: application-ci
+    operation: fixture-build
+    required: true
+    secret_access: none
   - id: factory-acceptance
     provider_name: factory-acceptance
     operation: fixture-acceptance
-    required: true
+    required: false
     environment_profile: fixture-local
-    secret_access: protected_environment
+    secret_access: none
 artifacts:
   retention_days: 30
-  required: [evidence-manifest, results-json, junit, html-report]
-  conditional: [screenshots, traces]
+  required: [evidence-manifest, results-json, junit, acceptance-report]
+  conditional: [screenshots]
 flake_policy:
   retry_count: 1
   retry_pass_outcome: failed
@@ -103,5 +108,7 @@ flake_policy:
 security:
   default_permissions: read
   protected_job_requires_environment_approval: true
-  no_pull_request_target_checkout: true
+  policy_definition_source: protected_base
+  controller_ref: protected_full_sha
+  candidate_checkout_credentials: none
   actions_pinned_to_full_sha: true

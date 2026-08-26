@@ -12,7 +12,7 @@ Skills are grouped by **intent**, not by chronological order of authorship. The 
 | `continuous/` | Persistent roadmap, runs, graph and next-best-actions for the post-kickstart enrichment loop. |
 | `authoring/` | Skills used when producing or evolving artefacts: specs, implementations, incident playbooks, knowledge capture. Shared across `developer`, `functional-analyst` and `reliability-analyst`. |
 | `governance/` | Corpus quality: validation, completeness audits, safe operation guardrails, adoption material gating, reconciliation. |
-| `development/` | The software factory: clarify, model routing, change triage, environment/CI contracts, deterministic control plane, bounded work packages, capabilities, review/correction, corpus closeout, SHA-bound acceptance/evidence and draft-PR delivery. |
+| `development/` | The software factory: clarify, model routing, change triage, existing-code-first integration and refactor escalation, environment/CI contracts, deterministic control plane, bounded work packages, capabilities, review/correction, corpus closeout, SHA-bound acceptance/evidence and draft-PR delivery. |
 
 ## Pipeline ordering
 

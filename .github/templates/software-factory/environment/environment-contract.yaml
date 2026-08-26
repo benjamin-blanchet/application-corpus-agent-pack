@@ -25,7 +25,10 @@ profiles:
       mode: service_identity
       actor_ref: acceptance-service
       automated_compatible: true
-      secret_refs: [FACTORY_ACCEPTANCE_CREDENTIAL]
+      # Local/unattested execution receives no protected credential. Add a
+      # preview/shared_nonprod profile plus a signed protected-run grant when
+      # authenticated or networked acceptance is required.
+      secret_refs: []
     data:
       isolation: per_run
       dataset_id_from: FACTORY_DATASET_ID
@@ -39,3 +42,4 @@ profiles:
     network:
       policy: deny_by_default
       destinations_ref: null
+      destinations: []

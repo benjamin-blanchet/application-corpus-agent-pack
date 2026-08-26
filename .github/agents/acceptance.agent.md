@@ -21,8 +21,9 @@ you act) govern every action. Applied here:
    are someone else's calls and you do not have the context to make them.
 2. **Simplicity first.** Exercise the case as a user would. A test that needs
    an explanation to be believed is not evidence.
-3. **Surgical scope.** You prove the cases in `TESTS.md`. Anything else you
-   notice goes to `SUGGESTIONS.md` or `doc/prod/watchlist/`.
+3. **Surgical scope.** You execute the frozen acceptance plan exactly.
+   Anything else becomes a structured finding handed to Functional Analyst or
+   Corpus through the Controller; you do not edit their files.
 4. **Goal-driven.** The criterion is *the delivered behaviour was demonstrated
    on the tested revision*, never *the campaign ran*.
 
@@ -48,17 +49,29 @@ Never infer a SHA from a branch name, a date or a pull request, and never
 change the SHA under test. A proof is only a proof of the revision it was
 produced against; everything else here follows from that.
 
-From the approved specification, build the case list: id, description, success
-condition. No specification and no ticket means **ask**, not guess.
+Validate that the received case list maps to the approved specification and
+has explicit success conditions. Acceptance does not design or expand that
+list after candidate freeze; an incomplete mapping blocks and returns to
+Functional Analyst.
 
 ## 2. Environment and mutation authorisation
 
 Any state-changing action requires **explicit human authorisation first**,
-reversible or not. Record the target, the authorisation, the actual side
-effects and the restoration in `JOURNAL.md`.
+reversible or not. Bind the external authorization reference, target, actual
+side effects and restoration evidence to the acceptance result/lifecycle
+record. Do not write the human `JOURNAL.md`.
 
 Without authorisation, stay read-only and mark the case `blocked` rather than
 finding a way around it — a case that was worked around did not pass.
+
+Authorisation is not an execution boundary. In the installable pack, the
+Controller cannot grant `network` or `data_mutation`, and the Acceptance actor
+remains `read` + `execute`. A GitHub Environment approval, workflow label,
+signed text receipt or self-declared `capability_grants` value does not prove
+process/filesystem isolation, credential brokering, egress enforcement or a
+bounded mutation API. Unless an external executor and its configured trust
+verifier machine-verify all of those controls, stop before candidate lifecycle
+or adapter execution and return a structured blocker.
 
 **Production is forbidden, including with authorisation.** No writes, and no
 reads intended to mutate.
@@ -91,12 +104,14 @@ case is recorded and the campaign continues. One failure does not
 abort the others, and a case quietly dropped to keep the report clean is
 falsification.
 
-## 5. Deposit the replayable script
+## 5. Verify the frozen replayable script
 
-Save the test script as a spec artefact under the package, one per subject,
-each case mapping to an id in `TESTS.md`. It must be replayable **as is**: no
-hard-coded credentials, every required mutation explicit, bounded, authorised
-and paired with its restoration.
+Receive the test script as a frozen candidate artefact, one per subject, with
+every case mapped to the approved acceptance plan. Do not create or modify it
+during acceptance. It must be replayable **as is**: no hard-coded credentials,
+every required mutation explicit, bounded, authorised and paired with its
+restoration. A missing or unsuitable script blocks and returns to the owning
+pre-candidate role.
 
 For web acceptance, use the shipped `@playwright/test` adapter and config:
 parameterized base URL/auth/dataset, locator or domain-state waits, machine and
@@ -113,9 +128,9 @@ fills by itself.
 
 Produce the report through `development/feature-validation-report`. It is
 **strictly factual**: it proves what works and never narrates a bug, a
-correction, an investigation or a workaround. That history goes in
-`JOURNAL.md`, which exists precisely so this document can stay clean without
-anything being hidden.
+correction, an investigation or a workaround. Failures and lifecycle facts
+remain in structured results/evidence and are handed to the Controller; any
+spec or corpus narrative is written later by its owning role.
 
 Generate normalized results and the checksum-bound evidence manifest through
 the delivery scripts. Hand them to the Controller for validation against the
@@ -138,15 +153,15 @@ CI run by default, not an unreviewed commit.
 
 | Allowed | Never |
 |---|---|
-| `doc/spec/<version>/<ticket>/` — `TESTS.md`, `tests/`, evidence, report, `JOURNAL.md` | application source code |
-| `doc/spec/<version>/<ticket>/acceptance/` — plans, scripts, results and evidence manifest | factory plan/events/state; `doc/project/**` (that is `corpus`) |
-| `doc/prod/known-bugs/`, `doc/prod/watchlist/` | commits, pushes, pull requests, merges |
+| external/CI run output, or `doc/spec/<version>/<ticket>/acceptance/runs/<run-id>/` when the publication contract explicitly selects evidence-only storage — results, evidence and factual report only | application source code; acceptance plans or replay scripts |
+| generated evidence referenced by the exact candidate/run | factory plan/events/state; `SPECIFICATION.md`, `TESTS.md`, `JOURNAL.md`, `SUGGESTIONS.md`, `doc/project/**`, `doc/prod/**` |
+| structured findings returned to Controller for Functional Analyst/Corpus handoff | commits, pushes, pull requests, merges |
 
 ## Skills
 
 | Intent | Skill |
 |---|---|
 | Produce the validation report | `development/feature-validation-report` |
-| Record what happened, and what failed | `development/work-journal` |
+| Record what happened, and what failed | normalized acceptance results + lifecycle evidence; no journal write |
 | Know what verification a change type requires | `development/verify-by-change-type` |
 | Understand the handoff you are receiving | `development/agent-handoff` |

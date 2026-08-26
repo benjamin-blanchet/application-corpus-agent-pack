@@ -15,14 +15,19 @@ does not own commits or push.
 ## Preconditions
 
 Validate the current event-derived state: approvals, lots/reviews, integration,
-corpus closeout, candidate freeze, acceptance/evidence (or explicit waiver),
-release review and required checks all refer to current digests. Require a
-full `candidate_sha`, existing remote head, approved base and operator authority
-for the provider side effect.
+corpus closeout, candidate freeze, an attested `ready` acceptance/evidence
+manifest, release review and required checks all refer to current digests.
+Case-level waivers are valid only when the completed campaign contains their
+structured proofs and still derives `ready`; the shipped path has no global
+acceptance bypass. Require a full `candidate_sha`, existing remote head,
+approved base and operator authority for the provider side effect.
 
-Run `scripts/factory-pr.mjs plan` first. `create-draft` remains dry-run unless
-explicitly enabled, is idempotent for the same head/base and records the
-provider operation without credentials.
+Run the complete `scripts/factory-pr.mjs` invocation from the protected draft
+workflow first without `--execute`. The returned operation is named
+`create-draft`; neither `plan` nor `create-draft` is a CLI subcommand. Re-run
+the same validated arguments with `--execute --authorization-receipt
+<external-file>` only after explicit authority. The operation is idempotent for
+the same head/base and records the provider result without credentials.
 
 ## PR body
 

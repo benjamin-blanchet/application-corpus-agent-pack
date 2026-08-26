@@ -13,12 +13,13 @@ root:
 item:
   inside_block: sources
   required_fields: [id, name, category, lifecycle, requirement, mapping_state, mapping_refs, transport_semantics, transports, allowed_uses, restrictions, evidence_rules, freshness_max_days, operational_doc, owner]
+  optional_fields: [notes]
   enums:
     lifecycle: [candidate, declared, retired, not_applicable]
     requirement: [required, optional]
     mapping_state: [unknown, partial, known, not_applicable]
     transport_semantics: [alternative, complementary]
-  forbidden_fields: [status, readiness, availability, available, connected, tools_attached_to_agent, server_running, authentication_status, last_checked]
+  forbidden_fields: [status, readiness, availability, available, connected, tools_attached_to_agent, server_running, authentication_status, permission_status, last_checked]
   additional_fields: forbidden
 
 transport_item:
@@ -38,4 +39,5 @@ rules:
   - A transport with `consent: operator_required` cannot be usable without a structured runtime attestation.
   - Every durable source claim references a registered source id and evidence.
   - Session visibility connectivity authentication and probe outcomes are never persisted here.
+  - CamelCase kebab compact and prefixed aliases of forbidden runtime fields are normalized and rejected by the durable-state scanner.
   - Secrets tokens and credential-bearing connection strings are forbidden.

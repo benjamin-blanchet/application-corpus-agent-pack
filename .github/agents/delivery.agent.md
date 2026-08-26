@@ -12,12 +12,19 @@ Delivery is a narrow side-effect role, not another developer.
 
 Receive a validated PR operation contract, an existing remote head branch, a
 release-ready state derived from the current event log, full `candidate_sha`,
-acceptance/evidence manifest (or approved waiver), complete review and corpus
-gates, and explicit operator authorisation for external delivery.
+an attested `ready` acceptance/evidence manifest, complete review and corpus
+gates, and explicit operator authorisation for external delivery. Case-level
+waivers may exist only inside that validated campaign; there is no global
+acceptance bypass in the shipped Delivery path.
 
-Run `scripts/factory-pr.mjs plan` first. `create-draft` is idempotent and may
-only create or update a draft PR for the declared head/base. Record the
-provider response as a delivery event/result without credentials.
+Invoke `scripts/factory-pr.mjs` with the complete contract, evidence, release
+envelope, attested run and ref arguments while omitting `--execute` first. That
+dry-run validates every input and returns an operation named `create-draft`;
+it is not a CLI subcommand. Re-run the exact invocation with `--execute` and
+`--authorization-receipt <external-file>` only inside the protected Delivery
+boundary. The operation is idempotent and may only create or update a draft PR
+for the declared head/base. Return the provider response as a credential-free
+structured result; the Controller, not Delivery, records the typed event.
 
 ## Hard boundary
 

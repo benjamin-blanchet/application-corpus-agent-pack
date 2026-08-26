@@ -85,7 +85,7 @@ export function buildV1Migration({ stateText, planText, packageRef, at = new Dat
     actor: {
       role: 'migration', execution_id: 'factory-v1-migration',
       capabilities: ['read'],
-      model: { planned: null, requested: null, used: null },
+      model: { planned: null, requested: null, used: null, model_family: 'legacy-unknown-family' },
     },
     subject: { package: packageRef, lot_id: null },
     basis: { spec_sha256: null, plan_sha256: canonicalHash(plan), candidate_sha: null, diff_sha256: null },

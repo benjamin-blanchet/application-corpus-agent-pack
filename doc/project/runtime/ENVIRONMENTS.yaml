@@ -20,27 +20,22 @@ profiles:
         reason: "Validation uses temporary directories and does not require persistent environment reset."
       revision_probe: pack-revision
     endpoint:
-      base_url_from: FACTORY_BASE_URL
-      tls: local_self_signed
+      not_applicable: true
+      reason: "This repository is a CLI and documentation pack with no network endpoint."
     revision:
       must_equal_subject_sha: true
-      source: build_manifest
+      source: probe
     dependencies: []
     auth:
-      mode: service_identity
-      actor_ref: github-actions
-      automated_compatible: true
-      secret_refs: []
+      not_applicable: true
+      reason: "Local pack validation does not authenticate to an application service."
     data:
-      isolation: per_run
-      dataset_id_from: FACTORY_DATASET_ID
-      dataset_version_from: FACTORY_DATASET_VERSION
-      seed_operation: null
-      cleanup_operation: null
-      cleanup_required: false
+      not_applicable: true
+      reason: "The pack test suite uses code fixtures and temporary files, not an application dataset."
     mutation_policy:
       allowed: []
       requires_human_approval: false
     network:
       policy: deny_by_default
       destinations_ref: null
+      destinations: []

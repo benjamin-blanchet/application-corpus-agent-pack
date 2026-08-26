@@ -1,0 +1,10 @@
+{
+  "source": {
+    "CurrentAvailability": "usable",
+    "currentavailability": "usable",
+    "runtimeTransportState": "connected",
+    "runtimeadapterobservation": "present",
+    "toolsAttachedToAgent": ["jira"],
+    "authenticationStatus": "authenticated"
+  }
+}

@@ -104,13 +104,15 @@ read relevant corpus → create/validate spec → implement → test → update/
 Mandatory for `developer`:
 
 1. Start from the relevant corpus slice, not from the ticket alone.
-2. Use or create a `doc/spec/<version>/<jira>/` package before code changes.
-3. Implement from repository evidence and existing conventions.
-4. Update the spec and affected corpus files at closeout.
-5. Reconcile contradictions; do not leave an append-only trail.
-
-If direct corpus editing is blocked, write precise updates to
-`doc/_meta/update-candidates.md` and auto-invoke `Corpus` to consume them.
+2. Return repository evidence to `functional-analyst` and wait for an approved
+   `doc/spec/<version>/<jira>/` package plus an approved Planner work package.
+3. Implement only the reserved paths, from repository evidence and observed
+   existing conventions; a demonstrated refactor blocker returns to the
+   operator instead of widening the lot.
+4. Return structured `spec_delta` and `corpus_delta` evidence at closeout;
+   never write either owned surface directly.
+5. The Controller routes those deltas to Functional Analyst and `Corpus` and
+   keeps the candidate gate blocked until both owners reconcile contradictions.
 
 ## First run
 
@@ -149,8 +151,14 @@ important before broad team use; P2 is hygiene work.
 
 Operator-triggered only: preview and apply the safe `sync` command, then ask
 the `corpus` agent to migrate. Sync refreshes pack-owned files, confirms before
-replacing divergent local agents, and never overwrites an existing `doc/`
-file; missing scaffolds may be added. The agent runs `governance/pack-upgrade`,
+replacing divergent local agents, and preserves application corpus content.
+The reusable `doc/spec/template/**` scaffold and pack regression ledger
+`doc/_meta/factory-learning.yaml` are the only versioned `doc/` exceptions;
+their divergent previous bytes are backed up under `.corpus-pack-backups/`
+before replacement. Missing scaffolds may be added. Sync also backs up, then
+retires the exact legacy-contract allowlist declared by the upgrade engine;
+all other removed local extensions are warning-only. The agent runs
+`governance/pack-upgrade`,
 reconstructs a legacy missing state from the shipped schema scaffold, stamps
 `pack_version`, fills schema gaps, and writes a validator-clean durable
 migration report. That report is also a resumable checkpoint: an interrupted
@@ -162,6 +170,7 @@ Full procedure: [doc/_agents/pack-upgrade.md](doc/_agents/pack-upgrade.md).
 How to keep the prompt cache warm across tours and minimize token spend:
 [doc/_meta/agent-cache-discipline.md](doc/_meta/agent-cache-discipline.md).
 
-Summary: pick a model and stay on it, pre-attach MCP servers before the
-first agent message, treat `AGENTS.md` and agent personas as immutable for
-the session, `/compact` at natural task boundaries.
+Summary: keep one model stable inside each bounded execution, route models per
+approved role/work package, attach runtime source adapters before that role's
+first message, treat `AGENTS.md` and agent personas as immutable within the
+execution, and `/compact` only at natural task boundaries.

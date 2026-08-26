@@ -1,7 +1,7 @@
 version: 1
 profiles:
   - id: fixture-local
-    kind: local
+    kind: preview
     runtime_type: server
     automated: true
     operations:
@@ -46,8 +46,9 @@ profiles:
       allowed: [fixture-record]
       requires_human_approval: false
     network:
-      policy: deny_by_default
-      destinations_ref: null
+      policy: allowlist
+      destinations_ref: fixture-egress
+      destinations: [fixture.example.invalid]
   - id: fixture-cli
     kind: local
     runtime_type: cli
@@ -86,3 +87,4 @@ profiles:
     network:
       policy: deny_by_default
       destinations_ref: null
+      destinations: []

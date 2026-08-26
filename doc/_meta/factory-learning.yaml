@@ -1,4 +1,8 @@
-schema_version: 1
+schema_version: 2
+baseline:
+  path: scripts/factory-fixtures/catalog.json#learning_baseline
+  algorithm: sha256-canonical-json-v1
+  sha256: 07f72300f135eef01e9a8845a97309c10c6e63485b2723e7639e4a27b7f661cf
 promotions:
   - id: FACTORY-LEARN-001
     observed_at: 2026-08-26
@@ -34,10 +38,10 @@ promotions:
       type: experiment
       ref: operator-supplied-pgs-software-factory-pilot
     observed_failure: An acceptance role pushed despite a textual prohibition.
-    generalized_rule: Side effects are deny-by-default capabilities enforced before execution; prompts cannot grant them.
+    generalized_rule: Dangerous side effects are deny-by-default at shipped executor/provider boundaries and require effective host isolation elsewhere; prompts cannot grant them.
     decision:
       status: adopted
-      rationale: Role intent without technical enforcement is not an authority boundary.
+      rationale: Role intent without an effective provider or host control is not an authority boundary.
     acceptance_criteria: [AC-008]
     positive_fixtures: [delivery-draft-only]
     negative_fixtures: [acceptance-git-push-denied]

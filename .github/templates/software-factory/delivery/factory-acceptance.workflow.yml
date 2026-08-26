@@ -1,0 +1,163 @@
+name: Factory acceptance evidence
+
+on:
+  repository_dispatch:
+    types: [factory-acceptance]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: factory-acceptance-${{ github.event.client_payload.candidate_sha }}-${{ github.event.client_payload.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  acceptance:
+    if: ${{ github.sha == vars.FACTORY_CONTROLLER_SHA }}
+    runs-on: ${{ vars.FACTORY_ACCEPTANCE_RUNNER }}
+    timeout-minutes: 45
+    environment: factory-acceptance
+    env:
+      FACTORY_INPUT_CANDIDATE_SHA: ${{ github.event.client_payload.candidate_sha }}
+      FACTORY_INPUT_RUN_ID: ${{ github.event.client_payload.run_id }}
+      FACTORY_INPUT_BASE_URL: ${{ github.event.client_payload.base_url }}
+      FACTORY_INPUT_BUILD_OR_IMAGE: ${{ github.event.client_payload.build_or_image }}
+      FACTORY_INPUT_SCHEMA_VERSION: ${{ github.event.client_payload.schema_version }}
+      FACTORY_INPUT_DATASET_ID: ${{ github.event.client_payload.dataset_id }}
+      FACTORY_INPUT_DATASET_VERSION: ${{ github.event.client_payload.dataset_version }}
+      FACTORY_INPUT_PLAN: ${{ github.event.client_payload.plan }}
+      FACTORY_INPUT_ENVIRONMENT: ${{ github.event.client_payload.environment }}
+      FACTORY_INPUT_CI: ${{ github.event.client_payload.ci }}
+      FACTORY_BASE_URL: ${{ github.event.client_payload.base_url }}
+      FACTORY_DATASET_ID: ${{ github.event.client_payload.dataset_id }}
+      FACTORY_DATASET_VERSION: ${{ github.event.client_payload.dataset_version }}
+      FACTORY_RAW_EVIDENCE_ROOT: ${{ runner.temp }}/factory-evidence-quarantine
+      FACTORY_STAGING_ROOT: ${{ runner.temp }}/factory-evidence-staging
+      FACTORY_ENVELOPE_ROOT: ${{ runner.temp }}/factory-evidence-envelope
+    steps:
+      - name: Checkout protected factory controller
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ vars.FACTORY_CONTROLLER_SHA }}
+          path: factory-controller
+          persist-credentials: false
+      - name: Checkout exact candidate
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.client_payload.candidate_sha }}
+          path: candidate
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 20
+          package-manager-cache: false
+      - name: Validate protected controller and selected CI contract
+        id: contract
+        env:
+          FACTORY_CONTROLLER_SHA: ${{ vars.FACTORY_CONTROLLER_SHA }}
+        run: >-
+          node "$GITHUB_WORKSPACE/factory-controller/scripts/factory-workflow-context.mjs"
+          --controller-root "$GITHUB_WORKSPACE/factory-controller"
+          --controller-sha "$FACTORY_CONTROLLER_SHA"
+          --candidate-root "$GITHUB_WORKSPACE/candidate"
+          --candidate-sha "$FACTORY_INPUT_CANDIDATE_SHA"
+          --ci "$FACTORY_INPUT_CI"
+          --github-output "$GITHUB_OUTPUT" --json
+      - name: Run protected lifecycle and selected acceptance adapter
+        id: campaign
+        continue-on-error: true
+        run: >-
+          node "$GITHUB_WORKSPACE/factory-controller/scripts/factory-acceptance.mjs"
+          --root "$GITHUB_WORKSPACE/candidate"
+          --controller-root "$GITHUB_WORKSPACE/factory-controller"
+          --plan "$FACTORY_INPUT_PLAN"
+          --environment "$FACTORY_INPUT_ENVIRONMENT"
+          --ci "$FACTORY_INPUT_CI"
+          --subject-sha "$FACTORY_INPUT_CANDIDATE_SHA"
+          --run-id "$FACTORY_INPUT_RUN_ID"
+          --instance-id "github-run-$GITHUB_RUN_ID"
+          --build-or-image "$FACTORY_INPUT_BUILD_OR_IMAGE"
+          --schema-version "$FACTORY_INPUT_SCHEMA_VERSION"
+          --dataset-id "$FACTORY_INPUT_DATASET_ID"
+          --dataset-version "$FACTORY_INPUT_DATASET_VERSION"
+          --observation-out "$FACTORY_RAW_EVIDENCE_ROOT/environment-observation.json"
+          --lifecycle-out "$FACTORY_RAW_EVIDENCE_ROOT/factory-lifecycle.json"
+          --evidence-root "$FACTORY_RAW_EVIDENCE_ROOT" --json
+      - name: Scan and stage an exact minimized evidence bundle
+        id: stage
+        if: always()
+        continue-on-error: true
+        run: >-
+          node "$GITHUB_WORKSPACE/factory-controller/scripts/factory-stage-evidence.mjs"
+          --raw-root "$FACTORY_RAW_EVIDENCE_ROOT"
+          --out "$FACTORY_STAGING_ROOT"
+          --manifest-out "$FACTORY_ENVELOPE_ROOT/staging-manifest.json"
+          --plan "$GITHUB_WORKSPACE/candidate/$FACTORY_INPUT_PLAN" --json
+      - name: Upload only the scanned minimized evidence bundle
+        id: sanitized-evidence
+        if: always() && steps.stage.outcome == 'success'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: factory-evidence-bundle-${{ github.run_id }}
+          path: ${{ runner.temp }}/factory-evidence-staging
+          if-no-files-found: error
+          retention-days: ${{ steps.contract.outputs.retention_days }}
+      - name: Assemble immutable evidence manifest with protected controller
+        id: evidence
+        if: always() && steps.sanitized-evidence.outcome == 'success'
+        continue-on-error: true
+        env:
+          FACTORY_CI_RUN_ID: ${{ github.run_id }}
+          FACTORY_CI_ARTIFACT_ID: ${{ steps.sanitized-evidence.outputs.artifact-id }}
+          FACTORY_CI_ARTIFACT_URL: ${{ steps.sanitized-evidence.outputs.artifact-url }}
+        run: >-
+          node "$GITHUB_WORKSPACE/factory-controller/scripts/factory-evidence.mjs"
+          --root "$GITHUB_WORKSPACE/candidate"
+          --plan "$FACTORY_INPUT_PLAN"
+          --environment "$FACTORY_INPUT_ENVIRONMENT"
+          --ci "$FACTORY_INPUT_CI"
+          --observation "$FACTORY_STAGING_ROOT/environment-observation.json"
+          --results "$FACTORY_STAGING_ROOT/results.json"
+          --artifacts-root "$FACTORY_STAGING_ROOT"
+          --subject-sha "$FACTORY_INPUT_CANDIDATE_SHA"
+          --out "$FACTORY_ENVELOPE_ROOT/evidence-manifest.yaml"
+          --ci-run-id "$FACTORY_CI_RUN_ID"
+          --ci-artifact-id "$FACTORY_CI_ARTIFACT_ID"
+          --ci-artifact-url "$FACTORY_CI_ARTIFACT_URL"
+          --staging-manifest "$FACTORY_ENVELOPE_ROOT/staging-manifest.json" --json
+      - name: Render acceptance report with protected controller
+        id: report
+        if: always() && steps.sanitized-evidence.outcome == 'success'
+        continue-on-error: true
+        run: >-
+          node "$GITHUB_WORKSPACE/factory-controller/scripts/factory-report.mjs"
+          --root "$GITHUB_WORKSPACE/candidate"
+          --manifest "$FACTORY_ENVELOPE_ROOT/evidence-manifest.yaml"
+          --plan "$FACTORY_INPUT_PLAN"
+          --environment "$FACTORY_INPUT_ENVIRONMENT"
+          --ci "$FACTORY_INPUT_CI"
+          --artifacts-root "$FACTORY_STAGING_ROOT"
+          --out "$FACTORY_ENVELOPE_ROOT/ACCEPTANCE_REPORT.md" --json
+      - name: Upload manifest and human-readable report
+        id: envelope
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: factory-evidence-envelope-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/factory-evidence-envelope/staging-manifest.json
+            ${{ runner.temp }}/factory-evidence-envelope/evidence-manifest.yaml
+            ${{ runner.temp }}/factory-evidence-envelope/ACCEPTANCE_REPORT.md
+          if-no-files-found: error
+          retention-days: ${{ steps.contract.outputs.retention_days }}
+      - name: Enforce honest campaign verdict
+        if: always()
+        env:
+          FACTORY_CAMPAIGN_OUTCOME: ${{ steps.campaign.outcome }}
+          FACTORY_STAGE_OUTCOME: ${{ steps.stage.outcome }}
+          FACTORY_SANITIZED_OUTCOME: ${{ steps.sanitized-evidence.outcome }}
+          FACTORY_EVIDENCE_OUTCOME: ${{ steps.evidence.outcome }}
+          FACTORY_REPORT_OUTCOME: ${{ steps.report.outcome }}
+          FACTORY_ENVELOPE_OUTCOME: ${{ steps.envelope.outcome }}
+        run: test "$FACTORY_CAMPAIGN_OUTCOME" = success -a "$FACTORY_STAGE_OUTCOME" = success -a "$FACTORY_SANITIZED_OUTCOME" = success -a "$FACTORY_EVIDENCE_OUTCOME" = success -a "$FACTORY_REPORT_OUTCOME" = success -a "$FACTORY_ENVELOPE_OUTCOME" = success

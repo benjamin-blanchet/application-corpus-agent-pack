@@ -51,4 +51,7 @@ agents draw from two skill families:
 
 ## Spec path contract
 
-Specs follow the path contract `doc/spec/<version>/<jira>/`, where `<version>` is derived from the Jira `fixVersion` field. The `Functional Analyst` and `Developer` agents enforce this layout when creating or validating spec packages.
+Specs follow the path contract `doc/spec/<version>/<jira>/`, where `<version>`
+is derived from the Jira `fixVersion` field. Functional Analyst creates and
+reconciles the package; Developer only validates the approved package it
+receives and never writes it.

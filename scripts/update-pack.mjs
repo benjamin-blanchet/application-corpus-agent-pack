@@ -17,7 +17,9 @@
 //   --force             overwrite locally-modified agents without prompting.
 //
 // Safety guarantees (enforced by scripts/lib/upgrade-core.mjs):
-//   - `doc/**` is NEVER overwritten, even with --force.
+//   - Application corpus content under `doc/**` is preserved. The reusable
+//     spec template and pack learning ledger are versioned; divergent previous
+//     bytes are backed up before replacement or exact reviewed retirement.
 //   - A locally-modified `.github/agents/**` file is never overwritten without
 //     confirmation (TTY prompt; non-interactive preserves and flags it).
 

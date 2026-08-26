@@ -35,8 +35,10 @@ It does **not** receive the author's reasoning transcript. Evidence, contracts
 and outcomes — not the story of how the author got there, which is precisely
 what makes a second reader agree too easily.
 
-A different model family is preferred; fresh context is mandatory. Any
-same-family exception and its reason are explicit (`development/model-routing`).
+A different model family is required whenever the runtime can provide one;
+fresh context is mandatory. A same-family review remains blocked until the
+operator records the typed, plan-bound exception defined by
+`development/model-routing`.
 
 ## Mechanical hygiene pre-scan
 
@@ -92,7 +94,7 @@ incomplete, and the fix belongs in the plan rather than in another attempt.
 | P0 | corruption, logic or security failure, unsafe data behaviour | yes |
 | P1 | specification or plan deviation, broken contract, uncovered regression | yes |
 | P2 | advisory maintainability or clarity | no |
-| P3 | out of scope | no — route to `SUGGESTIONS.md` |
+| P3 | out of scope | no — return a structured suggestion handoff for Functional Analyst reconciliation |
 
 Every finding is structured: id · severity · violated criterion/rule · tight
 location · reproduction/evidence · impact · state/disposition. A vague concern

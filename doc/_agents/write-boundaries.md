@@ -28,8 +28,9 @@ configs, infrastructure-as-code, secrets, fixtures.
 
 ## When a corpus run uncovers a needed source change
 
-1. Write the precise suggestion to `doc/_meta/update-candidates.md` (or
-   `doc/spec/<version>/<jira>/` if it warrants a specification).
+1. Write the precise suggestion to `doc/_meta/update-candidates.md`; if it
+   warrants a specification, return a structured handoff to
+   `functional-analyst` instead of writing that package as `corpus`.
 2. Surface it in the end-of-run recap.
 3. Hand off to `developer` for implementation.
 
@@ -41,11 +42,11 @@ code, the agent declines and reroutes to `developer`.
 
 | Agent | Write surface |
 |---|---|
-| `developer` | application source code (after Step 7 gate), spec package, feature files for verified claims |
-| `functional-analyst` | spec packages (`doc/spec/...`), impact analyses |
+| `developer` | only application/source/test paths reserved by its approved work package after Step 7; no `doc/**` writes |
+| `functional-analyst` | functional spec package files and pre-candidate `acceptance-plan.yaml`; never factory controller state, acceptance run results or general corpus surfaces |
 | `planner` | `TECHNICAL_PLAN.md` and `factory/plan.v3.json` inside one approved spec package |
 | `reliability-analyst` | `doc/prod/known-bugs/`, `doc/prod/structural-risks/`, `doc/prod/root-cause-playbooks/`, `doc/prod/watchlist/`, reliability analyses |
-| `acceptance` | spec-package acceptance plan/scripts/results/evidence manifest and factual report; never factory plan/events/state |
+| `acceptance` | generated results/evidence/factual report under the selected run output (`acceptance/runs/<run-id>/` only in evidence-only mode); plans and replay scripts are frozen read-only inputs, never factory plan/events/state |
 | `factory-controller` | typed factory event log, derived state and controller lock/recovery records only |
 | `code-reviewer` | structured review result only; no repository content changes |
 | `delivery` | draft PR metadata through the declared provider operation; no repository file changes |

@@ -3,14 +3,14 @@
   "blockers": [],
   "delivery": null,
   "derived_from": {
-    "current_inputs_sha256": "212916a6aaef24335e6159356c9c4ea7871d01a6161c46dfd236fcca16c370a2",
+    "current_inputs_sha256": "7631ff730997b1d5aff31652756fb291e2b0cd9976a74fc33da2ed58e2f686c1",
     "events_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "last_seq": 0
   },
   "digests": {
-    "corpus_manifest_sha256": null,
+    "corpus_tree_sha256": null,
     "evidence_manifest_sha256": null,
-    "plan_sha256": "db5be5e29c5542e817a44548d10c04ea99b26b299bb9db7b2f44c3141e8c528e",
+    "plan_sha256": "6ab8586b7a3c2a903a01d022b1a0dd07cbe2bf72cf394696e716d7015bde1fe1",
     "spec_sha256": null,
     "test_bundle_sha256": null
   },
@@ -60,22 +60,37 @@
   "legacy": null,
   "lots": {
     "LOT-1": {
+      "attempt_budget_extensions": 0,
       "attempts": 0,
+      "diff_budget_override": null,
       "diff_sha256": null,
+      "effective_max_attempts": 2,
+      "preimplementation_contract": null,
+      "refactor_approval": null,
+      "refactor_escalation": null,
       "reservation_id": null,
       "review": null,
-      "status": "pending"
+      "status": "pending",
+      "workspace_snapshot": null
     }
   },
   "phase": "draft",
   "provenance": {
+    "candidate_binding": null,
     "candidate_sha": null,
+    "consolidated_snapshot": null,
     "evidence_sha": null,
+    "integration_snapshot": null,
     "publication": null,
     "tested_sha": null
   },
   "ready_lots": [],
   "reservations": {},
+  "reviews": {
+    "consolidated": null,
+    "release": null
+  },
   "run_id": null,
+  "run_mode": null,
   "v": 3
 }

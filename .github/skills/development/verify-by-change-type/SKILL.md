@@ -11,7 +11,8 @@ Select and execute the verification that actually proves the change works, based
 
 ## When to use
 
-In **Step 9** of the developer lifecycle, after implementation (Step 8) is complete and before corpus closeout (Step 10).
+In **Step 9** of the developer lifecycle, after implementation (Step 8) is
+complete and before consolidated review (Step 10) and owner closeout (Step 11).
 
 ## Verification matrix
 

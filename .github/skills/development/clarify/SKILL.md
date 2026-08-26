@@ -97,7 +97,8 @@ Do not batch. After **each** answer:
   briefing becomes a silent assumption at implementation.
 - Every remaining assumption is written down as an assumption, not as a fact.
 
-Record the session and its outcome in `JOURNAL.md`. Where the corpus could not
-answer, that gap is itself a finding: route it to
-`doc/_meta/update-candidates.md` so the next specification on this area starts
-from a better corpus.
+The Functional Analyst records the session and its outcome in `JOURNAL.md`.
+Where the corpus could not answer, that gap is itself a finding: return a
+structured `corpus_delta` to the Controller. `Corpus` decides whether to
+reconcile it immediately or render it in `doc/_meta/update-candidates.md`; the
+Functional Analyst never writes that cross-owner surface directly.

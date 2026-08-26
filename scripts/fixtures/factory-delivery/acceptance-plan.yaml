@@ -5,6 +5,7 @@ subject:
   freeze_at_execution: true
 campaign:
   adapter: playwright
+  config: scripts/fixtures/factory-delivery/playwright.config.mjs
   unattended_required: true
   continue_after_failure: true
   flaky_blocks: true
@@ -23,6 +24,7 @@ cases:
       - id: fixture-oracle
         type: file
         assertion: executable
+        criteria: [AC-001]
     evidence:
       required:
         - id: fixture-state
@@ -32,5 +34,7 @@ cases:
 mutations:
   - id: fixture-record
     scope: per_run
+    target: fixture-dataset
+    side_effects: [create-fixture-record]
     cleanup_required: true
     cleanup_operation: fixture-cleanup

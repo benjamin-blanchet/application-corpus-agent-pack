@@ -1,0 +1,17 @@
+✔ every adopted factory learning resolves to executable positive and negative fixtures (2.000542ms)
+✔ factory learning validation runs before adoption filtering (0.753458ms)
+✔ factory learning baseline prevents silent deletion, rejection or fixture removal (0.761333ms)
+✔ a coordinated ledger, baseline and fixture deletion is rejected against published history (0.549875ms)
+✔ published learning compares full provenance and rejects reuse of an old amendment (0.577291ms)
+✔ factory learning preserves every promotion and fixture binding from the requested published revision (0.089875ms)
+✔ published baseline checkout is bound to its exact HEAD and rejects symlink substitution (49.761667ms)
+✔ every learning catalogue fixture actually executes and passes by exact name (375.017666ms)
+✔ learning fixture execution rejects a skipped test even when its source and process exit look valid (105.489792ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 538.142041

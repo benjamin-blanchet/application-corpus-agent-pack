@@ -38,5 +38,16 @@
   { "id": "BF-037", "scenario": "status is requested after the specification disappears", "expected_code": "factory-package-invalid" },
   { "id": "BF-038", "scenario": "release provenance names an unresolvable Git object", "expected_code": "factory-git-sha-unresolvable" },
   { "id": "BF-039", "scenario": "Git HEAD advances after evidence was bound", "expected_code": "factory-candidate-head-moved" },
-  { "id": "BF-040", "scenario": "work package omits digest-bound handoff", "expected_code": "factory-lot-handoff" }
+  { "id": "BF-040", "scenario": "work package omits digest-bound handoff", "expected_code": "factory-lot-handoff" },
+  { "id": "BF-041", "scenario": "approval is recorded without a proposal", "expected_code": "factory-spec-approval-without-proposal" },
+  { "id": "BF-042", "scenario": "running work is rescheduled after invalidation", "expected_code": "factory-running-reservation-preserved" },
+  { "id": "BF-043", "scenario": "manifest redirects its package binding", "expected_code": "factory-evidence-spec-package-mismatch" },
+  { "id": "BF-044", "scenario": "application commit after freeze preserves implementation proof", "expected_code": "factory-candidate-head-moved" },
+  { "id": "BF-045", "scenario": "artifact change has malformed or unknown affected lots", "expected_code": "factory-change-affected-lots-shape" },
+  { "id": "BF-046", "scenario": "economy evades routing metadata for a sensitive path", "expected_code": "factory-economy-sensitive-path" },
+  { "id": "BF-047", "scenario": "handoff input bytes differ from declared digest", "expected_code": "factory-handoff-input-digest-mismatch" },
+  { "id": "BF-048", "scenario": "controller reserves a lot before conventions were observed", "expected_code": "factory-preimplementation-contract-required" },
+  { "id": "BF-049", "scenario": "conventions are observed after path reservation", "expected_code": "factory-preimplementation-contract-after-reservation" },
+  { "id": "BF-050", "scenario": "lot starts from a revision different from convention observation", "expected_code": "factory-preimplementation-contract-revision-mismatch" },
+  { "id": "BF-051", "scenario": "lot result binds a different convention contract", "expected_code": "factory-preimplementation-contract-result-mismatch" }
 ]

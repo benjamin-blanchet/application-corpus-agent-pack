@@ -33,7 +33,7 @@ reviewer earn different default trust, and it is worth knowing which you have.
 | **Blocking** | correctness, security, data safety, a contract or specification deviation | fix |
 | **Advisory** | maintainability, naming, clarity, a defensible alternative | fix if cheap and in scope, otherwise answer why not |
 | **False positive** | the reviewer misread the code or its context | answer with the evidence, do not change the code |
-| **Out of scope** | a real issue, unrelated to this change | route to `SUGGESTIONS.md`, answer with the link |
+| **Out of scope** | a real issue, unrelated to this change | return a structured suggestion handoff to the Functional Analyst; answer with its stable finding id |
 
 A false positive is answered, never ignored. Silence reads as agreement to
 everyone except the person who wrote the comment.
@@ -70,10 +70,11 @@ reviewer learns to deprioritise your changes.
 
 ## 6. Record
 
-Append to `JOURNAL.md`: the comments received, their classification, what was
-changed, what was declined and why. A recurring class of finding across
-changes is not a series of incidents — it is a convention nobody wrote down,
-and it belongs in the corpus so the next change starts from it.
+Return a structured review disposition to the Controller: comments received,
+their stable ids and classification, what changed, and what was declined with
+its evidence. The Controller routes the result to the Functional Analyst for
+`JOURNAL.md`/`SUGGESTIONS.md` reconciliation and to `Corpus` for any durable
+convention. Review workers never append owner documents themselves.
 
 ## Rules
 

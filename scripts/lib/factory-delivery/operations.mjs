@@ -1,12 +1,21 @@
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 
-import { asArray, requiredObject, resolveContainedDirectory } from './core.mjs';
+import { asArray, requiredObject, resolveContainedDirectory, sha256Object } from './core.mjs';
 import { redactRuntimeText } from './minimize.mjs';
 
 function bounded(value, limit = 4000) {
   const text = redactRuntimeText(value);
   return text.length > limit ? `${text.slice(0, limit)}\n<output truncated>` : text;
+}
+
+export function operationContractDigest(operation) {
+  return sha256Object({
+    argv: asArray(operation?.argv).map(String),
+    cwd: operation?.cwd || '.',
+    timeout_seconds: operation?.timeout_seconds,
+    side_effect: operation?.side_effect,
+  });
 }
 
 export function executeOperation(ci, id, {
@@ -53,7 +62,7 @@ export function executeOperation(ci, id, {
 }
 
 function revisionFrom(output) {
-  const match = String(output || '').match(/\b[0-9a-f]{40}\b/i);
+  const match = String(output || '').trim().match(/^[0-9a-f]{40}$/i);
   return match ? match[0].toLowerCase() : null;
 }
 

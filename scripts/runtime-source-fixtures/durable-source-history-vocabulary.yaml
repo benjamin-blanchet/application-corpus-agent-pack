@@ -1,0 +1,11 @@
+source_coverage:
+  status: covered
+  freshness: fresh
+  last_successful_run: demo-2026-05-30
+  transport_semantics: alternative
+  mapping_state: known
+  historical_availability:
+    narrative: Historical coverage is evidence, not current runtime availability.
+  runtime_probe_policy:
+    safe_probe: list-accessible-projects
+    safe_limit: 10

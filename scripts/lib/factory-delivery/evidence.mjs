@@ -11,29 +11,9 @@ import {
   sha256File,
   sha256Object,
 } from './core.mjs';
-import { scanEvidenceFile, redactRuntimeValue } from './minimize.mjs';
+import { inspectEvidenceMedia, scanEvidenceFile, redactRuntimeValue } from './minimize.mjs';
 import { repositoryRelative, sourceTreeDigest } from './provenance.mjs';
 import { hasValidWaiver, validateAcceptancePlan, validateAcceptanceResults, validateEnvironmentObservation, validateEvidence } from './validation.mjs';
-
-function mediaType(file) {
-  const extension = path.extname(file).toLowerCase();
-  return ({
-    '.png': 'image/png',
-    '.jpg': 'image/jpeg',
-    '.jpeg': 'image/jpeg',
-    '.webp': 'image/webp',
-    '.zip': 'application/zip',
-    '.webm': 'video/webm',
-    '.mp4': 'video/mp4',
-    '.json': 'application/json',
-    '.yaml': 'application/yaml',
-    '.yml': 'application/yaml',
-    '.xml': 'application/xml',
-    '.html': 'text/html',
-    '.md': 'text/markdown',
-    '.txt': 'text/plain',
-  })[extension] || 'application/octet-stream';
-}
 
 function normalizeOutcome(result) {
   const attempts = Math.max(1, Number(result?.attempts) || 1);
@@ -42,7 +22,15 @@ function normalizeOutcome(result) {
 
 function artifactInput(value, caseId, index) {
   if (typeof value === 'string') return { id: `${caseId}-evidence-${index + 1}`, path: value };
-  return { id: value?.id || `${caseId}-evidence-${index + 1}`, path: value?.path, media_type: value?.media_type };
+  return {
+    id: value?.id || `${caseId}-evidence-${index + 1}`,
+    path: value?.path,
+    media_type: value?.media_type,
+    requirement_id: value?.requirement_id,
+    type: value?.type,
+    checkpoint: value?.checkpoint,
+    media_pii_policy: value?.media_pii_policy,
+  };
 }
 
 export function assembleEvidence({
@@ -61,8 +49,12 @@ export function assembleEvidence({
   acceptancePlanPath = null,
   publication = null,
   supportingArtifacts = [],
+  externalFindings = [],
 }) {
-  const generationFindings = validateAcceptancePlan(plan, { root: repository, checkFiles: false });
+  const generationFindings = [
+    ...validateAcceptancePlan(plan, { root: repository, checkFiles: false }),
+    ...asArray(externalFindings).map((item) => finding(item?.code || 'evidence-staging-finding', item?.message || 'evidence staging reported a blocking finding')),
+  ];
   if (!SHA_PATTERN.test(subjectSha || '')) generationFindings.push(finding('evidence-sha-invalid', 'subjectSha must be a full 40-hex SHA'));
   const provenanceWaiver = plan?.subject?.provenance_waiver || null;
   const environmentDigest = environmentContractPath && fs.existsSync(environmentContractPath)
@@ -71,6 +63,7 @@ export function assembleEvidence({
   const planDigest = acceptancePlanPath && fs.existsSync(acceptancePlanPath)
     ? sha256File(acceptancePlanPath)
     : sha256Object(plan);
+  const environmentProfile = asArray(environment?.profiles).find((profile) => profile.id === plan?.environment_profile);
   generationFindings.push(...validateEnvironmentObservation(observation, { provenanceWaiver, environment, ci }));
   generationFindings.push(...validateAcceptanceResults(results, {
     subjectSha,
@@ -79,9 +72,10 @@ export function assembleEvidence({
     environmentDigest,
     plan,
     provenanceWaiver,
+    ci,
+    environmentProfile,
   }));
   if (observation?.environment_contract_digest !== environmentDigest) generationFindings.push(finding('evidence-environment-digest-mismatch', 'observation was not produced from the supplied environment contract'));
-  const environmentProfile = asArray(environment?.profiles).find((profile) => profile.id === plan?.environment_profile);
   if (!environmentProfile) generationFindings.push(finding('acceptance-environment-unknown', `acceptance profile ${plan?.environment_profile} is not declared`));
   if (observation?.profile !== plan?.environment_profile) generationFindings.push(finding('evidence-environment-profile-mismatch', `observation profile ${observation?.profile} differs from planned profile ${plan?.environment_profile}`));
   for (const duplicate of duplicateIds(results?.cases)) generationFindings.push(finding('evidence-case-duplicate', `duplicate execution result ${duplicate}`));
@@ -89,24 +83,35 @@ export function assembleEvidence({
   const resultCases = new Map(asArray(results?.cases).map((testCase) => [testCase.id, testCase]));
   const artifactRecords = new Map();
   const cases = [];
+  if (results?.toolchain?.adapter !== plan?.campaign?.adapter) {
+    generationFindings.push(finding('evidence-adapter-mismatch', `results adapter ${JSON.stringify(results?.toolchain?.adapter)} differs from planned adapter ${JSON.stringify(plan?.campaign?.adapter)}`));
+  }
 
   for (const [id, planned] of planCases) {
     const result = resultCases.get(id);
     if (!result) {
-      cases.push({ id, criteria: asArray(planned.criteria), outcome: 'blocked', attempts: 0, oracle_results: [], evidence_ids: [] });
+      cases.push({ id, criteria: asArray(planned.criteria), outcome: 'blocked', attempts: 0, user_visible_error: false, oracle_results: [], evidence_ids: [], evidence_bindings: [] });
       generationFindings.push(finding('evidence-case-missing', `${id} has no execution result`));
       continue;
     }
-    const normalized = normalizeOutcome(result);
+    if (typeof result?.user_visible_error !== 'boolean') generationFindings.push(finding('evidence-user-visible-error-unrecorded', `${id}.user_visible_error must be recorded explicitly`));
+    const userVisibleError = result?.user_visible_error === true;
+    const normalized = normalizeOutcome(userVisibleError ? { ...result, outcome: 'fail' } : result);
     const outcome = normalized.outcome;
+    if (userVisibleError) generationFindings.push(finding('acceptance-user-visible-error', `${id} recorded a user-visible error and cannot pass`));
     if (normalized.reason === 'flaky_retry') generationFindings.push(finding('acceptance-flaky-blocking', `${id} passed only after retry and is recorded as failed`));
     if (normalized.reason === 'invalid_adapter_outcome') generationFindings.push(finding('evidence-outcome-invalid', `${id} returned unsupported adapter outcome ${JSON.stringify(result?.outcome)}`));
     const oracleResults = asArray(result.oracle_results).map((oracle) => ({
       ...oracle,
       outcome: canonicalizeCaseOutcome(oracle?.outcome).outcome,
+      recorded: oracle?.recorded === true,
     }));
+    for (const oracle of oracleResults) {
+      if (oracle?.recorded === false) generationFindings.push(finding('evidence-oracle-not-recorded', `${id}.${oracle?.id || '?'} was not explicitly recorded by the adapter`));
+    }
     if (outcome === 'passed' && oracleResults.length === 0) generationFindings.push(finding('evidence-oracle-result-missing', `${id} has no recorded oracle result`));
     const evidenceIds = [];
+    const plannedEvidence = new Map(asArray(planned?.evidence?.required).map((requirement) => [requirement.id, requirement]));
     for (const [index, raw] of asArray(result.evidence).entries()) {
       const input = artifactInput(raw, id, index);
       if (!input.path) {
@@ -126,13 +131,25 @@ export function assembleEvidence({
         generationFindings.push(finding('evidence-artifact-duplicate', `artifact id ${input.id} is not globally unique`, relative));
         continue;
       }
-      const minimization = scanEvidenceFile(absolute, relative);
+      const inspection = inspectEvidenceMedia(absolute, relative);
+      const requirement = input.requirement_id ? plannedEvidence.get(input.requirement_id) : null;
+      const approvedMediaPiiPolicy = requirement?.media_pii_policy || null;
+      if (input.media_pii_policy && input.media_pii_policy !== approvedMediaPiiPolicy) {
+        generationFindings.push(finding('evidence-media-pii-policy-mismatch', `${id}.${input.requirement_id || input.id} reports a PII policy that is not approved by the plan`, relative));
+      }
+      const claimedMediaType = String(input.media_type || '').split(';')[0].trim().toLowerCase();
+      if (claimedMediaType && inspection.mediaType && claimedMediaType !== inspection.mediaType) {
+        generationFindings.push(finding('evidence-artifact-media-claim-mismatch', `${input.id} claimed ${input.media_type} but its bytes identify ${inspection.mediaType}`, relative));
+      }
+      const minimization = scanEvidenceFile(absolute, relative, { mediaPiiPolicy: approvedMediaPiiPolicy });
       for (const issue of minimization) generationFindings.push(finding(issue.code, issue.message, relative));
       const stat = fs.statSync(absolute);
       artifactRecords.set(input.id, {
         id: input.id,
         path: relative,
-        media_type: input.media_type || mediaType(relative),
+        media_type: inspection.mediaType || 'application/octet-stream',
+        pii_policy: inspection.kind === 'text' ? 'content_scanned' : approvedMediaPiiPolicy || 'blocked_unverified',
+        ...(['screenshot', 'video'].includes(requirement?.type) && requirement?.pii_attestation_ref ? { pii_attestation_ref: requirement.pii_attestation_ref } : {}),
         sha256: sha256File(absolute),
         bytes: stat.size,
       });
@@ -156,8 +173,9 @@ export function assembleEvidence({
       id,
       criteria: asArray(planned.criteria),
       outcome,
-      ...(normalized.reason ? { reason: normalized.reason } : {}),
+      ...(userVisibleError ? { reason: 'user_visible_error' } : normalized.reason ? { reason: normalized.reason } : {}),
       attempts: Math.max(1, Number(result.attempts) || 1),
+      user_visible_error: userVisibleError,
       oracle_results: oracleResults,
       evidence_ids: evidenceIds,
       evidence_bindings: evidenceBindings,
@@ -170,28 +188,46 @@ export function assembleEvidence({
     const actual = resultMutations.get(planned.id);
     if (!actual) {
       if (planned.cleanup_required === true) generationFindings.push(finding('acceptance-cleanup-pending', `${planned.id} has no cleanup result`));
-      return { id: planned.id, outcome: 'not_applied', cleanup: planned.cleanup_required ? 'pending' : 'not_required' };
+      return { id: planned.id, outcome: 'not_applied', cleanup: planned.cleanup_required ? 'pending' : 'not_required', cleanup_evidence_ids: [] };
     }
     return {
       id: planned.id,
       outcome: actual.outcome || 'failed',
       cleanup: actual.cleanup || (planned.cleanup_required ? 'pending' : 'not_required'),
+      cleanup_evidence_ids: [...new Set(asArray(actual.cleanup_evidence_ids).filter((id) => typeof id === 'string' && id))],
+      ...(actual.authorization ? { authorization: { ...actual.authorization } } : {}),
+      ...(actual.cleanup_execution ? { cleanup_execution: { ...actual.cleanup_execution } } : {}),
     };
   });
+  for (const mutation of mutations) {
+    const planned = asArray(plan?.mutations).find((candidate) => candidate.id === mutation.id);
+    if (planned?.cleanup_required === true && mutation.cleanup === 'passed' && mutation.cleanup_evidence_ids.length === 0) {
+      generationFindings.push(finding('acceptance-cleanup-evidence-missing', `${mutation.id} claims passed cleanup without an evidence artifact`));
+    }
+    for (const evidenceId of mutation.cleanup_evidence_ids) {
+      if (!artifactRecords.has(evidenceId)) generationFindings.push(finding('acceptance-cleanup-evidence-missing', `${mutation.id} references absent cleanup evidence ${evidenceId}`));
+    }
+  }
 
   const recordedPaths = new Set([...artifactRecords.values()].map((artifact) => artifact.path));
   for (const [index, supporting] of asArray(supportingArtifacts).entries()) {
     try {
       const resolved = resolveContainedRegularFile(artifactsRoot, path.resolve(supporting));
       if (recordedPaths.has(resolved.relative)) continue;
-      const minimization = scanEvidenceFile(resolved.absolute, resolved.relative);
+      const inspection = inspectEvidenceMedia(resolved.absolute, resolved.relative);
+      const digest = sha256File(resolved.absolute);
+      const identicalApprovedArtifact = [...artifactRecords.values()].find((artifact) => artifact.sha256 === digest && artifact.pii_policy === 'masked_or_synthetic' && artifact.pii_attestation_ref);
+      const supportingMediaPiiPolicy = identicalApprovedArtifact?.pii_policy || null;
+      const minimization = scanEvidenceFile(resolved.absolute, resolved.relative, { mediaPiiPolicy: supportingMediaPiiPolicy });
       for (const issue of minimization) generationFindings.push(finding(issue.code, issue.message, resolved.relative));
       const id = `support-${index + 1}-${path.basename(resolved.relative).replace(/[^A-Za-z0-9._-]/g, '-')}`;
       artifactRecords.set(id, {
         id,
         path: resolved.relative,
-        media_type: mediaType(resolved.relative),
-        sha256: sha256File(resolved.absolute),
+        media_type: inspection.mediaType || 'application/octet-stream',
+        pii_policy: inspection.kind === 'text' ? 'content_scanned' : supportingMediaPiiPolicy || 'blocked_unverified',
+        ...(identicalApprovedArtifact?.pii_attestation_ref ? { pii_attestation_ref: identicalApprovedArtifact.pii_attestation_ref } : {}),
+        sha256: digest,
         bytes: fs.statSync(resolved.absolute).size,
       });
       recordedPaths.add(resolved.relative);
@@ -216,7 +252,6 @@ export function assembleEvidence({
     subject: {
       head_sha: String(subjectSha || '').toLowerCase(),
       ...(baseSha ? { base_sha: String(baseSha).toLowerCase() } : {}),
-      ...(publication?.mode === 'evidence_only_commit' && publication?.evidence_commit_sha ? { evidence_commit_sha: String(publication.evidence_commit_sha).toLowerCase() } : {}),
       tested_sha: String(subjectSha || '').toLowerCase(),
       source_tree_digest: treeDigest,
     },
@@ -243,6 +278,12 @@ export function assembleEvidence({
         : `${specPackage || path.dirname(plan?.spec_ref || 'doc/spec/unknown')}/acceptance-plan.yaml`,
       plan_digest: planDigest,
     },
+    ...(results?.capability_receipt ? {
+      capability_receipt: {
+        ...results.capability_receipt,
+        grants: asArray(results.capability_receipt.grants).map((grant) => ({ ...grant })),
+      },
+    } : {}),
     publication: publication || { mode: 'ci_artifact' },
     criteria_waivers: criteriaWaivers,
     cases,
@@ -253,8 +294,10 @@ export function assembleEvidence({
     generation_findings: [],
     ...(provenanceWaiver ? { provenance_waiver: provenanceWaiver } : {}),
   };
-  if (manifest.publication.mode === 'ci_artifact' && !manifest.publication.bundle_digest) manifest.publication.bundle_digest = sha256Object(manifest.artifacts);
-  const validationFindings = validateEvidence(manifest, plan, { artifactsRoot, verifyArtifacts: true });
+  if (manifest.publication.mode === 'ci_artifact' && !manifest.publication.bundle_digest) manifest.publication.bundle_digest = sha256Object(manifest.artifacts
+    .map((artifact) => ({ path: artifact.path, sha256: artifact.sha256, bytes: artifact.bytes }))
+    .sort((left, right) => left.path.localeCompare(right.path)));
+  const validationFindings = validateEvidence(manifest, plan, { artifactsRoot, verifyArtifacts: true, ci, environment });
   const allFindings = [...generationFindings, ...validationFindings];
   manifest.generation_findings = [...new Map(allFindings.map((item) => [`${item.code}:${item.message}`, { code: item.code, message: item.message }])).values()];
   if (allFindings.length === 0

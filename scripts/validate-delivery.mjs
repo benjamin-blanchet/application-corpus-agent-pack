@@ -9,6 +9,7 @@ import { currentHead, verifyEvidenceOnlyCommit } from './lib/factory-delivery/pr
 import {
   validateAcceptancePlan,
   validateCrossContracts,
+  validateDeliveryWorkflowTemplates,
   validateEnvironment,
   validateEnvironmentObservation,
   validateEvidence,
@@ -42,6 +43,7 @@ try {
   const specFile = plan.spec_ref && !String(plan.spec_ref).includes('<') ? path.resolve(root, plan.spec_ref) : null;
   const criteria = extractSpecificationCriteria(specFile);
   const findings = [
+    ...validateDeliveryWorkflowTemplates({ root, requireActiveWorkflows: args['allow-unadopted-workflows'] !== true }),
     ...validateFactoryCi(ci, { file: path.relative(root, ciFile), root, allowPlaceholders: lintTemplate, checkPipelineFile: !lintTemplate }),
     ...validateEnvironment(environment, ci, { file: path.relative(root, environmentFile), allowPlaceholders: lintTemplate }),
     ...validateAcceptancePlan(plan, {
@@ -75,10 +77,11 @@ try {
       acceptancePlanFile: planFile,
       environmentContractFile: environmentFile,
       repositoryRoot: root,
+      ci,
     }));
-    if (manifest?.subject?.evidence_commit_sha) {
+    if (args['evidence-commit-sha']) {
       const allowed = [packageDir ? path.relative(root, path.join(packageDir, 'acceptance/runs')) : `${manifest.spec_package}/acceptance/runs`];
-      const check = verifyEvidenceOnlyCommit(root, manifest.subject.tested_sha, manifest.subject.evidence_commit_sha, allowed);
+      const check = verifyEvidenceOnlyCommit(root, manifest.subject.tested_sha, args['evidence-commit-sha'], allowed);
       if (!check.ok) findings.push({ severity: 'P0', code: check.code, message: `evidence commit is not evidence-only: ${(check.forbidden || []).join(', ')}` });
     }
   }

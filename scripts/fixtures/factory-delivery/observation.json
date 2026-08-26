@@ -11,8 +11,8 @@
   "dataset_id": "fixture-dataset",
   "dataset_version": "fixture-dataset-v1",
   "auth_actor_type": "service_identity",
-  "environment_contract_digest": "sha256:18dfdb68dbc2483f619e8fe5e00f8eb355b6441585dda158653c52d740c2c081",
-  "ci_contract_digest": "sha256:f4933e19ad898a4d16f49df55b07bb38b9ae4041eee0487470bd5398a4ef3407",
+  "environment_contract_digest": "sha256:3980ac7c9e2b00ac5e262454bf4864526bac2431027667848251d3c36716fbe5",
+  "ci_contract_digest": "sha256:3b09bdf9e535b5acc99c53b4469c5c3b510d079d7d8ec4690faf2e05e5cda851",
   "checks": [
     { "id": "fixture-health", "kind": "health", "required": true, "outcome": "pass" },
     { "id": "fixture-revision", "kind": "revision", "required": true, "outcome": "pass" },

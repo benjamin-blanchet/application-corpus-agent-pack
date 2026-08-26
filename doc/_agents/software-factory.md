@@ -25,6 +25,7 @@ approved spec → approved plan → bounded lots → independent review
 | Role | Authority | Durable output |
 |---|---|---|
 | Factory Controller | scheduling and typed state transitions | event log + derived state |
+| Functional Analyst | business specification, criteria and pre-candidate acceptance mapping | spec package + acceptance plan |
 | Planner | decomposition and work-package contracts | plan V3 |
 | Implementer | one reserved change outcome | structured lot result |
 | Code Reviewer | independent verdict | structured review result |
@@ -37,7 +38,24 @@ No role owns the full chain. The Controller owns coordination, not semantic
 work. Workers cannot edit plan/events/state or perform repository delivery.
 The capability contract under
 `.github/templates/software-factory/roles/role-capabilities.yaml` is deny by
-default and is validated before an action, not merely pasted into prompts.
+default. Shipped executors/providers validate it before their side effects and
+require effective host-control receipts for dangerous capabilities. The YAML
+does not sandbox arbitrary IDE tools: without host filesystem/credential/egress
+isolation those actions are ineligible, and the independently recomputed Git
+delta is post-action detection of source writes, not prevention.
+
+The shipped V3 Controller therefore records Acceptance with only `read` and
+`execute`. Its `capability_grants` field is reserved and must be empty:
+operator approval, a GitHub Environment gate, a receipt string or a
+`protected` label is not machine evidence of an isolated executor. Network,
+secrets and data mutation stay blocked until an external executor and trust
+verifier are integrated as one enforcement boundary.
+
+Accordingly, the shipped `factory-acceptance.mjs` validates inputs but emits
+`acceptance-execution-boundary-unavailable` before starting the candidate
+lifecycle or an adapter, even when network policy is `deny_by_default`. Only a
+machine-verified external process/filesystem/egress boundary can replace this
+honest blocker.
 
 ## Truth and invalidation
 

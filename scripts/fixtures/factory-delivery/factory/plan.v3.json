@@ -1,0 +1,54 @@
+{
+  "v": 3,
+  "spec_path": "SPECIFICATION.md",
+  "environment_contract": "scripts/fixtures/factory-delivery/environment.yaml",
+  "acceptance_criteria": [
+    { "id": "AC-001", "proved_by": ["CASE-001"] }
+  ],
+  "lots": [
+    {
+      "id": "LOT-1",
+      "kind": "implementation",
+      "objective": "Exercise the stack-neutral delivery fixture",
+      "acceptance_criteria": ["AC-001"],
+      "dependencies": [],
+      "read_claims": [
+        { "kind": "exact", "path": "scripts/fixtures/factory-delivery/SPECIFICATION.md" },
+        { "kind": "exact", "path": "scripts/fixtures/factory-delivery/evidence/CASE-001.txt" }
+      ],
+      "write_claims": [
+        { "kind": "prefix", "path": "scripts/fixtures/factory-delivery" }
+      ],
+      "forbidden_paths": [".git", "node_modules"],
+      "contracts": {
+        "inputs": ["fixture-specification"],
+        "outputs": ["fixture-evidence"],
+        "invariants": ["draft-only-delivery"],
+        "non_goals": ["external-publication"]
+      },
+      "handoff": {
+        "inputs": [
+          {
+            "id": "fixture-specification",
+            "path": "scripts/fixtures/factory-delivery/SPECIFICATION.md",
+            "sha256": "7c370f6cee7942c0f450baa3fc2fde2d7e070f8cfb40a1d1eaff8c9b65fdc9b4"
+          }
+        ],
+        "outputs": [
+          { "id": "fixture-evidence", "path": "scripts/fixtures/factory-delivery/evidence" }
+        ],
+        "include_private_reasoning": false
+      },
+      "verification": ["node scripts/test-factory-delivery.mjs"],
+      "stop_rules": ["stop before any external mutation"],
+      "risk": "medium",
+      "control_plane_critical": false,
+      "complexity": "bounded",
+      "agent_role": "implementer",
+      "model_role": "standard",
+      "capabilities": ["read", "write", "execute"],
+      "decision_domains": [],
+      "max_attempts": 2
+    }
+  ]
+}

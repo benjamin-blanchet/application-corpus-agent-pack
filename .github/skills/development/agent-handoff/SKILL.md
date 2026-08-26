@@ -1,7 +1,7 @@
 ---
 name: agent-handoff
 category: development
-description: "The artefact-driven gates between roles: analyst to developer, developer to implementation, developer to quality analyst, and the final human action. Each transition is checkable, so nothing is lost between agents."
+description: "Artefact-driven gates from analyst and planner through bounded implementation, owner closeout, acceptance, release and the final human action. Each transition is independently checkable."
 ---
 
 # Agent Handoff
@@ -64,13 +64,15 @@ initialized the event log and derived state · the review budget fits the
 remaining capacity, or the operator
 accepted the queue explicitly.
 
-## Gate 3 — developer → acceptance
+## Gate 3 — verified integration + owner closeout → acceptance
 
-Upstream delivers: all lots integrated and deterministically verified · all lot
-reviews and the consolidated review clean · corpus closeout complete with the
-delta merged · the exact full `candidate_sha` frozen and recorded ·
-`SPECIFICATION.md` reflecting the integrated behaviour · `TESTS.md` enumerating
-the acceptance cases · a target non-production environment, explicitly named · environment, build, schema, dataset and script
+Controller assembles: Developer's bounded results integrated and
+deterministically verified · all lot reviews and the consolidated review clean
+· Functional Analyst's spec reconciliation complete · Corpus closeout complete
+with the durable delta reconciled · the exact full `candidate_sha` frozen and
+recorded · `SPECIFICATION.md` reflecting the integrated behaviour · `TESTS.md`
+enumerating the acceptance cases · a target non-production environment,
+explicitly named · environment, build, schema, dataset and script
 identities · declared expected mutations and side effects · current environment
 and CI contracts · capability-limited acceptance work package.
 

@@ -54,8 +54,8 @@ surface:
 | Turn an approved spec into a bounded technical plan | `planner` | plan files in `doc/spec/**` | read-only |
 | Initialize, enrich or audit the corpus; retrodocument code | `corpus` | `doc/**` | read-only |
 | Investigate an incident, failure mode or operational risk | `reliability-analyst` | `doc/prod/**` | read-only |
-| Implement a *validated* spec | `developer` | source + `doc/spec/**` | edits |
-| Validate delivered features on a frozen SHA; produce the validation report | `acceptance` | `doc/spec/**` evidence | read-only |
+| Implement an approved reserved work package | `developer` | reserved application source/test paths only | edits |
+| Validate delivered features on a frozen SHA; produce the validation report | `acceptance` | generated run results/evidence only | read-only |
 | Coordinate an approved machine plan | `factory-controller` | factory event log + derived state via controller CLI | read-only |
 | Independently review one lot or integration | `code-reviewer` | structured review result only | read-only |
 | Open/update an authorised draft PR from an existing remote branch | `delivery` | draft-PR metadata only | read-only |

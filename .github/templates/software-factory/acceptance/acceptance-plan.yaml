@@ -7,6 +7,8 @@ subject:
 
 campaign:
   adapter: playwright
+  config: doc/spec/<version>/<ticket>/acceptance/playwright.config.mjs
+  bootstrap_operation: acceptance-browser-bootstrap
   unattended_required: true
   continue_after_failure: true
   flaky_blocks: true
@@ -27,10 +29,15 @@ cases:
       - id: visible-final-state
         type: ui
         assertion: executable
+        criteria: [AC-001]
+      - id: no-user-visible-error
+        type: ui
+        assertion: executable
+        criteria: [AC-001]
     evidence:
       required:
         - id: stable-final-state
-          type: screenshot
+          type: log
           checkpoint: stable-final-state
     mutations: []
 

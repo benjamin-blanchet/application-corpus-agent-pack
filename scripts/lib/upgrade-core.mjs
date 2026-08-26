@@ -16,13 +16,16 @@
 //                           requested (TTY prompts; non-interactive preserves
 //                           and flags it). `force: true` overwrites all.
 //   B · pack-template     → copied only when missing locally (existing files
-//                           preserved; diff hints emitted)
+//                           preserved; diff hints emitted). Executable factory
+//                           templates are bucket A so they cannot drift from
+//                           the scripts and schemas that consume them.
 //   C · corpus-owned      → never touched, even if present in source
 //
 // Two hard rules:
-//   1. `doc/**` is NEVER overwritten — even with `force`. The corpus is the
-//      team's data. Genuinely-missing scaffold files are added; existing
-//      files are preserved (with a diff hint when the template moved on).
+//   1. `doc/**` is NEVER overwritten — even with `force` — except the reusable
+//      executable scaffold `doc/spec/template/**` and the pack regression
+//      ledger `doc/_meta/factory-learning.yaml`. Instantiated spec packages
+//      and application knowledge remain team data.
 //   2. A locally-modified agent is NEVER overwritten without explicit consent.
 
 import fs from 'node:fs';
@@ -36,6 +39,7 @@ const BUCKET_A_FILES = new Set([
   'AGENTS.md',
   'KICKSTART.md',
   '.github/copilot-instructions.md', // pack doctrine (the AGENTS.md mirror + role routing), like AGENTS.md — refreshed on upgrade. Operator-specific Copilot instructions belong in `.github/instructions/*.instructions.md`, which the pack never ships or touches.
+  'doc/_meta/factory-learning.yaml', // pack regression memory; version-aligned with its schema and executable fixture catalogue
   'PACK_VERSION',
   'scripts/build-corpus-site.mjs',
   'scripts/validate-corpus.mjs',
@@ -44,18 +48,28 @@ const BUCKET_A_FILES = new Set([
   'scripts/update-pack.mjs',
 ]);
 // Note: doc/CORPUS_MAP.md, doc/CORPUS_MANIFEST.md and doc/README.md are NOT
-// bucket A — nothing under `doc/` is overwritten. They fall through to the
-// copy-if-missing / preserve path like the rest of the corpus.
+// bucket A. Only the two explicit Factory exceptions above/below are refreshed;
+// all application corpus files fall through to copy-if-missing / preserve.
 
 const BUCKET_A_PREFIXES = [
   '.github/skills/',
   '.github/prompts/',     // shipped prompt assets are pack-owned and refreshed with their skills
+  '.github/templates/software-factory/', // executable workflows/contracts must stay version-aligned with scripts and schemas
+  'doc/spec/template/', // reusable executable V3 package; instantiated doc/spec/<version> packages remain corpus-owned
   'scripts/',          // all pack scripts (incl. scripts/lib/**) are pack-owned — replaced wholesale
   'schemas/',          // machine-readable contracts the validator enforces — pack-owned, not team data; refreshed so they never drift behind an updated validator
 ];
 
 // `.github/agents/**` is the confirm bucket: operator-customizable.
 const AGENT_PREFIXES = ['.github/agents/'];
+
+// Exact, reviewed retirements only. General removed pack files remain warnings:
+// local extensions are legitimate and sync must never become `--delete`.
+const RETIRED_PACK_FILES = new Map([
+  ['.github/skills/sources/mcp-readiness-check/SKILL.md', 'obsolete workstation/session readiness contract; replaced by runtime-source-probe'],
+  ['doc/spec/template/factory-state.yaml', 'obsolete V1 mutable state; V3 state is derived from factory/events.v3.jsonl'],
+  ['doc/spec/template/technical-plan.yaml', 'obsolete V1 machine plan; V3 uses factory/plan.v3.json'],
+]);
 
 // On an existing installation, the migration agent owns the durable version
 // transition. Copying a missing state template here would pre-stamp the target
@@ -75,7 +89,7 @@ const SOURCE_IGNORE_ROOT_FILES = new Set([
   'README.md', 'LICENSE.md', 'package.json', 'package-lock.json',
   '.gitignore', '.npmignore', '.DS_Store',
 ]);
-const SOURCE_IGNORE_ROOT_DIRS = ['docs/', 'examples/', '.github/workflows/'];
+const SOURCE_IGNORE_ROOT_DIRS = ['docs/', 'examples/', '.github/workflows/', '.corpus-pack-backups/'];
 
 function isIgnoredSource(rel) {
   const segments = rel.split(/[\\/]/);
@@ -106,21 +120,144 @@ function isAgent(rel) {
 // any comparison. (path.join converts back to the native separator on write.)
 const toPosix = (p) => p.replace(/\\/g, '/');
 
+function realDirectoryRoot(candidate, label) {
+  const lexical = path.resolve(candidate);
+  if (!fs.existsSync(lexical)) throw new Error(`${label} does not exist: ${lexical}`);
+  const stat = fs.lstatSync(lexical);
+  if (stat.isSymbolicLink() || !stat.isDirectory()) throw new Error(`${label} must be a real directory: ${lexical}`);
+  return fs.realpathSync(lexical);
+}
+
+function relativeParts(rel, label) {
+  const normalized = toPosix(rel);
+  if (!normalized || path.posix.isAbsolute(normalized) || path.win32.isAbsolute(rel)) throw new Error(`${label} must be a non-empty relative path`);
+  const parts = normalized.split('/');
+  if (parts.some((part) => !part || part === '.' || part === '..')) throw new Error(`${label} contains an unsafe path segment: ${rel}`);
+  return parts;
+}
+
+function inspectContained(root, rel, { allowMissing = false, label = rel } = {}) {
+  const parts = relativeParts(rel, label);
+  let cursor = root;
+  for (let index = 0; index < parts.length; index += 1) {
+    cursor = path.join(cursor, parts[index]);
+    let stat;
+    try {
+      stat = fs.lstatSync(cursor);
+    } catch (error) {
+      if (allowMissing && error.code === 'ENOENT') return { absolute: path.join(root, ...parts), exists: false, stat: null };
+      throw new Error(`${label} cannot be inspected: ${error.message}`);
+    }
+    if (stat.isSymbolicLink()) throw new Error(`${label} traverses a symbolic link at ${parts.slice(0, index + 1).join('/')}`);
+    if (index < parts.length - 1 && !stat.isDirectory()) throw new Error(`${label} has a non-directory parent at ${parts.slice(0, index + 1).join('/')}`);
+  }
+  return { absolute: path.join(root, ...parts), exists: true, stat: fs.lstatSync(cursor) };
+}
+
+function readContainedFile(root, rel, { allowMissing = false, encoding = null, label = rel } = {}) {
+  const checked = inspectContained(root, rel, { allowMissing, label });
+  if (!checked.exists) return null;
+  if (!checked.stat.isFile()) throw new Error(`${label} must be a regular file`);
+  const fd = fs.openSync(checked.absolute, fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW || 0));
+  try {
+    const opened = fs.fstatSync(fd);
+    if (!opened.isFile() || opened.dev !== checked.stat.dev || opened.ino !== checked.stat.ino) throw new Error(`${label} changed while it was opened`);
+    return fs.readFileSync(fd, encoding === null ? undefined : { encoding });
+  } finally {
+    fs.closeSync(fd);
+  }
+}
+
+function ensureContainedParents(root, rel, label = rel) {
+  const parts = relativeParts(rel, label);
+  let cursor = root;
+  for (const part of parts.slice(0, -1)) {
+    cursor = path.join(cursor, part);
+    try {
+      const stat = fs.lstatSync(cursor);
+      if (stat.isSymbolicLink() || !stat.isDirectory()) throw new Error(`${label} has an unsafe parent ${path.relative(root, cursor)}`);
+    } catch (error) {
+      if (error.code !== 'ENOENT') throw error;
+      fs.mkdirSync(cursor);
+      const created = fs.lstatSync(cursor);
+      if (created.isSymbolicLink() || !created.isDirectory()) throw new Error(`${label} parent was not created safely`);
+    }
+  }
+  return path.dirname(path.join(root, ...parts));
+}
+
+let copySequence = 0;
+function writeContainedFile(targetRoot, rel, bytes, mode, { refuseDifferentExisting = false } = {}) {
+  const parent = ensureContainedParents(targetRoot, rel, `target ${rel}`);
+  const target = inspectContained(targetRoot, rel, { allowMissing: true, label: `target ${rel}` });
+  if (target.exists && !target.stat.isFile()) throw new Error(`target ${rel} must be a regular file`);
+  if (target.exists && refuseDifferentExisting) {
+    const existing = readContainedFile(targetRoot, rel, { label: `target ${rel}` });
+    if (!existing.equals(bytes)) throw new Error(`Refusing to overwrite a different existing backup: ${rel}`);
+    return false;
+  }
+  copySequence += 1;
+  const temporary = path.join(parent, `.${path.basename(rel)}.corpus-pack-${process.pid}-${copySequence}.tmp`);
+  let temporaryCreated = false;
+  try {
+    const fd = fs.openSync(temporary, fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constants.O_EXCL | (fs.constants.O_NOFOLLOW || 0), mode & 0o777);
+    temporaryCreated = true;
+    try {
+      let offset = 0;
+      while (offset < bytes.length) offset += fs.writeSync(fd, bytes, offset, bytes.length - offset);
+      fs.fsyncSync(fd);
+    } finally {
+      fs.closeSync(fd);
+    }
+    ensureContainedParents(targetRoot, rel, `target ${rel}`);
+    inspectContained(targetRoot, rel, { allowMissing: true, label: `target ${rel}` });
+    fs.renameSync(temporary, target.absolute);
+    temporaryCreated = false;
+    const written = inspectContained(targetRoot, rel, { label: `target ${rel}` });
+    if (!written.stat.isFile()) throw new Error(`target ${rel} was not written as a regular file`);
+    return true;
+  } finally {
+    if (temporaryCreated && fs.existsSync(temporary)) fs.unlinkSync(temporary);
+  }
+}
+
+function copyContainedFile(sourceRoot, targetRoot, rel) {
+  const source = inspectContained(sourceRoot, rel, { label: `source ${rel}` });
+  if (!source.stat.isFile()) throw new Error(`source ${rel} must be a regular file`);
+  const bytes = readContainedFile(sourceRoot, rel, { label: `source ${rel}` });
+  writeContainedFile(targetRoot, rel, bytes, source.stat.mode);
+}
+
+function backupRelativePath(fromVersion, toVersion, rel) {
+  const slug = (value) => String(value).replace(/[^A-Za-z0-9._-]/g, '-');
+  return `.corpus-pack-backups/${slug(fromVersion)}-to-${slug(toVersion)}/${toPosix(rel)}`;
+}
+
+function needsCompatibilityBackup(rel) {
+  return rel.startsWith('.github/templates/software-factory/')
+    || rel.startsWith('doc/spec/template/')
+    || rel === 'doc/_meta/factory-learning.yaml';
+}
+
+function unlinkContainedFile(root, rel) {
+  const checked = inspectContained(root, rel, { label: `retired ${rel}` });
+  if (!checked.stat.isFile()) throw new Error(`Refusing to retire non-regular pack surface: ${rel}`);
+  fs.unlinkSync(checked.absolute);
+}
+
 function walk(dirAbs) {
   if (!fs.existsSync(dirAbs)) return [];
+  const rootStat = fs.lstatSync(dirAbs);
+  if (rootStat.isSymbolicLink() || !rootStat.isDirectory()) throw new Error(`Refusing to traverse non-directory or symlink: ${dirAbs}`);
   const out = [];
   for (const entry of fs.readdirSync(dirAbs, { withFileTypes: true })) {
     if (SOURCE_IGNORE_SEGMENTS.has(entry.name)) continue; // never descend into .git / node_modules
     const abs = path.join(dirAbs, entry.name);
+    if (entry.isSymbolicLink()) throw new Error(`Refusing to traverse source/target symlink: ${abs}`);
     if (entry.isDirectory()) out.push(...walk(abs));
     else out.push(abs);
   }
   return out;
-}
-
-function copyFile(srcAbs, dstAbs) {
-  fs.mkdirSync(path.dirname(dstAbs), { recursive: true });
-  fs.copyFileSync(srcAbs, dstAbs);
 }
 
 function firstLine(text) {
@@ -153,17 +290,14 @@ async function confirmPrompt(question) {
  * @returns {Promise<object>}    summary { changed, kept, plan }
  */
 export async function runUpgrade({ sourceRoot, target, apply = false, force = false }) {
-  if (!fs.existsSync(sourceRoot) || !fs.statSync(sourceRoot).isDirectory()) {
-    throw new Error(`Source pack not found or not a directory: ${sourceRoot}`);
-  }
+  sourceRoot = realDirectoryRoot(sourceRoot, 'source pack');
+  target = realDirectoryRoot(target, 'target repository');
 
   const readLocal = (rel) => {
-    const abs = path.join(target, rel);
-    return fs.existsSync(abs) ? fs.readFileSync(abs, 'utf8') : null;
+    return readContainedFile(target, rel, { allowMissing: true, encoding: 'utf8', label: `local ${rel}` });
   };
   const readSource = (rel) => {
-    const abs = path.join(sourceRoot, rel);
-    return fs.existsSync(abs) ? fs.readFileSync(abs, 'utf8') : null;
+    return readContainedFile(sourceRoot, rel, { allowMissing: true, encoding: 'utf8', label: `source ${rel}` });
   };
 
   const sourceVersion = firstLine(readSource('PACK_VERSION')) || '<unknown>';
@@ -181,20 +315,27 @@ export async function runUpgrade({ sourceRoot, target, apply = false, force = fa
     defer: [],       // {rel, why}  — migration-owned file missing on upgrade
     confirm: [],     // {rel, why}  — local agent differs → needs confirmation
     preserve: [],    // {rel, hint} — template diverged from local, NOT touched
+    backup: [],      // {rel, backupRel} — compatibility copy before replacing or retiring a formerly customizable pack surface
+    retire: [],      // {rel, why}  — exact obsolete pack-owned surface
     warnRemoved: [], // {rel}       — local file no longer in source pack
     unchanged: [],   // {rel}
   };
 
   const differs = (rel) => {
-    const a = fs.readFileSync(path.join(sourceRoot, rel));
-    const b = fs.readFileSync(path.join(target, rel));
+    const a = readContainedFile(sourceRoot, rel, { label: `source ${rel}` });
+    const b = readContainedFile(target, rel, { label: `local ${rel}` });
     return !a.equals(b);
   };
-  const existsLocal = (rel) => fs.existsSync(path.join(target, rel));
+  const existsLocal = (rel) => inspectContained(target, rel, { allowMissing: true, label: `local ${rel}` }).exists;
 
   function classifyAFile(rel) {
     if (!existsLocal(rel)) { plan.copyNew.push({ rel, why: 'pack-owned, missing locally' }); return; }
-    if (differs(rel)) plan.replace.push({ rel, why: 'pack-owned, content drift' });
+    if (differs(rel)) {
+      if (!isInstall && needsCompatibilityBackup(rel)) {
+        plan.backup.push({ rel, backupRel: backupRelativePath(localVersion, sourceVersion, rel), why: 'preserve pre-upgrade customization before version-locked replacement' });
+      }
+      plan.replace.push({ rel, why: 'pack-owned, content drift' });
+    }
     else plan.unchanged.push({ rel });
   }
   function classifyAgentFile(rel) {
@@ -233,11 +374,25 @@ export async function runUpgrade({ sourceRoot, target, apply = false, force = fa
   // pack-owned / agent prefixes; under doc/ a "removed" file is corpus content).
   const localUnderManaged = [];
   for (const p of [...BUCKET_A_PREFIXES, ...AGENT_PREFIXES]) {
-    const dir = path.join(target, p);
-    if (fs.existsSync(dir)) localUnderManaged.push(...walk(dir).map((f) => toPosix(path.relative(target, f))));
+    const local = inspectContained(target, p.replace(/\/$/, ''), { allowMissing: true, label: `managed prefix ${p}` });
+    if (local.exists) {
+      if (!local.stat.isDirectory()) throw new Error(`managed prefix must be a directory: ${p}`);
+      localUnderManaged.push(...walk(local.absolute).map((f) => toPosix(path.relative(target, f))));
+    }
   }
   for (const rel of localUnderManaged) {
-    if (!sourceSet.has(rel)) plan.warnRemoved.push({ rel });
+    if (sourceSet.has(rel)) continue;
+    if (RETIRED_PACK_FILES.has(rel)) {
+      if (!isInstall) {
+        plan.backup.push({
+          rel,
+          backupRel: backupRelativePath(localVersion, sourceVersion, rel),
+          why: 'preserve exact pre-upgrade bytes before reviewed retirement',
+        });
+      }
+      plan.retire.push({ rel, why: RETIRED_PACK_FILES.get(rel) });
+    }
+    else plan.warnRemoved.push({ rel });
   }
   for (const rel of BUCKET_A_FILES) {
     if (existsLocal(rel) && !sourceSet.has(rel)) plan.warnRemoved.push({ rel });
@@ -263,6 +418,8 @@ export async function runUpgrade({ sourceRoot, target, apply = false, force = fa
   header(`Deferred to Corpus migration: ${plan.defer.length}`); row(plan.defer);
   header(`Agents modified locally (confirm before overwrite${force ? ' — forced' : ''}): ${plan.confirm.length}`); row(plan.confirm);
   header(`Preserve (bucket B — local content differs, NOT touched): ${plan.preserve.length}`); row(plan.preserve);
+  header(`Compatibility backups before replacement or retirement: ${plan.backup.length}`); row(plan.backup.map((item) => ({ rel: `${item.rel} -> ${item.backupRel}`, why: item.why })));
+  header(`Retire (exact obsolete pack surfaces): ${plan.retire.length}`); row(plan.retire);
   header(`Locally present, removed in source (review): ${plan.warnRemoved.length}`); row(plan.warnRemoved);
   header(`Unchanged: ${plan.unchanged.length}`);
 
@@ -272,8 +429,15 @@ export async function runUpgrade({ sourceRoot, target, apply = false, force = fa
   const changed = [];
   const keptAgents = [];
   if (apply) {
+    for (const it of plan.backup) {
+      const source = inspectContained(target, it.rel, { label: `backup source ${it.rel}` });
+      if (!source.stat.isFile()) throw new Error(`backup source ${it.rel} must be a regular file`);
+      const bytes = readContainedFile(target, it.rel, { label: `backup source ${it.rel}` });
+      const created = writeContainedFile(target, it.backupRel, bytes, source.stat.mode, { refuseDifferentExisting: true });
+      if (created) changed.push(it.backupRel);
+    }
     for (const it of plan.replace.concat(plan.copyNew)) {
-      copyFile(path.join(sourceRoot, it.rel), path.join(target, it.rel));
+      copyContainedFile(sourceRoot, target, it.rel);
       changed.push(it.rel);
     }
 
@@ -284,8 +448,12 @@ export async function runUpgrade({ sourceRoot, target, apply = false, force = fa
       const overwrite = force
         ? true
         : await confirmPrompt(`Overwrite locally-modified agent '${it.rel}'? Local changes will be lost.`);
-      if (overwrite) { copyFile(path.join(sourceRoot, it.rel), path.join(target, it.rel)); changed.push(it.rel); }
+      if (overwrite) { copyContainedFile(sourceRoot, target, it.rel); changed.push(it.rel); }
       else keptAgents.push(it.rel);
+    }
+    for (const it of plan.retire) {
+      unlinkContainedFile(target, it.rel);
+      changed.push(it.rel);
     }
   }
 

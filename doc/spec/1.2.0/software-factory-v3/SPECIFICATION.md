@@ -255,7 +255,7 @@ spec métier complète et approuvée
 
 ## Hypothèses et décisions
 
-- L'état canonique est un event log JSONL ; la projection YAML reste la vue
+- L'état canonique est un event log JSONL ; la projection JSON reste la vue
   humaine et CI.
 - Le modèle central reste stack-neutral, avec adaptateurs (Playwright, GitHub).
 - Les artefacts lourds de recette vivent en CI ; le dépôt conserve manifests,

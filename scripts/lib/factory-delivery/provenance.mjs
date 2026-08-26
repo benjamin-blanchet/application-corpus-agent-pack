@@ -11,9 +11,12 @@ function git(repo, args) {
 }
 
 export function resolveCommit(repo, revision) {
-  const sha = git(repo, ['rev-parse', '--verify', `${revision}^{commit}`]).trim();
-  if (!SHA_PATTERN.test(sha)) throw new Error(`${revision} did not resolve to a full commit SHA`);
-  return sha.toLowerCase();
+  const lines = git(repo, ['rev-parse', '--verify', `${revision}^{commit}`])
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  if (lines.length !== 1 || !SHA_PATTERN.test(lines[0])) throw new Error(`${revision} did not resolve to exactly one full commit SHA`);
+  return lines[0].toLowerCase();
 }
 
 export function sourceTreeDigest(repo, revision, { excludedPrefixes = [] } = {}) {

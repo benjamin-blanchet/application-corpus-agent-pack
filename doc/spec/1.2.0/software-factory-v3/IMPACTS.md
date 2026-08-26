@@ -15,7 +15,7 @@ description: "Surface, compatibilité et risques de l'implémentation V3."
 | Zone | Nature du changement |
 |---|---|
 | `scripts/lib/factory/**` | automate, reducer, scheduler, chemins, digests et contrats purs |
-| `scripts/factory-controller.mjs` | CLI mécanique du run |
+| `scripts/factory-control.mjs` | CLI mécanique du run |
 | `scripts/validate-factory.mjs` | validation V3 et compatibilité/migration V1 |
 | `schemas/factory/**` | contrats d'événement, plan, work package, review, source, environnement, recette et preuve |
 | `doc/spec/template/**` | package V3 dogfoodable |

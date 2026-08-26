@@ -376,12 +376,21 @@ const FORBIDDEN_DURABLE_RUNTIME_FIELDS = new Set([
   'last_checked',
 ]);
 
+function normalizeDurableDocumentKey(value) {
+  return String(value)
+    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1_$2')
+    .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+    .replace(/[^A-Za-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .toLowerCase();
+}
+
 function collectDocumentKeys(value, keys = new Set()) {
   if (Array.isArray(value)) {
     for (const entry of value) collectDocumentKeys(entry, keys);
   } else if (value && typeof value === 'object') {
     for (const [key, child] of Object.entries(value)) {
-      keys.add(String(key).toLowerCase().replace(/-/g, '_'));
+      keys.add(normalizeDurableDocumentKey(key));
       collectDocumentKeys(child, keys);
     }
   }
@@ -396,17 +405,27 @@ export function durableDocumentKeys(text) {
   const keys = new Set();
   for (const line of normalized.split('\n')) {
     const match = line.match(/^\s*(?:-\s*)?["']?([A-Za-z0-9_-]+)["']?\s*:/);
-    if (match) keys.add(match[1].toLowerCase().replace(/-/g, '_'));
+    if (match) keys.add(normalizeDurableDocumentKey(match[1]));
     for (const flowMatch of line.matchAll(/(?:\{|,)\s*["']?([A-Za-z0-9_-]+)["']?\s*:/g)) {
-      keys.add(flowMatch[1].toLowerCase().replace(/-/g, '_'));
+      keys.add(normalizeDurableDocumentKey(flowMatch[1]));
     }
   }
   return keys;
 }
 
 function isForbiddenDurableRuntimeField(field) {
-  if (FORBIDDEN_DURABLE_RUNTIME_FIELDS.has(field)) return true;
-  return /^(?:current_(?:source_)?(?:availability|capabilities|connection|authentication|permissions)|runtime_(?:source|transport|adapter)_(?:observation|status|state|availability|capabilities)|(?:source|transport|adapter)_(?:runtime_state|availability(?:_status)?|connection_status)|[a-z0-9]+_mcp_status)$/.test(field);
+  const normalized = normalizeDurableDocumentKey(field);
+  if (FORBIDDEN_DURABLE_RUNTIME_FIELDS.has(normalized)) return true;
+  const forbiddenPattern = /^(?:current_(?:source_)?(?:availability|available|capabilities|connection|connected|authentication|permissions|readiness|status|state|observation)|runtime_(?:(?:source|transport|adapter)_)?(?:observation|status|state|availability|available|capabilities|connection|connected|authentication|permissions|readiness)|(?:source|transport|adapter)_(?:runtime_(?:observation|status|state|availability|capabilities)|availability(?:_status)?|connection_status)|[a-z0-9]+_mcp_status)$/;
+  if (forbiddenPattern.test(normalized)) return true;
+
+  // Keys without separators (including lower-cased aliases originating in
+  // JSON) must not bypass the same policy. Keep this list anchored so durable
+  // historical keys such as `historical_availability` and contract keys such
+  // as `transport_semantics` remain valid.
+  const compact = normalized.replace(/_/g, '');
+  if ([...FORBIDDEN_DURABLE_RUNTIME_FIELDS].some((candidate) => candidate.replace(/_/g, '') === compact)) return true;
+  return /^(?:current(?:source)?(?:availability|available|capabilities|connection|connected|authentication|permissions|readiness|status|state|observation)|runtime(?:(?:source|transport|adapter))?(?:observation|status|state|availability|available|capabilities|connection|connected|authentication|permissions|readiness)|(?:source|transport|adapter)(?:runtime(?:observation|status|state|availability|capabilities)|availability(?:status)?|connectionstatus)|[a-z0-9]+mcpstatus)$/.test(compact);
 }
 
 export function findForbiddenDurableRuntimeFields(text) {

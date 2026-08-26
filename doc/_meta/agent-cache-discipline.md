@@ -2,6 +2,7 @@
 type: operations-guide
 audience: operator
 status: stable
+confidence: confirmed
 source: pack
 title: "Agent cache discipline"
 description: "Claude's prompt cache is **sequential, left-to-right**."
@@ -41,22 +42,26 @@ The pack measures its bootstrap with `scripts/estimate-token-cost.mjs`:
 
 ## Hard discipline (apply on every session)
 
-### 1. Pick a model before starting, and stay on it
+### 1. Route once per bounded execution, and stay on it inside that boundary
 
 `/model` mid-session invalidates the full cache for every subsequent tour.
-If you must switch (e.g. drop to Haiku for a mechanical subtask), do it
-**between tasks**, never inside one.
+Model allocation therefore happens from the runtime catalogue before a bounded
+role/work package starts. A different lot or an independent review may receive
+a different approved profile and identity; never switch identity silently
+inside one execution.
 
-Recommendation per agent:
+Routing profile by task shape (runtime identities are never durable defaults):
 
-| Agent | Default model | Acceptable |
+| Task | Profile |
 |---|---|---|
-| `corpus` (kickstart, deep enrichment) | Sonnet | Opus when reasoning-heavy |
-| `corpus` (continuous, lightweight) | Sonnet | Haiku acceptable |
-| `developer` | Sonnet | Opus on large refactors |
-| `reliability-analyst` | Sonnet | Opus on cross-system incident |
-| `functional-analyst` | Sonnet | — |
-| Internal subagents (`corpus-brick-*`) | Sonnet | Haiku acceptable |
+| Deep corpus, architecture, security, migration, control plane | `expert` |
+| Bounded implementation, analysis or corpus reconciliation | `standard` |
+| Fully mechanical, low-risk and explicitly testable lot | `economy` when eligible |
+| Lot, consolidated and release review | `reviewer`, preferably outside the author's model family |
+
+Resolve each profile through `development/model-routing` against what the
+current runtime actually exposes, then record planned/requested/used. A cached
+identity from another workstation or run is not availability evidence.
 
 ### 2. Attach MCP servers BEFORE starting the agent
 
@@ -144,7 +149,7 @@ goal is to do it at a tour boundary, not mid-tool-call).
 
 Run this once before starting `corpus`, `developer` or `reliability-analyst`:
 
-- [ ] Model picked (`/model sonnet` typically)
+- [ ] Role profile resolved to an operator-confirmed identity from the current runtime catalogue
 - [ ] All MCP servers needed for the current phase attached (`/mcp list`)
 - [ ] No pending edit to `AGENTS.md` or agent personas
 - [ ] If long session expected: `ENABLE_PROMPT_CACHING_1H=1`
@@ -156,7 +161,7 @@ Run this once before starting `corpus`, `developer` or `reliability-analyst`:
 
 Measured impact ranges from public state-of-the-art (mai 2026):
 
-- Staying on one model: −15 to −30 % vs. switching mid-session
+- Staying on one model inside a bounded execution: −15 to −30 % vs. switching mid-session
 - Pre-staging MCPs vs. attaching during: −30 to −50 % on the kickstart bootstrap
 - Stable `AGENTS.md` + persona: +++ cache-hit rate (cumulative across all
   subsequent tours)

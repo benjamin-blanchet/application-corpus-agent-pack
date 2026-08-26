@@ -13,7 +13,18 @@ import {
   validateSourceCoverage,
 } from './check-runtime-sources.mjs';
 
-const root = process.cwd();
+function argumentValue(name) {
+  const exact = process.argv.indexOf(name);
+  if (exact >= 0) return process.argv[exact + 1] || null;
+  const prefixed = process.argv.find((value) => value.startsWith(`${name}=`));
+  return prefixed ? prefixed.slice(name.length + 1) : null;
+}
+
+const requestedRoot = path.resolve(argumentValue('--root') || process.cwd());
+const root = fs.realpathSync(requestedRoot);
+if (requestedRoot !== root || !fs.statSync(root).isDirectory()) {
+  throw new Error('--root must be a real directory without symbolic-link indirection');
+}
 const docRoot = path.join(root, 'doc');
 const jsonMode = process.argv.includes('--json');
 
@@ -1826,7 +1837,21 @@ function checkSourceContracts() {
       const fileRel = rel(file);
       if (fileRel.startsWith('doc/spec/') || fileRel.startsWith('doc/_site/')) continue;
       if (!/\.(?:md|yaml|yml|json)$/.test(fileRel)) continue;
-      if (forbiddenReference.test(normalizeText(fs.readFileSync(file, 'utf8')))) {
+      let checkedText = normalizeText(fs.readFileSync(file, 'utf8'));
+      // The upgrade procedure must name the retired paths in order to remove
+      // them safely. Ignore only that bounded migration section; all other
+      // guidance, including the rest of this file, remains subject to the
+      // active-state ban.
+      if (fileRel === '.github/skills/governance/pack-upgrade/SKILL.md') {
+        const marker = '### Step 3a — Retire persistent MCP readiness';
+        const start = checkedText.indexOf(marker);
+        if (start >= 0) {
+          const tail = checkedText.slice(start + marker.length);
+          const next = tail.search(/\n(?:### Step |## )/);
+          checkedText = checkedText.slice(0, start) + (next >= 0 ? tail.slice(next) : '');
+        }
+      }
+      if (forbiddenReference.test(checkedText)) {
         add('P0', 'legacy-runtime-state-reference', 'Active corpus guidance still references the removed global runtime-state contract', fileRel);
       }
     }

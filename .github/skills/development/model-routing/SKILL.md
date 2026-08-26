@@ -38,10 +38,15 @@ lots.
    - `reviewer` — independent lot, consolidated or release review, with
      capability at least matching the reviewed risk.
 4. Record the identities, requested effort and context tier in the typed
-   execution event; render planned/requested/used to `JOURNAL.md` for
+   execution event. Record the runtime-reported model family as a canonical
+   lower-case id distinct from the marketing identity; render
+   planned/requested/used/family to `JOURNAL.md` for
    every task, lot, review, acceptance execution, replacement and escalation.
 5. If a requested identity is absent, **stop and ask for a replacement**. Never
    fall back silently.
+6. If the runtime cannot report a stable model family, stop and ask the
+   operator for an explicit family mapping for this run. Never derive it by
+   splitting or pattern-matching the model name.
 
 ## Reviewer independence
 
@@ -85,13 +90,17 @@ model:
   planned: "<role profile from the plan>"
   requested: "<operator-confirmed runtime identity, or null>"
   used: "<runtime-reported identity, or unknown>"
+  model_family: "<runtime-reported canonical family id>"
 reasoning_effort: "<requested value, or unknown>"
 context_tier: "<requested value, or unknown>"
 ```
 
-`planned` is a role profile. `requested` and `used` are task-specific runtime
-identities and belong in state and journal — never in a skill or template as a
-default.
+`planned` is a role profile. `requested`, `used` and `model_family` are
+task-specific runtime facts and belong in state and journal — never in a skill
+or template as defaults. The Controller rejects a family inferred from an
+identity string. A same-family review needs a typed operator exception bound to
+the exact plan digest and all author families; a free-text rationale is not a
+substitute.
 
 ## Escalation and replacement
 

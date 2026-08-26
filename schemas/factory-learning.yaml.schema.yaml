@@ -5,9 +5,15 @@
 # the regression that justified the rule.
 
 file: doc/_meta/factory-learning.yaml
-schema_version: 1
-required_top_level: [schema_version, promotions]
+schema_version: 2
+required_top_level: [schema_version, baseline, promotions]
+baseline:
+  additional_properties: false
+  required: [path, algorithm, sha256]
+  algorithm: sha256-canonical-json-v1
+  path: scripts/factory-fixtures/catalog.json#learning_baseline
 promotion:
+  additional_properties: false
   required:
     - id
     - observed_at
@@ -23,7 +29,13 @@ promotion:
     source.type: [code, runtime, experiment, human, mixed]
     decision.status: [proposed, adopted, rejected, superseded]
   invariants:
+    - promotion ids are unique and match FACTORY-LEARN-NNN
+    - baseline is content-addressed and every adopted promotion has one immutable-id baseline record
+    - source, decision and any amendment are closed objects with all required fields
     - adopted promotions have at least one positive and one negative executable fixture
-    - every fixture id resolves in an executable factory test catalogue
-    - a fixture removal requires the promotion to be superseded or explicitly amended
+    - every fixture id on every decision status resolves in an executable factory test catalogue with the declared polarity
+    - a baseline promotion cannot disappear; decision or fixture changes require a typed operator amendment
+    - CI compares the current ledger and fixture bindings with the pull-request base revision when that revision already contains the learning contract
+    - every referenced fixture test executes and reports its exact name as passed; skipped, todo, cancelled or merely present source text is rejected
     - secrets, personal data and workstation-specific absolute paths are forbidden
+validated_by: FACTORY_LEARNING_BASELINE_REF=<published-commit> scripts/test-factory-learning.mjs --contract-only

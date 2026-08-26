@@ -31,15 +31,12 @@ application. The local execution contract is therefore command-based.
 | Reset | not applicable | Tests use temporary folders and clean their own fixtures. |
 | Revision probe | `pack-revision` | `git rev-parse HEAD` returns the candidate revision. |
 
-## Acceptance Variables
+## Non-applicable runtime surfaces
 
-The generic environment schema still expects logical runtime variables so the
-same contract shape works for server applications:
-
-- `FACTORY_BASE_URL`: unused for this CLI profile; set to a local placeholder
-  such as `http://localhost`.
-- `FACTORY_DATASET_ID`: use the run id or `pack-fixtures`.
-- `FACTORY_DATASET_VERSION`: use the candidate SHA or fixture version.
+This CLI profile declares endpoint, authentication, and application data as
+structured `not_applicable` surfaces with explicit reasons. No fake base URL,
+credential identity, dataset id, or dataset version is needed to run the pack
+tests. The candidate revision remains observable through `pack-revision`.
 
 For a real application generated from this pack, replace this file and
 `doc/project/runtime/ENVIRONMENTS.yaml` with stack-specific build/start/health,

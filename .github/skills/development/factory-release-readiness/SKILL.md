@@ -8,21 +8,22 @@ description: "The final evidence gate before draft-PR delivery. Binds plan, revi
 
 ## Purpose
 
-The last gate between completed — or explicitly waived — acceptance and
-bounded draft-pull-request delivery.
+The last gate between successfully attested acceptance and bounded
+draft-pull-request delivery.
 
 It verifies **provenance and completeness**. It does not authorise a commit, a
-push, a deployment or a merge. `ready_for_human_pr_merge` means the evidence is
-complete for one exact revision; it does not mean anyone may approve, mark
-ready, merge or deploy.
+push, a deployment or a merge. Its machine phase is `release_ready`; the
+following handoff verdict is `ready_for_draft_pr`. Neither means anyone may
+approve, mark ready, merge or deploy.
 
 ## When
 
 After all lots are integrated and deterministically verified · consolidated
 review has no unresolved blocking finding · corpus closeout is complete ·
 a `candidate_sha` was frozen after corpus closeout · acceptance completed
-against that candidate, or was explicitly waived with a written reason,
-approver and timestamp · an evidence manifest was generated and verified.
+against that candidate · an evidence manifest was generated and verified.
+Structured case/provenance waivers may contribute to a `ready` manifest, but
+the shipped Release path has no waiver that skips the acceptance run itself.
 
 This is the third review level, distinct from lot and consolidated review.
 
@@ -33,8 +34,8 @@ or acceptance-waived work.
 
 1. Freeze revision C only after code, tests, acceptance scripts, spec and corpus
    closeout are complete; record it as `candidate_sha`.
-2. Resolve the deployed revision independently and record it as `tested_sha`.
-   When acceptance applies, require `tested_sha == candidate_sha`.
+2. Resolve the deployed revision independently and record it as `tested_sha`;
+   require `tested_sha == candidate_sha`.
 3. Record acceptance environment identity, build or image identity where
    applicable, schema and dataset identity, test-script identity, the cases
    executed, the result, and every declared side effect.
@@ -67,8 +68,7 @@ else in this gate follows from that.
 - [ ] Any claim whose witness changed is recorded; a REMOVED claim whose
       witness still passes means the removal is wrong.
 - [ ] Full `candidate_sha` present for every delivery.
-- [ ] `tested_sha` equals `candidate_sha`, or an approved acceptance waiver is
-      recorded without rewriting a failed/blocked result.
+- [ ] `tested_sha` equals `candidate_sha`.
 - [ ] Acceptance evidence names the same candidate/tested SHA, environment, build, schema,
       dataset, scripts, cases, outcomes and side effects.
 - [ ] Model audit records planned, requested and used for lots, reviews and
@@ -88,12 +88,23 @@ Human action required: <authorise draft delivery, review/merge, or resolve block
 ## Decision rules
 
 - A missing candidate SHA always blocks. A missing, inconsistent or stale
-  tested SHA blocks whenever acceptance applies.
-- A waiver is an explicit human decision with a scope and a rationale. **It
-  does not rewrite failed evidence or remove a journal entry** — a waiver that
-  edits history is not a waiver, it is a deletion.
+  tested SHA always blocks.
+- A case/provenance waiver is an explicit human decision with a scope and a
+  rationale inside the attested acceptance result. **It does not bypass the
+  campaign, rewrite failed evidence or remove history** — a waiver that edits
+  history is not a waiver, it is a deletion.
 - Never hide unavailable evidence. Mark it blocked and name the exact action
   needed to unblock it.
+
+## Executable gate
+
+The checklist is guidance, not an authority token. The shipped protected
+`factory-release` workflow rebuilds the V3 state from the committed candidate
+control artefacts, verifies the successful Acceptance workflow and exact
+artifact attestation, requires a separately signed fresh-context review bound
+to candidate/spec/plan/evidence/model provenance, then emits the canonical
+`release_ready` envelope. Missing or stale attestations block; prose cannot
+synthesize this state.
 
 ## Proportionality
 

@@ -41,8 +41,8 @@ Before producing the PR description, verify:
 - [ ] `AI_AGENT_GUIDE.md` still accurate (or an update-candidate filed if it isn't).
 - [ ] `doc/_meta/update-candidates.md` entries consumed by `Corpus` (status `consumed` or `parked` with reason).
 - [ ] Multi-repo sibling sync recommendation produced (when `multi_repo.status == declared`).
-- [ ] Full `candidate_sha` recorded; `tested_sha` and evidence manifest agree,
-      or an explicit acceptance waiver is current.
+- [ ] Full `candidate_sha` recorded; `tested_sha == candidate_sha` and the
+      attested evidence manifest agrees.
 - [ ] Every required case is passed or explicitly waived; no required failed,
       blocked, skipped or flaky case is hidden by aggregation.
 - [ ] Lot, consolidated and release reviews cover the complete current
@@ -83,7 +83,7 @@ For each regression zone (Step 4.1):
 - Performance: <budget vs. measured, or "no measurable impact expected — <evidence>">
 - Verifications skipped: <list with reason, or "none">
 - Candidate SHA: <full SHA>
-- Tested SHA: <full SHA or approved waiver>
+- Tested SHA: <full SHA, equal to candidate SHA>
 - Environment/build/schema/dataset: <identities>
 - Evidence manifest: <run/ref + digest>
 - Replay: `<one command>`
@@ -137,8 +137,11 @@ The skill emits:
 3. A validated operation contract: provider, `draft: true`, approved base,
    existing remote head, body path, required checks, `contents: read`,
    `pull_requests: write`, and forbidden actions.
-4. An explicit handoff to `delivery`. It runs `factory-pr plan`, then may run
-   `create-draft` only with recorded external-action authority.
+4. An explicit handoff to `delivery`. It runs the full `factory-pr.mjs`
+   invocation without `--execute`, then repeats those exact arguments with
+   `--execute --authorization-receipt <external-file>` only with recorded
+   external-action authority. `create-draft` is the returned operation name,
+   not a subcommand.
 
 ## Rules
 

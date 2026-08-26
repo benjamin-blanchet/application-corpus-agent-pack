@@ -42,4 +42,10 @@ operation_side_effects:
   reset: reset
   revision_probe: none
 auth_required_keys: [mode, actor_ref, automated_compatible, secret_refs]
+auth_ephemeral_storage_state:
+  declared_input: secret_refs must include FACTORY_EPHEMERAL_STORAGE_STATE_JSON or FACTORY_EPHEMERAL_STORAGE_STATE
+  runtime_root: FACTORY_EPHEMERAL_STORAGE_ROOT is protocol-owned, absolute, private, disjoint from the repository, and never a durable credential
+  materialization: JSON input is controller-only and becomes a per-run 0700 directory plus 0600 state file after startup; JSON and state paths are never forwarded together
 data_required_keys: [isolation, dataset_id_from, dataset_version_from, seed_operation, cleanup_operation, cleanup_required]
+network_required_keys: [policy, destinations_ref, destinations]
+network_effective_enforcement: allowlist campaigns and every campaign receiving secret_refs require a signed protected-run provider receipt whose exact egress_allowlist equals destinations; local or unattested execution receives no secret

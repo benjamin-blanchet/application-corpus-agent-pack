@@ -4,10 +4,11 @@
   "title": "Software Factory V3 derived state",
   "type": "object",
   "additionalProperties": false,
-  "required": ["v", "run_id", "derived_from", "phase", "digests", "execution_policy", "lots", "reservations", "gates", "provenance", "ready_lots", "blockers", "delivery", "acceptance_run", "legacy"],
+  "required": ["v", "run_id", "run_mode", "derived_from", "phase", "digests", "execution_policy", "lots", "reservations", "gates", "provenance", "reviews", "ready_lots", "blockers", "delivery", "acceptance_run", "legacy"],
   "properties": {
     "v": { "const": 3 },
     "run_id": { "type": ["string", "null"] },
+    "run_mode": { "type": ["string", "null"], "enum": ["live", "retrospective_attestation", null] },
     "derived_from": {
       "type": "object",
       "additionalProperties": false,
@@ -22,12 +23,12 @@
     "digests": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["spec_sha256", "plan_sha256", "test_bundle_sha256", "corpus_manifest_sha256", "evidence_manifest_sha256"],
+      "required": ["spec_sha256", "plan_sha256", "test_bundle_sha256", "corpus_tree_sha256", "evidence_manifest_sha256"],
       "properties": {
         "spec_sha256": { "$ref": "#/$defs/nullableSha256" },
         "plan_sha256": { "$ref": "#/$defs/sha256" },
         "test_bundle_sha256": { "$ref": "#/$defs/nullableSha256" },
-        "corpus_manifest_sha256": { "$ref": "#/$defs/nullableSha256" },
+        "corpus_tree_sha256": { "$ref": "#/$defs/nullableSha256" },
         "evidence_manifest_sha256": { "$ref": "#/$defs/nullableSha256" }
       }
     },
@@ -36,7 +37,7 @@
         { "type": "null" },
         {
           "type": "object",
-          "required": ["mode", "observed_at", "models"],
+          "required": ["mode", "observed_at", "models", "model_families"],
           "properties": {
             "mode": { "enum": ["balanced", "maximum_quality", "economical", "manual"] },
             "observed_at": { "type": "string", "format": "date-time" },
@@ -50,7 +51,8 @@
                 "expert": { "type": "string", "minLength": 1 },
                 "reviewer": { "type": "string", "minLength": 1 }
               }
-            }
+            },
+            "model_families": { "$ref": "#/$defs/modelFamilyMap" }
           }
         }
       ]
@@ -77,8 +79,11 @@
     "provenance": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["candidate_sha", "tested_sha", "evidence_sha", "publication"],
+      "required": ["integration_snapshot", "consolidated_snapshot", "candidate_binding", "candidate_sha", "tested_sha", "evidence_sha", "publication"],
       "properties": {
+        "integration_snapshot": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/reviewedSnapshot" }] },
+        "consolidated_snapshot": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/reviewedSnapshot" }] },
+        "candidate_binding": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/candidateBinding" }] },
         "candidate_sha": { "$ref": "#/$defs/nullableGitSha" },
         "tested_sha": { "$ref": "#/$defs/nullableGitSha" },
         "evidence_sha": { "$ref": "#/$defs/nullableGitSha" },
@@ -88,17 +93,24 @@
             {
               "type": "object",
               "additionalProperties": false,
-              "required": ["mode", "manifest_path"],
+              "required": ["mode", "manifest_locator"],
               "properties": {
                 "mode": { "enum": ["ci_artifact", "evidence_only_commit"] },
-                "manifest_path": { "type": "string", "minLength": 1 },
-                "artifact_locator": { "type": "string", "minLength": 1 },
-                "artifact_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+                "manifest_locator": { "$ref": "#/$defs/manifestLocator" },
                 "media_type": { "type": "string", "minLength": 1 }
               }
             }
           ]
         }
+      }
+    },
+    "reviews": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["consolidated", "release"],
+      "properties": {
+        "consolidated": { "type": ["object", "null"] },
+        "release": { "type": ["object", "null"] }
       }
     },
     "ready_lots": { "type": "array", "items": { "type": "string" } },
@@ -122,6 +134,15 @@
     "nullableSha256": { "type": ["string", "null"], "pattern": "^[0-9a-f]{64}$" },
     "gitSha": { "type": "string", "pattern": "^([0-9a-f]{40}|[0-9a-f]{64})$" },
     "nullableGitSha": { "type": ["string", "null"], "pattern": "^([0-9a-f]{40}|[0-9a-f]{64})$" },
+    "repoPath": { "type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!\\./)[^*?\\[\\]\\\\]+$" },
+    "byteReference": { "type": "object", "additionalProperties": false, "required": ["path", "sha256", "bytes"], "properties": { "path": { "$ref": "#/$defs/repoPath" }, "sha256": { "$ref": "#/$defs/sha256" }, "bytes": { "type": "integer", "minimum": 0 } } },
+    "observedConvention": { "type": "object", "additionalProperties": false, "required": ["id", "rule", "examples"], "properties": { "id": { "type": "string", "minLength": 1 }, "rule": { "type": "string", "minLength": 1 }, "examples": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/byteReference" } } } },
+    "preimplementationConventionState": { "type": "object", "additionalProperties": false, "required": ["algorithm", "source_revision", "observed_conventions", "contract_sha256", "event_id", "plan_sha256"], "properties": { "algorithm": { "const": "sha256-canonical-json-v1" }, "source_revision": { "$ref": "#/$defs/gitSha" }, "observed_conventions": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/observedConvention" } }, "contract_sha256": { "$ref": "#/$defs/sha256" }, "event_id": { "type": "string", "pattern": "^EVT-[0-9]{6,}$" }, "plan_sha256": { "$ref": "#/$defs/sha256" } } },
+    "modelFamilyMap": { "type": "object", "additionalProperties": false, "required": ["economy", "standard", "expert", "reviewer"], "properties": { "economy": { "type": "string" }, "standard": { "type": "string" }, "expert": { "type": "string" }, "reviewer": { "type": "string" } } },
+    "reviewedSnapshot": { "type": "object", "additionalProperties": false, "required": ["algorithm", "commit_sha", "git_tree", "file_count", "tree_sha256", "snapshot_sha256"], "properties": { "algorithm": { "const": "sha256-git-tree-inventory-v1" }, "commit_sha": { "$ref": "#/$defs/gitSha" }, "git_tree": { "$ref": "#/$defs/gitSha" }, "file_count": { "type": "integer", "minimum": 1 }, "tree_sha256": { "$ref": "#/$defs/sha256" }, "snapshot_sha256": { "$ref": "#/$defs/sha256" } } },
+    "controlTransition": { "type": "object", "additionalProperties": false, "required": ["algorithm", "events_path", "state_path", "base_commit_sha", "candidate_commit_sha", "base_events_sha256", "candidate_events_sha256", "base_state_sha256", "candidate_state_sha256", "base_event_count", "candidate_event_count", "appended_event_ids", "appended_events_sha256", "transition_sha256"], "properties": { "algorithm": { "const": "sha256-factory-control-transition-v1" }, "events_path": { "type": "string" }, "state_path": { "type": "string" }, "base_commit_sha": { "$ref": "#/$defs/gitSha" }, "candidate_commit_sha": { "$ref": "#/$defs/gitSha" }, "base_events_sha256": { "$ref": "#/$defs/sha256" }, "candidate_events_sha256": { "$ref": "#/$defs/sha256" }, "base_state_sha256": { "$ref": "#/$defs/sha256" }, "candidate_state_sha256": { "$ref": "#/$defs/sha256" }, "base_event_count": { "type": "integer", "minimum": 0 }, "candidate_event_count": { "type": "integer", "minimum": 3 }, "appended_event_ids": { "type": "array", "minItems": 3, "maxItems": 3, "uniqueItems": true, "items": { "type": "string" } }, "appended_events_sha256": { "$ref": "#/$defs/sha256" }, "transition_sha256": { "$ref": "#/$defs/sha256" } } },
+    "candidateBinding": { "type": "object", "additionalProperties": false, "required": ["algorithm", "reviewed_snapshot_sha256", "candidate_snapshot", "corpus_closeout_event_id", "corpus_tree_sha256", "authorized_paths", "control_transition", "binding_sha256"], "properties": { "algorithm": { "const": "sha256-reviewed-candidate-v2" }, "reviewed_snapshot_sha256": { "$ref": "#/$defs/sha256" }, "candidate_snapshot": { "$ref": "#/$defs/reviewedSnapshot" }, "corpus_closeout_event_id": { "type": "string" }, "corpus_tree_sha256": { "$ref": "#/$defs/sha256" }, "authorized_paths": { "type": "array", "items": { "type": "string" } }, "control_transition": { "$ref": "#/$defs/controlTransition" }, "binding_sha256": { "$ref": "#/$defs/sha256" } } },
+    "manifestLocator": { "oneOf": [{ "type": "object", "additionalProperties": false, "required": ["kind", "path", "digest_sha256"], "properties": { "kind": { "const": "repo_file" }, "path": { "type": "string" }, "digest_sha256": { "$ref": "#/$defs/sha256" } } }, { "type": "object", "additionalProperties": false, "required": ["kind", "provider", "artifact_id", "name", "run_id", "path", "digest_sha256", "bundle_digest", "attestation_ref"], "properties": { "kind": { "const": "ci_artifact" }, "provider": { "const": "github_actions" }, "artifact_id": { "type": "string" }, "name": { "type": "string" }, "run_id": { "type": "string" }, "path": { "type": "string" }, "digest_sha256": { "$ref": "#/$defs/sha256" }, "bundle_digest": { "type": "string" }, "attestation_ref": { "type": "string" } } }] },
     "claim": {
       "type": "object",
       "additionalProperties": false,
@@ -142,12 +163,19 @@
     "lotState": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["status", "attempts", "reservation_id", "diff_sha256", "review"],
+      "required": ["status", "attempts", "attempt_budget_extensions", "effective_max_attempts", "reservation_id", "diff_sha256", "review", "workspace_snapshot", "preimplementation_contract", "diff_budget_override", "refactor_escalation", "refactor_approval"],
       "properties": {
         "status": { "enum": ["pending", "reserved", "running", "completed_pending_review", "needs_correction", "reviewed", "integrated", "blocked", "stale", "legacy_completed_unreviewed"] },
         "attempts": { "type": "integer", "minimum": 0 },
+        "attempt_budget_extensions": { "type": "integer", "minimum": 0 },
+        "effective_max_attempts": { "type": "integer", "minimum": 1 },
         "reservation_id": { "type": ["string", "null"] },
         "diff_sha256": { "$ref": "#/$defs/nullableSha256" },
+        "workspace_snapshot": { "type": ["object", "null"] },
+        "preimplementation_contract": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/preimplementationConventionState" }] },
+        "diff_budget_override": { "type": ["object", "null"] },
+        "refactor_escalation": { "type": ["object", "null"] },
+        "refactor_approval": { "type": ["object", "null"] },
         "changed_paths": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
         "review": {
           "oneOf": [

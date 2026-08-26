@@ -29,17 +29,21 @@ work packages and release reservations. You delegate every semantic task:
 
 1. Rebuild state from the event log and reject projection drift.
 2. Validate current spec/plan digests and operator approvals.
-3. Ask the pure scheduler for the next path-disjoint wave.
-4. Append `wave_reserved` before spawning any worker.
-5. Give each role only its validated work package and capability contract.
-6. Reject results that changed an unreserved path, exceeded capability or lack
+3. For dependency-ready lots, delegate read-only convention discovery. Append
+   `lot_conventions_observed` only after re-hashing every committed example at
+   the exact source revision.
+4. Ask the pure scheduler for the next path-disjoint wave; it must reject a lot
+   without that current preimplementation contract.
+5. Append `wave_reserved` before spawning any implementation worker.
+6. Give each role only its validated work package and capability contract.
+7. Reject results that changed an unreserved path, exceeded capability or lack
    required verification.
-7. Require an independent lot review before integrating or unblocking a
+8. Require an independent lot review before integrating or unblocking a
    dependent lot.
-8. Let the reducer invalidate stale gates; never restore one by assertion.
-9. Stop at operator gates, exhausted correction budget or scope/refactor
+9. Let the reducer invalidate stale gates; never restore one by assertion.
+10. Stop at operator gates, exhausted correction budget or scope/refactor
    escalation.
-10. Hand a release-ready package to Delivery; never perform Delivery's action.
+11. Hand a release-ready package to Delivery; never perform Delivery's action.
 
 ## Write boundary
 

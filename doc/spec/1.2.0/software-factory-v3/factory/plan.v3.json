@@ -39,43 +39,45 @@
   "environment_contract": "doc/project/runtime/ENVIRONMENTS.yaml",
   "lots": [
     {
-      "acceptance_criteria": ["AC-001", "AC-006", "AC-034", "AC-035"],
+      "acceptance_criteria": ["AC-034"],
       "agent_role": "implementer",
       "capabilities": ["read", "write", "execute"],
       "complexity": "reasoning",
       "contracts": {
-        "inputs": ["operator-vision", "approved-specification", "pgs-experiment"],
-        "invariants": ["no-implementation-before-approved-contract", "project-lessons-require-executable-fixtures"],
+        "inputs": ["approved-specification", "promoted-learning-ledger", "implemented-regression-fixtures"],
+        "invariants": ["project-lessons-require-executable-positive-and-negative-fixtures"],
         "non_goals": ["distributed-workflow-engine"],
-        "outputs": ["approved-v3-contract", "learning-promotion-ledger"]
+        "outputs": ["learning-regression-harness"]
       },
       "control_plane_critical": true,
       "decision_domains": ["architecture"],
-      "dependencies": [],
+      "dependencies": ["LOT-2", "LOT-3", "LOT-4"],
       "forbidden_paths": [".git", "node_modules"],
       "handoff": {
         "include_private_reasoning": false,
-        "inputs": [{ "id": "approved-specification", "path": "doc/spec/1.2.0/software-factory-v3/SPECIFICATION.md", "sha256": "134400759f2c7d641d9e89bed10a0246476902be46d8ec0edc2cc71be144d32a" }],
-        "outputs": [{ "id": "v3-contract-package", "path": "doc/spec/1.2.0/software-factory-v3" }]
+        "inputs": [{ "id": "approved-specification", "path": "doc/spec/1.2.0/software-factory-v3/SPECIFICATION.md", "sha256": "c268ed3663d791bd5004acdb840efc3b31d0d7b2e19df831079a1e6a213dd962" }],
+        "outputs": [{ "id": "learning-regression-harness", "path": "scripts/test-factory-learning.mjs" }]
       },
       "id": "LOT-1",
       "kind": "implementation",
       "max_attempts": 2,
       "model_role": "expert",
-      "objective": "Freeze the V3 product contract and its promoted regression catalogue",
+      "objective": "Bind every promoted factory learning to executable positive and negative regressions",
       "read_claims": [
         { "kind": "exact", "path": "doc/spec/1.2.0/software-factory-v3/SPECIFICATION.md" },
-        { "kind": "exact", "path": "docs/factory-design-notes.md" }
+        { "kind": "exact", "path": "doc/_meta/factory-learning.yaml" },
+        { "kind": "prefix", "path": "scripts/factory-fixtures/v3" },
+        { "kind": "prefix", "path": "scripts/runtime-source-fixtures" },
+        { "kind": "prefix", "path": "scripts/fixtures/factory-delivery" }
       ],
       "risk": "high",
       "stop_rules": ["stop if the operator vision is ambiguous", "stop before changing runtime behavior outside the approved contract", "stop if a promoted rule lacks positive and negative fixtures"],
-      "verification": ["node scripts/test-factory-learning.mjs", "node scripts/validate-factory.mjs doc/spec/1.2.0/software-factory-v3"],
+      "verification": ["node scripts/test-factory-learning.mjs --contract-only"],
       "write_claims": [
-        { "kind": "prefix", "path": "doc/spec/1.2.0/software-factory-v3" },
-        { "kind": "exact", "path": "doc/_meta/factory-learning.yaml" },
         { "kind": "exact", "path": "schemas/factory-learning.yaml.schema.yaml" },
         { "kind": "exact", "path": "scripts/factory-fixtures/catalog.json" },
-        { "kind": "exact", "path": "scripts/test-factory-learning.mjs" }
+        { "kind": "exact", "path": "scripts/test-factory-learning.mjs" },
+        { "kind": "exact", "path": "scripts/test-factory-suite.mjs" }
       ]
     },
     {
@@ -91,11 +93,11 @@
       },
       "control_plane_critical": true,
       "decision_domains": ["architecture", "migration", "security"],
-      "dependencies": ["LOT-1"],
+      "dependencies": [],
       "forbidden_paths": ["doc/project", "node_modules"],
       "handoff": {
         "include_private_reasoning": false,
-        "inputs": [{ "id": "approved-specification", "path": "doc/spec/1.2.0/software-factory-v3/SPECIFICATION.md", "sha256": "134400759f2c7d641d9e89bed10a0246476902be46d8ec0edc2cc71be144d32a" }],
+        "inputs": [{ "id": "approved-specification", "path": "doc/spec/1.2.0/software-factory-v3/SPECIFICATION.md", "sha256": "c268ed3663d791bd5004acdb840efc3b31d0d7b2e19df831079a1e6a213dd962" }],
         "outputs": [{ "id": "control-plane", "path": "scripts/lib/factory-v3" }]
       },
       "id": "LOT-2",
@@ -117,6 +119,7 @@
         { "kind": "exact", "path": "scripts/factory-control.mjs" },
         { "kind": "exact", "path": "scripts/migrate-factory-v1-to-v3.mjs" },
         { "kind": "exact", "path": "scripts/test-factory-v3.mjs" },
+        { "kind": "exact", "path": "scripts/validate-factory.mjs" },
         { "kind": "prefix", "path": "scripts/factory-fixtures/v3" }
       ]
     },
@@ -129,16 +132,16 @@
         "inputs": ["logical-source-needs", "historical-coverage", "runtime-transports"],
         "invariants": ["mcp-is-a-transport", "runtime-availability-is-ephemeral", "no-silent-fallback"],
         "non_goals": ["guarantee-external-access", "persist-workstation-state"],
-        "outputs": ["durable-source-contract", "coverage-history", "ephemeral-runtime-probe", "migrated-guides"]
+        "outputs": ["source-contract-schemas", "ephemeral-runtime-probe", "migrated-pack-guides", "source-regressions"]
       },
       "control_plane_critical": false,
       "decision_domains": ["migration"],
-      "dependencies": ["LOT-1"],
+      "dependencies": [],
       "forbidden_paths": ["scripts/lib/factory-v3", "node_modules"],
       "handoff": {
         "include_private_reasoning": false,
-        "inputs": [{ "id": "approved-specification", "path": "doc/spec/1.2.0/software-factory-v3/SPECIFICATION.md", "sha256": "134400759f2c7d641d9e89bed10a0246476902be46d8ec0edc2cc71be144d32a" }],
-        "outputs": [{ "id": "source-contracts", "path": "doc/_meta/information-sources.yaml" }]
+        "inputs": [{ "id": "approved-specification", "path": "doc/spec/1.2.0/software-factory-v3/SPECIFICATION.md", "sha256": "c268ed3663d791bd5004acdb840efc3b31d0d7b2e19df831079a1e6a213dd962" }],
+        "outputs": [{ "id": "source-runtime-probe", "path": "scripts/check-runtime-sources.mjs" }]
       },
       "id": "LOT-3",
       "kind": "implementation",
@@ -155,13 +158,35 @@
       "verification": ["node scripts/test-runtime-sources.mjs", "node scripts/validate-corpus.mjs --json"],
       "write_claims": [
         { "kind": "prefix", "path": ".github/skills/sources" },
-        { "kind": "prefix", "path": "doc/mcp" },
-        { "kind": "prefix", "path": "doc/_meta" },
-        { "kind": "prefix", "path": "examples/demo-corpus/doc" },
+        { "kind": "prefix", "path": ".github/skills/actionable" },
+        { "kind": "prefix", "path": ".github/skills/continuous" },
+        { "kind": "prefix", "path": ".github/skills/exploration" },
+        { "kind": "prefix", "path": ".github/skills/foundations" },
+        { "kind": "prefix", "path": ".github/skills/governance" },
+        { "kind": "prefix", "path": ".github/skills/modes" },
+        { "kind": "exact", "path": ".github/templates/prod-knowledge/production-discovery-report-template.md" },
+        { "kind": "exact", "path": "schemas/README.md" },
+        { "kind": "exact", "path": "schemas/source-contract.yaml.schema.yaml" },
+        { "kind": "exact", "path": "schemas/source-coverage.yaml.schema.yaml" },
+        { "kind": "exact", "path": "schemas/runtime-source-observation.schema.yaml" },
+        { "kind": "prefix", "path": "scripts/runtime-source-fixtures" },
         { "kind": "exact", "path": "scripts/check-runtime-sources.mjs" },
         { "kind": "exact", "path": "scripts/test-runtime-sources.mjs" },
         { "kind": "exact", "path": "scripts/validate-corpus.mjs" },
-        { "kind": "exact", "path": "scripts/build-corpus-site.mjs" }
+        { "kind": "exact", "path": "scripts/build-corpus-site.mjs" },
+        { "kind": "exact", "path": "docs/continuous-enrichment.md" },
+        { "kind": "exact", "path": "docs/sources-and-mcp.md" },
+        { "kind": "exact", "path": "examples/demo-corpus/doc/CORPUS_MANIFEST.md" },
+        { "kind": "exact", "path": "examples/demo-corpus/doc/CORPUS_MAP.md" },
+        { "kind": "exact", "path": "examples/demo-corpus/doc/README.md" },
+        { "kind": "exact", "path": "examples/demo-corpus/doc/_agents/operator-onboarding.md" },
+        { "kind": "exact", "path": "examples/demo-corpus/doc/_indexes/by-source.md" },
+        { "kind": "prefix", "path": "examples/demo-corpus/doc/_meta" },
+        { "kind": "prefix", "path": "examples/demo-corpus/doc/_roadmap" },
+        { "kind": "prefix", "path": "examples/demo-corpus/doc/_runs" },
+        { "kind": "prefix", "path": "examples/demo-corpus/doc/mcp" },
+        { "kind": "prefix", "path": "examples/demo-corpus/doc/prod/snapshots" },
+        { "kind": "prefix", "path": "examples/demo-corpus/doc/project/activity" }
       ]
     },
     {
@@ -173,16 +198,16 @@
         "inputs": ["approved-v3-contract", "application-environment-evidence", "immutable-candidate"],
         "invariants": ["visible-error-never-pass", "proof-is-sha-bound", "draft-only-delivery", "pii-minimization"],
         "non_goals": ["auto-merge", "deployment", "force-playwright-on-non-web"],
-        "outputs": ["environment-contract", "acceptance-plan", "playwright-adapter", "evidence-envelope", "draft-pr-adapter"]
+        "outputs": ["environment-contract", "acceptance-plan", "playwright-and-command-adapters", "evidence-envelope", "draft-pr-adapter"]
       },
       "control_plane_critical": true,
       "decision_domains": ["architecture", "security"],
-      "dependencies": ["LOT-1", "LOT-2"],
+      "dependencies": ["LOT-2"],
       "forbidden_paths": [".git", "node_modules"],
       "handoff": {
         "include_private_reasoning": false,
-        "inputs": [{ "id": "approved-specification", "path": "doc/spec/1.2.0/software-factory-v3/SPECIFICATION.md", "sha256": "134400759f2c7d641d9e89bed10a0246476902be46d8ec0edc2cc71be144d32a" }],
-        "outputs": [{ "id": "delivery-contracts", "path": ".github/templates/software-factory" }]
+        "inputs": [{ "id": "approved-specification", "path": "doc/spec/1.2.0/software-factory-v3/SPECIFICATION.md", "sha256": "c268ed3663d791bd5004acdb840efc3b31d0d7b2e19df831079a1e6a213dd962" }],
+        "outputs": [{ "id": "delivery-contracts", "path": ".github/templates/software-factory/delivery/README.md" }]
       },
       "id": "LOT-4",
       "kind": "implementation",
@@ -198,16 +223,31 @@
       "stop_rules": ["stop if the runtime revision cannot be observed", "stop if a failed case mutation or oracle could aggregate to ready", "stop before any push merge deploy or unapproved data mutation"],
       "verification": ["node scripts/test-factory-delivery.mjs", "node scripts/validate-delivery.mjs --lint-template --json"],
       "write_claims": [
-        { "kind": "prefix", "path": ".github/templates/software-factory" },
+        { "kind": "prefix", "path": ".github/templates/software-factory/acceptance" },
+        { "kind": "prefix", "path": ".github/templates/software-factory/delivery" },
+        { "kind": "prefix", "path": ".github/templates/software-factory/environment" },
         { "kind": "prefix", "path": "scripts/lib/factory-delivery" },
-        { "kind": "prefix", "path": "scripts/adapters/playwright" },
+        { "kind": "prefix", "path": "scripts/adapters" },
         { "kind": "exact", "path": "scripts/test-factory-delivery.mjs" },
         { "kind": "prefix", "path": "scripts/fixtures/factory-delivery" },
         { "kind": "exact", "path": "scripts/validate-delivery.mjs" },
         { "kind": "exact", "path": "scripts/factory-preflight.mjs" },
+        { "kind": "exact", "path": "scripts/factory-acceptance.mjs" },
+        { "kind": "exact", "path": "scripts/factory-workflow-context.mjs" },
         { "kind": "exact", "path": "scripts/factory-evidence.mjs" },
         { "kind": "exact", "path": "scripts/factory-report.mjs" },
-        { "kind": "exact", "path": "scripts/factory-pr.mjs" }
+        { "kind": "exact", "path": "scripts/factory-pr.mjs" },
+        { "kind": "exact", "path": "scripts/factory-actions-attestation.mjs" },
+        { "kind": "exact", "path": "scripts/factory-ci-check.mjs" },
+        { "kind": "exact", "path": "scripts/factory-release.mjs" },
+        { "kind": "exact", "path": "scripts/factory-stage-evidence.mjs" },
+        { "kind": "exact", "path": "schemas/acceptance-plan.yaml.schema.yaml" },
+        { "kind": "exact", "path": "schemas/acceptance-results.yaml.schema.yaml" },
+        { "kind": "exact", "path": "schemas/environment-contract.yaml.schema.yaml" },
+        { "kind": "exact", "path": "schemas/environment-observation.yaml.schema.yaml" },
+        { "kind": "exact", "path": "schemas/evidence-manifest.yaml.schema.yaml" },
+        { "kind": "exact", "path": "schemas/factory-ci.yaml.schema.yaml" },
+        { "kind": "exact", "path": "schemas/pr-draft.yaml.schema.yaml" }
       ]
     },
     {
@@ -219,7 +259,7 @@
         "inputs": ["control-plane", "source-contracts", "delivery-contracts", "repository-evidence"],
         "invariants": ["controller-delegates-semantic-work", "human-merge-only", "corpus-closeout-is-mandatory", "fit-existing-code"],
         "non_goals": ["application-refactor", "automatic-push", "automatic-approval"],
-        "outputs": ["bounded-agent-personas", "capability-policy", "active-ci-policy", "application-runtime-corpus", "operator-guides"]
+        "outputs": ["bounded-agent-personas", "capability-policy", "active-ci-policy", "operator-guides"]
       },
       "control_plane_critical": true,
       "decision_domains": ["architecture", "security"],
@@ -227,8 +267,8 @@
       "forbidden_paths": [".git", "node_modules"],
       "handoff": {
         "include_private_reasoning": false,
-        "inputs": [{ "id": "approved-specification", "path": "doc/spec/1.2.0/software-factory-v3/SPECIFICATION.md", "sha256": "134400759f2c7d641d9e89bed10a0246476902be46d8ec0edc2cc71be144d32a" }],
-        "outputs": [{ "id": "integrated-factory", "path": "doc/_agents/software-factory.md" }]
+        "inputs": [{ "id": "approved-specification", "path": "doc/spec/1.2.0/software-factory-v3/SPECIFICATION.md", "sha256": "c268ed3663d791bd5004acdb840efc3b31d0d7b2e19df831079a1e6a213dd962" }],
+        "outputs": [{ "id": "integrated-factory-guide", "path": "docs/software-factory.md" }]
       },
       "id": "LOT-5",
       "kind": "implementation",
@@ -244,43 +284,49 @@
       ],
       "risk": "high",
       "stop_rules": ["stop on a role or capability contradiction", "stop if corpus closeout can be bypassed", "stop if existing application conventions or safe scope are unknown"],
-      "verification": ["npm test", "node scripts/validate-corpus.mjs --json", "node scripts/validate-delivery.mjs --json"],
+      "verification": ["npm test", "node scripts/validate-corpus.mjs --json", "node scripts/validate-delivery.mjs --lint-template --json"],
       "write_claims": [
         { "kind": "prefix", "path": ".github/agents" },
         { "kind": "prefix", "path": ".github/skills/development" },
+        { "kind": "exact", "path": ".github/skills/authoring/implement-spec/SKILL.md" },
+        { "kind": "exact", "path": ".github/skills/authoring/implementation-guard/SKILL.md" },
+        { "kind": "exact", "path": ".github/skills/SKILLS_MAP.md" },
+        { "kind": "exact", "path": ".github/copilot-instructions.md" },
         { "kind": "prefix", "path": ".github/workflows" },
-        { "kind": "prefix", "path": "doc/_agents" },
-        { "kind": "prefix", "path": "doc/project/runtime" },
-        { "kind": "prefix", "path": "doc/project/cicd" },
-        { "kind": "prefix", "path": "docs" },
+        { "kind": "prefix", "path": ".github/templates/software-factory/roles" },
+        { "kind": "exact", "path": "docs/agents-and-workflow.md" },
+        { "kind": "exact", "path": "docs/factory-design-notes.md" },
+        { "kind": "exact", "path": "docs/installation.md" },
+        { "kind": "exact", "path": "docs/software-factory.md" },
+        { "kind": "exact", "path": "docs/standards.md" },
         { "kind": "exact", "path": "AGENTS.md" }
       ]
     },
     {
-      "acceptance_criteria": ["AC-001", "AC-002", "AC-005", "AC-006", "AC-012", "AC-015", "AC-019", "AC-020", "AC-021", "AC-024", "AC-025", "AC-026", "AC-027", "AC-028", "AC-029", "AC-030", "AC-031", "AC-032", "AC-033", "AC-034", "AC-035"],
+      "acceptance_criteria": ["AC-002", "AC-035"],
       "agent_role": "implementer",
       "capabilities": ["read", "write", "execute"],
       "complexity": "reasoning",
       "contracts": {
-        "inputs": ["reviewed-lot-results", "reconciled-corpus", "full-test-results", "frozen-candidate"],
-        "invariants": ["no-dual-truth", "release-provenance-is-exact", "independent-review-before-delivery"],
+        "inputs": ["reviewed-lot-results", "reconciled-corpus", "full-test-results"],
+        "invariants": ["no-dual-truth", "distribution-templates-are-installable"],
         "non_goals": ["publish-package", "merge-pr", "deploy"],
-        "outputs": ["dogfooded-v3-package", "release-1.2.0", "draft-pr-payload"]
+        "outputs": ["reusable-v3-templates", "pack-version-1.2.0"]
       },
       "control_plane_critical": true,
       "decision_domains": ["migration", "security"],
-      "dependencies": ["LOT-5"],
+      "dependencies": ["LOT-1", "LOT-5"],
       "forbidden_paths": [".git", "node_modules"],
       "handoff": {
         "include_private_reasoning": false,
-        "inputs": [{ "id": "approved-specification", "path": "doc/spec/1.2.0/software-factory-v3/SPECIFICATION.md", "sha256": "134400759f2c7d641d9e89bed10a0246476902be46d8ec0edc2cc71be144d32a" }],
-        "outputs": [{ "id": "release-package", "path": "doc/spec/1.2.0/software-factory-v3" }]
+        "inputs": [{ "id": "approved-specification", "path": "doc/spec/1.2.0/software-factory-v3/SPECIFICATION.md", "sha256": "c268ed3663d791bd5004acdb840efc3b31d0d7b2e19df831079a1e6a213dd962" }],
+        "outputs": [{ "id": "reusable-v3-templates", "path": "doc/spec/template" }]
       },
       "id": "LOT-6",
       "kind": "implementation",
       "max_attempts": 2,
       "model_role": "expert",
-      "objective": "Dogfood V3, reconcile the corpus and freeze release 1.2.0 for draft delivery",
+      "objective": "Ship reusable V3 templates and pack metadata for version 1.2.0",
       "read_claims": [
         { "kind": "prefix", "path": "doc" },
         { "kind": "prefix", "path": "scripts" },
@@ -292,9 +338,14 @@
       "verification": ["npm test", "node scripts/validate-factory.mjs", "node scripts/validate-corpus.mjs --json", "npm pack --dry-run --json"],
       "write_claims": [
         { "kind": "prefix", "path": "doc/spec/template" },
-        { "kind": "prefix", "path": "doc/spec/1.2.0/software-factory-v3" },
-        { "kind": "exact", "path": "doc/CORPUS_MAP.md" },
-        { "kind": "exact", "path": "doc/CORPUS_MANIFEST.md" },
+        { "kind": "prefix", "path": "examples/demo-corpus/doc/spec/template" },
+        { "kind": "exact", "path": "schemas/corpus-paths.yaml" },
+        { "kind": "exact", "path": "schemas/corpus-state.yaml.template" },
+        { "kind": "exact", "path": "scripts/cli.mjs" },
+        { "kind": "exact", "path": "scripts/lib/upgrade-core.mjs" },
+        { "kind": "exact", "path": "scripts/test-upgrade.mjs" },
+        { "kind": "exact", "path": "scripts/update-pack.mjs" },
+        { "kind": "exact", "path": "README.md" },
         { "kind": "exact", "path": "package.json" },
         { "kind": "exact", "path": "PACK_VERSION" }
       ]

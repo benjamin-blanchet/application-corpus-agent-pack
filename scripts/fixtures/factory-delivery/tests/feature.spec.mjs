@@ -1,3 +1,8 @@
-// Existence fixture used to verify acceptance-plan test references without
-// requiring @playwright/test in the distribution pack itself.
-// Exact planned title: CASE-001 fixture behaviour
+import { test } from '@playwright/test';
+import { recordOracle } from '../../../adapters/playwright/recording.mjs';
+
+test('CASE-001 fixture behaviour', async ({}, testInfo) => {
+  testInfo.annotations.push({ type: 'case', description: 'CASE-001' });
+  testInfo.annotations.push({ type: 'criterion', description: 'AC-001' });
+  recordOracle(testInfo, { id: 'fixture-oracle', outcome: 'pass' });
+});

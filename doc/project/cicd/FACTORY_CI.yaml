@@ -37,6 +37,11 @@ operations:
 checks:
   - id: factory-policy
     provider_name: Factory policy / validate
+    operation: factory-delivery-validate
+    required: true
+    secret_access: none
+  - id: factory-application-ci
+    provider_name: Application CI / test
     operation: pack-test
     required: true
     secret_access: none
@@ -49,8 +54,8 @@ checks:
 
 artifacts:
   retention_days: 30
-  required: [evidence-manifest, results-json, junit, html-report]
-  conditional: [screenshots, traces]
+  required: [evidence-manifest, results-json, junit, acceptance-report]
+  conditional: [screenshots]
 
 flake_policy:
   retry_count: 1
@@ -61,5 +66,7 @@ flake_policy:
 security:
   default_permissions: read
   protected_job_requires_environment_approval: true
-  no_pull_request_target_checkout: true
+  policy_definition_source: protected_base
+  controller_ref: protected_full_sha
+  candidate_checkout_credentials: none
   actions_pinned_to_full_sha: true

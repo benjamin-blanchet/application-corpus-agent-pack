@@ -63,7 +63,10 @@ Options:
   --force         Overwrite locally-modified agents without prompting.
   -h, --help      Show this help.
 
-Guarantees: existing files under doc/ are never overwritten; missing pack
-scaffolds may be copied. Locally-modified agents are never overwritten without
-confirmation.`);
+Guarantees: application corpus content under doc/ is preserved. The reusable
+doc/spec/template/** scaffold and doc/_meta/factory-learning.yaml are versioned
+pack surfaces; divergent pre-upgrade bytes are backed up under
+.corpus-pack-backups/ before replacement or reviewed retirement. Locally-modified agents are never
+overwritten without confirmation. Exact obsolete V1/MCP pack surfaces may be
+retired; unrelated local extensions are warning-only.`);
 }

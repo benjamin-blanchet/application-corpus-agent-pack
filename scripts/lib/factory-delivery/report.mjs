@@ -26,18 +26,23 @@ export function renderEvidenceReport(manifest) {
     '',
     '## Results',
     '',
-    '| Case | Criteria | Outcome | Attempts | Evidence |',
-    '|---|---|---|---:|---|',
+    '| Case | Criteria | Outcome | User-visible error | Oracles | Attempts | Evidence |',
+    '|---|---|---|---|---|---:|---|',
   ];
   for (const testCase of asArray(manifest.cases)) {
-    lines.push(`| ${cell(testCase.id)} | ${cell(asArray(testCase.criteria).join(', '))} | **${cell(testCase.outcome)}** | ${cell(testCase.attempts)} | ${cell(asArray(testCase.evidence_ids).join(', ') || 'none')} |`);
+    const oracles = asArray(testCase.oracle_results).map((oracle) => `${oracle.id}:${oracle.outcome}${oracle.recorded === false ? ':unrecorded' : ''}`).join(', ') || 'none';
+    lines.push(`| ${cell(testCase.id)} | ${cell(asArray(testCase.criteria).join(', '))} | **${cell(testCase.outcome)}** | ${testCase.user_visible_error === true ? '**yes**' : 'no'} | ${cell(oracles)} | ${cell(testCase.attempts)} | ${cell(asArray(testCase.evidence_ids).join(', ') || 'none')} |`);
   }
-  lines.push('', '## Mutations and cleanup', '', '| Mutation | Outcome | Cleanup |', '|---|---|---|');
-  if (asArray(manifest.mutations).length === 0) lines.push('| none | not applicable | not_required |');
-  else for (const mutation of manifest.mutations) lines.push(`| ${cell(mutation.id)} | ${cell(mutation.outcome)} | ${cell(mutation.cleanup)} |`);
-  lines.push('', '## Evidence inventory', '', '| ID | Path | Type | SHA-256 | Bytes |', '|---|---|---|---|---:|');
-  if (asArray(manifest.artifacts).length === 0) lines.push('| none | — | — | — | 0 |');
-  else for (const artifact of manifest.artifacts) lines.push(`| ${cell(artifact.id)} | \`${cell(artifact.path)}\` | ${cell(artifact.media_type)} | \`${cell(artifact.sha256)}\` | ${cell(artifact.bytes)} |`);
+  lines.push('', '## Mutations and cleanup', '', '| Mutation | Outcome | Cleanup | Declared operation / digest / exit | Cleanup evidence |', '|---|---|---|---|---|');
+  if (asArray(manifest.mutations).length === 0) lines.push('| none | not applicable | not_required | — | none |');
+  else for (const mutation of manifest.mutations) {
+    const execution = mutation.cleanup_execution;
+    const operation = execution ? `${execution.operation_id} / ${execution.operation_digest} / ${execution.exit_code} (${execution.started_at} → ${execution.finished_at})` : 'none';
+    lines.push(`| ${cell(mutation.id)} | ${cell(mutation.outcome)} | ${cell(mutation.cleanup)} | ${cell(operation)} | ${cell(asArray(mutation.cleanup_evidence_ids).join(', ') || 'none')} |`);
+  }
+  lines.push('', '## Evidence inventory', '', '| ID | Path | Byte-derived type | PII policy | SHA-256 | Bytes |', '|---|---|---|---|---|---:|');
+  if (asArray(manifest.artifacts).length === 0) lines.push('| none | — | — | — | — | 0 |');
+  else for (const artifact of manifest.artifacts) lines.push(`| ${cell(artifact.id)} | \`${cell(artifact.path)}\` | ${cell(artifact.media_type)} | ${cell(artifact.pii_policy)} | \`${cell(artifact.sha256)}\` | ${cell(artifact.bytes)} |`);
   lines.push(
     '',
     '## Verdict',

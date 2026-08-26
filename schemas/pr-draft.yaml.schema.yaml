@@ -7,14 +7,26 @@ description: |
   approval, ready-for-review, force-push, and merge are not capabilities.
 must_not_be_markdown: true
 root:
-  required_keys: [version, provider, draft, title, base_ref, head_ref_from, body_path, spec_ref, technical_plan_ref, acceptance_matrix_ref, replay_command, required_checks, authorization, permissions, forbidden_actions]
+  required_keys: [version, provider, repository, draft, title, base_ref, head_ref_from, body_path, spec_ref, factory_plan_ref, acceptance_matrix_ref, environment_contract_ref, ci_contract_ref, replay_command, required_checks, ci_attestation, authorization, permissions, forbidden_actions]
+  rejected_legacy_keys:
+    technical_plan_ref: migrate to factory_plan_ref pointing at factory/plan.v3.json
 enums:
   provider: [github]
   draft: [true]
 required_forbidden_actions: [push, approve, mark_ready, merge, force_push]
 required_permissions:
+  actions: read
   contents: read
+  checks: read
   pull_requests: write
 authorization:
-  required_keys: [required, provider, gate_id]
+  required_keys: [required, provider, issuer_ref, gate_id, public_key_ref, max_age_minutes]
   provider: [external_receipt]
+ci_attestation:
+  required_keys: [provider, workflow_ref, event, artifact_name_prefix]
+  provider: [github_actions]
+  event: [repository_dispatch]
+receipt:
+  format: signed stable JSON object verified with authorization.public_key_ref
+  required_keys: [version, issuer_ref, gate_id, candidate_sha, head_sha, head_ref, base_ref, input_digests, approver_ref, authorized_at, nonce, signature]
+  input_digest_keys: [contract, factory_plan, factory_events, factory_state, evidence_manifest, acceptance_plan, environment_contract, ci_contract, artifact_bundle]

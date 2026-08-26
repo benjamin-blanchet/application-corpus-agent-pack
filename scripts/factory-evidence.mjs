@@ -3,7 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { exitCodeFor, parseArgs, printResult, sha256File } from './lib/factory-delivery/core.mjs';
+import { exitCodeFor, parseArgs, printResult, resolveContainedRegularFile, sha256File, sha256Object } from './lib/factory-delivery/core.mjs';
 import { assembleEvidence } from './lib/factory-delivery/evidence.mjs';
 import { readData, writeData } from './lib/factory-delivery/files.mjs';
 
@@ -23,9 +23,33 @@ try {
   const artifactsRoot = path.resolve(root, args['artifacts-root']);
   const ci = readData(ciFile);
   const publicationMode = args['publication-mode'] || 'ci_artifact';
-  if (publicationMode === 'ci_artifact') for (const required of ['ci-run-id', 'ci-artifact-id', 'ci-artifact-url', 'junit', 'html-report']) if (!args[required]) throw new Error(`--${required} is required for ci_artifact publication`);
+  if (!['ci_artifact', 'evidence_only_commit'].includes(publicationMode)) throw new Error('--publication-mode must be ci_artifact or evidence_only_commit');
+  if (args['evidence-commit-sha']) throw new Error('--evidence-commit-sha is event provenance and must never be written while assembling its own manifest');
+  if (publicationMode === 'ci_artifact') for (const required of ['ci-run-id', 'ci-artifact-id', 'ci-artifact-url']) if (!args[required]) throw new Error(`--${required} is required for ci_artifact publication`);
   const supportingArtifacts = [resultsFile];
-  if (publicationMode === 'ci_artifact') {
+  let stagingManifest = null;
+  if (args['staging-manifest']) {
+    stagingManifest = readData(path.resolve(args['staging-manifest']));
+    if (stagingManifest?.schema_version !== 1 || !Array.isArray(stagingManifest?.inventory) || !Array.isArray(stagingManifest?.findings) || !/^sha256:[0-9a-f]{64}$/.test(stagingManifest?.bundle_digest || '')) throw new Error('--staging-manifest is malformed');
+    const observed = [];
+    const visit = (directory) => {
+      for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+        const child = path.join(directory, entry.name);
+        if (entry.isSymbolicLink() || (!entry.isDirectory() && !entry.isFile())) throw new Error(`staging bundle contains a non-regular entry: ${child}`);
+        if (entry.isDirectory()) visit(child);
+        else {
+          const resolved = resolveContainedRegularFile(artifactsRoot, child);
+          observed.push({ path: resolved.relative, sha256: sha256File(resolved.absolute), bytes: fs.statSync(resolved.absolute).size });
+        }
+      }
+    };
+    visit(artifactsRoot);
+    observed.sort((left, right) => left.path.localeCompare(right.path));
+    const declared = [...stagingManifest.inventory].sort((left, right) => left.path.localeCompare(right.path));
+    if (JSON.stringify(observed) !== JSON.stringify(declared) || sha256Object(observed) !== stagingManifest.bundle_digest) throw new Error('staging bundle has a symlink, stale digest, missing file or unmanifested extra');
+    supportingArtifacts.splice(0, supportingArtifacts.length, ...observed.map((entry) => path.join(artifactsRoot, entry.path)));
+  } else if (publicationMode === 'ci_artifact') {
+    for (const required of ['junit', 'html-report']) if (!args[required]) throw new Error(`--${required} is required when no minimized staging manifest is supplied`);
     const junit = path.resolve(root, args.junit);
     const htmlReport = path.resolve(root, args['html-report']);
     if (!fs.existsSync(junit) || !fs.statSync(junit).isFile()) throw new Error('--junit must identify a generated file');
@@ -62,11 +86,12 @@ try {
       artifact_id: args['ci-artifact-id'],
       artifact_url: args['ci-artifact-url'],
       retention_days: ci?.artifacts?.retention_days,
+      ...(stagingManifest ? { bundle_digest: stagingManifest.bundle_digest } : {}),
     } : {
       mode: 'evidence_only_commit',
-      evidence_commit_sha: args['evidence-commit-sha'] || null,
     },
     supportingArtifacts,
+    externalFindings: stagingManifest?.findings || [],
   });
   writeData(path.resolve(root, args.out), manifest);
   printResult({

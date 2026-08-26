@@ -39,8 +39,10 @@ When in doubt, **classify up** (trivial → small, small → standard). It is sa
 | Step 6 implementation plan | Single-line plan | Table with ≤ 3 rows | Full table | Full + explicit rollout plan |
 | Step 8 implementation | Same caution rules apply | Same | Same | Same |
 | Step 9 verification | Unit tests + lint | Unit + regression for direct callers + lint | Full matrix per change type | Full matrix + perf measurement |
-| Step 10 corpus closeout | Spec + maybe 1 feature-file claim | Spec + feature file(s) + 0–1 candidate | Spec + feature files + candidates + Corpus auto-invoke | Spec + feature files + candidates + Corpus + sibling sync |
-| Step 11 PR readiness | Minimal description | Standard description | Standard description + risk summary | Full description + rollout/rollback + sibling-repo links |
+| Step 10 consolidated review | Focused fresh review | Focused fresh review | Full fresh review | Full fresh review + ownership/security emphasis |
+| Step 11 owner closeout | Developer returns minimal `spec_delta`/`corpus_delta`; Functional Analyst and Corpus reconcile | Same, proportional to affected claims | Full owner reconciliation + mandatory Corpus invocation by Controller | Full owner reconciliation + Corpus + sibling sync |
+| Step 12 candidate freeze | Exact SHA + minimal bundle | Exact SHA + declared bundle | Full immutable bundle | Full immutable bundle + sibling contract identities |
+| Steps 13–15 acceptance/release/draft PR | Proportional cases; no gate skipped | Proportional cases | Full campaign and evidence | Full campaign + rollout/rollback + sibling-repo links |
 
 ## Required output
 
@@ -58,5 +60,8 @@ Lifecycle weight: <list of steps that are abbreviated or full per the table>
 - **Classify up when in doubt.** Better to over-spec a small change than under-spec a real one.
 - **Triage is not a gate.** The operator does not need to validate the class — but they can override ("treat this as standard").
 - **The class can be revised in-flight.** If during Step 1–3 the change turns out larger than expected, re-triage and announce the new class before continuing.
-- **Trivial does not skip Step 10.** The corpus loop still closes — just lighter. A trivial change that flips a documented behavior must still update the feature file's claim and file an update-candidate if it touches a graph edge.
+- **Trivial does not skip Step 11.** The corpus loop still closes — just
+  lighter. Developer returns evidence-backed deltas; Functional Analyst and
+  Corpus decide and apply any spec, feature, graph or candidate update within
+  their own write boundaries.
 - **Large always involves the operator more.** No autonomous large change — always confirm scope after triage.
