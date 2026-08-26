@@ -49,12 +49,21 @@ const BUCKET_A_FILES = new Set([
 
 const BUCKET_A_PREFIXES = [
   '.github/skills/',
+  '.github/prompts/',     // shipped prompt assets are pack-owned and refreshed with their skills
   'scripts/',          // all pack scripts (incl. scripts/lib/**) are pack-owned — replaced wholesale
   'schemas/',          // machine-readable contracts the validator enforces — pack-owned, not team data; refreshed so they never drift behind an updated validator
 ];
 
 // `.github/agents/**` is the confirm bucket: operator-customizable.
 const AGENT_PREFIXES = ['.github/agents/'];
+
+// On an existing installation, the migration agent owns the durable version
+// transition. Copying a missing state template here would pre-stamp the target
+// with the incoming version and destroy the evidence that its prior version is
+// unknown. Fresh installs still receive the template normally.
+const MIGRATION_OWNED_ON_UPGRADE = new Set([
+  'doc/_meta/corpus-state.yaml',
+]);
 
 // Repo-only paths in the pack source that must NEVER be copied into a consumer
 // repo. Needed because the source is now the whole pack repository (via npx /
@@ -72,6 +81,10 @@ function isIgnoredSource(rel) {
   const segments = rel.split(/[\\/]/);
   if (segments.some((s) => SOURCE_IGNORE_SEGMENTS.has(s))) return true;
   if (SOURCE_IGNORE_ROOT_FILES.has(rel)) return true;
+  // The pack repository follows its own spec-first workflow, but those
+  // release work packages are not consumer corpus scaffolds. Ship/sync only
+  // the reusable spec template.
+  if (rel.startsWith('doc/spec/') && !rel.startsWith('doc/spec/template/')) return true;
   return SOURCE_IGNORE_ROOT_DIRS.some((p) => rel.startsWith(p));
 }
 
@@ -116,7 +129,7 @@ function firstLine(text) {
 }
 
 async function confirmPrompt(question) {
-  // No TTY (npx in CI, piped) → never overwrite; preserve and report.
+  // No TTY (npx in CI, piped) → never overwrite; preserve and surface.
   if (!process.stdin.isTTY) return false;
   const rl = createInterface({ input: process.stdin, output: process.stdout });
   try {
@@ -155,11 +168,17 @@ export async function runUpgrade({ sourceRoot, target, apply = false, force = fa
 
   const sourceVersion = firstLine(readSource('PACK_VERSION')) || '<unknown>';
   const localVersion = firstLine(readLocal('PACK_VERSION')) || '<missing>';
-  const isInstall = localVersion === '<missing>';
+  // Very old corpora may predate PACK_VERSION. A canonical corpus marker still
+  // makes this an upgrade: treating it as a fresh install could copy the new
+  // state template and erase the fact that the previous version is unknown.
+  const hasExistingCorpus = readLocal('doc/CORPUS_MANIFEST.md') !== null
+    || readLocal('doc/_meta/corpus-state.yaml') !== null;
+  const isInstall = localVersion === '<missing>' && !hasExistingCorpus;
 
   const plan = {
     replace: [],     // {rel, why}  — pack-owned, content differs
     copyNew: [],     // {rel, why}  — file missing locally
+    defer: [],       // {rel, why}  — migration-owned file missing on upgrade
     confirm: [],     // {rel, why}  — local agent differs → needs confirmation
     preserve: [],    // {rel, hint} — template diverged from local, NOT touched
     warnRemoved: [], // {rel}       — local file no longer in source pack
@@ -184,7 +203,14 @@ export async function runUpgrade({ sourceRoot, target, apply = false, force = fa
     else plan.unchanged.push({ rel });
   }
   function classifyBFile(rel) {
-    if (!existsLocal(rel)) { plan.copyNew.push({ rel, why: 'template, missing locally' }); return; }
+    if (!existsLocal(rel)) {
+      if (!isInstall && MIGRATION_OWNED_ON_UPGRADE.has(rel)) {
+        plan.defer.push({ rel, why: 'migration-owned state, missing locally' });
+        return;
+      }
+      plan.copyNew.push({ rel, why: 'template, missing locally' });
+      return;
+    }
     if (differs(rel)) {
       plan.preserve.push({ rel, hint: 'local file differs from new template — review manually if conventions changed' });
     } else {
@@ -228,11 +254,13 @@ export async function runUpgrade({ sourceRoot, target, apply = false, force = fa
   };
 
   log(`Pack ${isInstall ? 'install' : 'upgrade'} · ${apply ? 'APPLY' : 'DRY-RUN'}`);
+  log(`  Version: ${localVersion} → ${sourceVersion}`);
   log(`  Source:  ${sourceRoot}  (version ${sourceVersion})`);
   log(`  Target:  ${target}  (version ${localVersion})`);
 
   header(`Replace (bucket A — pack-owned): ${plan.replace.length}`); row(plan.replace);
   header(`New files (missing locally): ${plan.copyNew.length}`); row(plan.copyNew);
+  header(`Deferred to Corpus migration: ${plan.defer.length}`); row(plan.defer);
   header(`Agents modified locally (confirm before overwrite${force ? ' — forced' : ''}): ${plan.confirm.length}`); row(plan.confirm);
   header(`Preserve (bucket B — local content differs, NOT touched): ${plan.preserve.length}`); row(plan.preserve);
   header(`Locally present, removed in source (review): ${plan.warnRemoved.length}`); row(plan.warnRemoved);
@@ -259,100 +287,25 @@ export async function runUpgrade({ sourceRoot, target, apply = false, force = fa
       if (overwrite) { copyFile(path.join(sourceRoot, it.rel), path.join(target, it.rel)); changed.push(it.rel); }
       else keptAgents.push(it.rel);
     }
-
-    stampState(target, sourceVersion, localVersion);
   }
 
   // --------------------------------------------------------------------------
-  // Report.
-
-  const reportRel = `doc/_meta/pack-${isInstall ? 'install' : 'upgrade'}-${localVersion.replace(/\s.*/, '')}-to-${sourceVersion.replace(/\s.*/, '')}.md`;
-  const reportText = buildReport({ plan, keptAgents, apply, sourceRoot, sourceVersion, localVersion, isInstall });
+  // Console summary. Durable state, changelog and migration reports belong to
+  // the Corpus migration that follows an upgrade, never to this copy step.
 
   if (apply) {
-    const reportAbs = path.join(target, reportRel);
-    fs.mkdirSync(path.dirname(reportAbs), { recursive: true });
-    fs.writeFileSync(reportAbs, reportText);
-    log(`\nReport written to ${reportRel}`);
+    log('\nSync complete.');
     log(`Files changed: ${changed.length}`);
-    log('Re-run `node scripts/validate-corpus.mjs` to confirm structural integrity.');
+    log(`Locally-modified agents preserved: ${keptAgents.length}`);
+    if (isInstall) {
+      log('Next step: open the Corpus agent and start the corpus.');
+    } else {
+      log('Next step: open the Corpus agent and run the pack migration.');
+    }
   } else {
-    log('\n(dry-run — pass --apply to perform the change)');
-    log(`Would write report to ${reportRel}`);
+    log('\nSync preview complete; no files were written.');
+    log('Re-run with --apply to perform the copy.');
   }
 
   return { changed, kept: keptAgents, plan, sourceVersion, localVersion, isInstall };
-}
-
-// ----------------------------------------------------------------------------
-// State stamping (corpus-state.yaml + changelog) — best-effort, regex-based.
-
-function stampState(target, sourceVersion, localVersion) {
-  const today = new Date().toISOString().slice(0, 10);
-
-  const csRel = 'doc/_meta/corpus-state.yaml';
-  const csAbs = path.join(target, csRel);
-  if (fs.existsSync(csAbs)) {
-    let cs = fs.readFileSync(csAbs, 'utf8');
-    if (/^\s*pack_version:/m.test(cs)) cs = cs.replace(/^(\s*pack_version:\s*).*$/m, `$1'${sourceVersion}'`);
-    else cs = cs.replace(/^(corpus:\s*\n)/, `$1  pack_version: '${sourceVersion}'\n`);
-    if (/^\s*last_pack_upgrade:/m.test(cs)) cs = cs.replace(/^(\s*last_pack_upgrade:\s*).*$/m, `$1'${today}'`);
-    else cs = cs.replace(/^(\s*pack_version:.*\n)/m, `$1  last_pack_upgrade: '${today}'\n`);
-    fs.writeFileSync(csAbs, cs);
-  }
-
-  const chgRel = 'doc/_meta/corpus-changelog.md';
-  const chgAbs = path.join(target, chgRel);
-  if (fs.existsSync(chgAbs)) {
-    let chg = fs.readFileSync(chgAbs, 'utf8');
-    const line = `| ${today} | Pack upgrade ${localVersion} → ${sourceVersion} | scripts/update-pack.mjs | corpus |\n`;
-    if (chg.includes('| Date | Change | Reason | Actor |')) chg = chg.replace(/(\|\s*Date\s*\|.*\n\|[-\s|]+\n)/, `$1${line}`);
-    else chg = chg.trimEnd() + '\n' + line;
-    fs.writeFileSync(chgAbs, chg);
-  }
-}
-
-function buildReport({ plan, keptAgents, apply, sourceRoot, sourceVersion, localVersion, isInstall }) {
-  const L = [];
-  const list = (items, render) => { if (items.length) for (const it of items) L.push(render(it)); else L.push('- _none_'); };
-
-  L.push('---', 'type: meta', 'status: active', 'confidence: confirmed', 'source: pack',
-    `generated_at: ${new Date().toISOString()}`, '---', '');
-  L.push(`# Pack ${isInstall ? 'install' : 'upgrade'} report`, '');
-  L.push(`- From version: \`${localVersion}\``);
-  L.push(`- To version:   \`${sourceVersion}\``);
-  L.push(`- Source path:  \`${sourceRoot}\``);
-  L.push(`- Mode:         ${apply ? 'apply' : 'dry-run'}`, '');
-
-  L.push('## Replaced (pack-owned)');
-  list(plan.replace, (it) => `- \`${it.rel}\``);
-  L.push('');
-  L.push('## Newly copied (was missing locally)');
-  list(plan.copyNew, (it) => `- \`${it.rel}\``);
-  L.push('');
-  L.push('## Agents modified locally (never overwritten silently)', '');
-  L.push(apply
-    ? 'These agents differ from the incoming pack version. Overwrites only happened where you confirmed (or `--force` was passed); the rest were preserved.'
-    : 'These agents differ from the incoming pack version. On `--apply` you will be asked per file before any overwrite (preserved by default).');
-  L.push('');
-  list(plan.confirm, (it) => {
-    const fate = apply ? (keptAgents.includes(it.rel) ? ' — preserved' : ' — overwritten') : '';
-    return `- \`${it.rel}\`${fate}`;
-  });
-  L.push('');
-  L.push('## Preserved (template diverged from local, NOT touched)', '');
-  L.push('Review these files manually if the new pack changed conventions (new fields, new columns, renamed keys). Compare against the source pack copy of the same file.', '');
-  list(plan.preserve, (it) => `- \`${it.rel}\``);
-  L.push('');
-  L.push('## Locally present, removed from source', '');
-  L.push('These exist in your repo but not in the new pack. They may be deprecated, renamed, or local customizations. The script did NOT delete them — review and remove manually if appropriate.', '');
-  list(plan.warnRemoved, (it) => `- \`${it.rel}\``);
-  L.push('');
-  L.push('## Next steps', '');
-  L.push('1. Run `node scripts/validate-corpus.mjs` — fix any P0/P1 finding introduced by the change.');
-  L.push('2. Review the "Preserved" list above — check each file against the new template if the pack changelog mentions structural changes.');
-  L.push('3. Review the "Removed from source" list — delete obsolete files only if you are sure they are not local customizations you want to keep.');
-  L.push('4. If `corpus-state.yaml.pack_version` was bumped, commit with a clear message: `chore: pack upgrade <from> → <to>`.');
-  L.push('');
-  return L.join('\n');
 }

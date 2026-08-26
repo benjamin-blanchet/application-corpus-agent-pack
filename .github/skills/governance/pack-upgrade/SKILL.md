@@ -9,9 +9,13 @@ description: "Migrate a corpus that was built with an older version of the pack 
 
 Migrate a corpus that was built with an older version of the pack to a newer version, **without losing any corpus data**.
 
-The canonical procedure is **manual file copy + agent-driven migration**:
+The canonical procedure is **safe sync + agent-driven migration**:
 
-1. The operator runs `sync`, which copies pack-owned files, confirms before overwriting a locally-modified agent, and never touches `doc/`.
+1. The operator runs `sync`, which copies pack-owned files, confirms before
+   overwriting a locally-modified agent, never overwrites an existing `doc/`
+   file, and may add missing pack scaffolds. During an upgrade, a missing
+   `doc/_meta/corpus-state.yaml` is deferred to this skill so the previous
+   version remains explicitly unknown.
 2. The operator invokes this skill. The agent handles version detection, schema gap detection and repair, structural migrations, version stamp, changelog, validator pass, dashboard rebuild and migration report.
 
 ## When to invoke
@@ -25,7 +29,20 @@ The skill responds to any of these phrasings (open trigger detection, like kicks
 - "vérifie la structure du corpus après upgrade"
 - "fais la migration structurelle"
 
-You also invoke this skill automatically when the operator says "continue" or "où en est-on" and the corpus state shows a `pack_version` older than the current `PACK_VERSION` file — propose the migration before continuing other work.
+You also invoke this skill automatically when the operator says "continue" or
+"où en est-on" and either:
+
+- the corpus state shows a `pack_version` older than the current
+  `PACK_VERSION`; or
+- `doc/_meta/corpus-state.yaml` is absent while both `PACK_VERSION` and the
+  existing-corpus marker `doc/CORPUS_MANIFEST.md` are present; or
+- a `doc/_meta/pack-upgrade-*-to-*.md` report targets the current
+  `PACK_VERSION` but has `status` other than `complete` or
+  `validation_status` other than `passed`.
+
+In all cases, propose the migration before continuing other work. A correct
+fresh install already contains its state file, so it does not match the second
+condition.
 
 ## Hard constraints (always)
 
@@ -45,15 +62,16 @@ You also invoke this skill automatically when the operator says "continue" or "o
 
 - **No re-scan of code, no re-run of pipeline passes.** This is a schema migration, not a re-analysis. If the new pack expects new metadata (e.g. `doc/_meta/code-activity-signals.yaml` from `pipeline/code-activity-signals`), record the gap and propose the next run that will produce it — do not synthesize the data.
 
-## Three-bucket model (for reference)
+## Sync and migration buckets (for reference)
 
 The same model as before, now applied **by the agent** based on what it reads:
 
 | Bucket | Examples | Behavior |
 |---|---|---|
-| **A — pack-owned** | `.github/agents/**`, `.github/skills/**`, `.github/prompts/**`, `scripts/**`, `AGENTS.md`, `KICKSTART.md`, `PACK_VERSION`, `.gitignore` | Operator already overwrote them in the manual copy. Agent reads them as the source of truth for the new contract. |
-| **B — pack-template** | `doc/_meta/*.yaml`, `doc/_meta/*.md` (top-level), `doc/_indexes/by-*.md`, `doc/_roadmap/*.md`, `doc/_runs/RUN_LEDGER.md`, `doc/_runs/RUN_TEMPLATE.md` | Operator did NOT touch these (excluded `doc/` from the copy). Agent inspects each for schema drift vs. the new pack's templates and adds missing fields when needed. |
-| **C — corpus-owned** | Everything else under `doc/` (see Hard constraints above) | Untouched. |
+| **A — pack-owned** | `.github/skills/**`, `.github/prompts/**`, `scripts/**`, `schemas/**`, `AGENTS.md`, `KICKSTART.md`, `PACK_VERSION` | `sync` refreshes these from the incoming pack. The agent reads them as the source of truth for the new contract. |
+| **Agents — confirmed** | `.github/agents/**` | `sync` copies missing agents and confirms before replacing a divergent local agent; non-interactive runs preserve it unless `--force` is explicit. |
+| **B — pack-template** | `doc/_meta/*.yaml`, `doc/_meta/*.md` (top-level), `doc/_indexes/by-*.md`, `doc/_roadmap/*.md`, `doc/_runs/RUN_LEDGER.md`, `doc/_runs/RUN_TEMPLATE.md` | `sync` copies missing scaffolds but preserves every existing file. This skill inspects existing templates for schema drift and performs the migration. A missing corpus state is deferred here on upgrade. |
+| **C — corpus-owned** | Everything else under `doc/` (see Hard constraints above) | Existing content is untouched. `sync` may add a missing pack-provided scaffold, but the migration never rewrites corpus knowledge. |
 
 ## Canonical operator procedure
 
@@ -71,11 +89,13 @@ npx github:benjamin-blanchet/application-corpus-agent-pack sync --apply
 #   open the Corpus agent and type one of the trigger phrases above
 ```
 
-`sync` is the only supported copy path. It resolves three buckets: pack-owned
-files are replaced, `.github/agents/**` is **confirmed before overwrite** when
-the local copy differs (`--force` to skip the prompt; non-interactive runs
-preserve and flag instead), and everything else with local content is
-preserved. `doc/` is never overwritten.
+`sync` is the only supported copy path. It refreshes pack-owned files,
+**confirms before overwriting** a divergent `.github/agents/**` file (`--force`
+to skip the prompt; non-interactive runs preserve and surface it), copies
+missing templates, and preserves every existing local template or corpus file.
+Existing `doc/` files are never overwritten; missing scaffolds may be copied.
+A missing `doc/_meta/corpus-state.yaml` is copied only on a fresh install and
+is deferred to this skill during an upgrade.
 
 > **Never use `rsync --delete` for this.** Local additions that do not ship
 > with the pack — new skills, custom agents, project scripts — are legitimate
@@ -90,7 +110,36 @@ When invoked, the agent runs the following steps in order.
 
 ### Step 1 — Detect versions
 
-Read `PACK_VERSION` (the new one, just copied) and `doc/_meta/corpus-state.yaml.pack_version` (the previous one, if it exists). Capture both as `from_version` and `to_version`. If `pack_version` is missing from `corpus-state.yaml`, mark `from_version: <unknown>` and continue — that is normal for very old packs.
+Read `PACK_VERSION` first and derive its filesystem-safe `to_slug` by replacing
+every character outside `[A-Za-z0-9._-]` with `-`. Before reading the state as
+the previous version, search `doc/_meta/pack-upgrade-*-to-*.md` for an
+incomplete report whose `to_version` equals this `PACK_VERSION`.
+
+- If exactly one exists, this is a **resume**. Reuse its `from_version` and
+  report path verbatim. Never recapture `from_version` from the already-stamped
+  state and never overwrite `previous_pack_version` with the target version.
+- If several exist, stop with a blocking question rather than guessing which
+  migration owns the transition.
+- If none exists, read `doc/_meta/corpus-state.yaml.pack_version` as
+  `from_version`. If the state file or its `pack_version` is missing, capture
+  `from_version: unknown` **before creating or copying any state file**. Never
+  infer it from the new `PACK_VERSION` or from the migration scaffold.
+
+Derive `from_slug` with the same safe-character rule, using the literal
+`unknown` when the previous version is unavailable.
+
+### Step 1b — Create or resume the durable checkpoint
+
+Before any other durable migration write, create
+`doc/_meta/pack-upgrade-<from_slug>-to-<to_slug>.md` with valid OKF
+frontmatter, `status: in-progress` and `validation_status: pending`. Include
+the captured `from_version` and `to_version`. On resume, preserve the existing
+checkpoint and update it in place; do not create a second report.
+
+This checkpoint is the recovery signal if the run stops after state stamping,
+schema repair, changelog update, dashboard generation or validation. The
+migration is complete only when the same report ends with both
+`status: complete` and `validation_status: passed`.
 
 ### Step 2 — Inventory what changed in the pack
 
@@ -129,6 +178,14 @@ For each missing field that the new pack expects:
 
 For files that the new pack expects but that don't exist at all yet (e.g. `code-activity-signals.yaml` on a corpus that was built before the skill existed): do **not** create them in this skill. Record in the report that they will be created on the next pipeline run.
 
+`doc/_meta/corpus-state.yaml` is the one required exception. When `sync`
+deferred it during an upgrade, copy the shipped canonical scaffold
+`schemas/corpus-state.yaml.template` byte-for-byte to
+`doc/_meta/corpus-state.yaml`. If that scaffold is absent, stop and surface a
+blocking pack-integrity finding; do not invent a partial state file. Keep the
+already-captured `from_version: unknown`, then apply Steps 3–4. This skill, not
+`sync`, owns that durable creation and version stamp.
+
 ### Step 3b — Scaffold the boundary contract zone (pack-template)
 
 The `doc/architecture/` zone and the ecosystem registry are **pack-template
@@ -156,7 +213,8 @@ the empty skeletons, never synthesized content:
 
 ### Step 4 — Stamp the upgrade
 
-Update `doc/_meta/corpus-state.yaml`:
+Create `doc/_meta/corpus-state.yaml` first when Step 3 identified the deferred
+upgrade case, then update these keys under `corpus:`:
 
 ```yaml
 pack_version: <to_version>             # the new PACK_VERSION
@@ -164,13 +222,41 @@ last_pack_upgrade: <ISO-8601>          # now
 previous_pack_version: <from_version>  # what was there before, if known
 ```
 
-### Step 5 — Append to the changelog
+For the deferred legacy case, write `previous_pack_version: unknown`. Do not
+replace it with the incoming version from the scaffold.
 
-Append a single row to `doc/_meta/corpus-changelog.md`:
+On resume, use the `from_version` preserved in the checkpoint. Reapplying the
+same three values is idempotent; never derive `previous_pack_version` from the
+current (possibly already updated) `pack_version`.
+
+### Step 4b — Recompute derived state
+
+Once the state file exists and the migration stamp is present, run:
+
+```bash
+node scripts/recompute-corpus-state.mjs --apply --json
+```
+
+Capture the changed fields for the report. Recompute owns only its documented
+allowlist, so it preserves `pack_version`, `previous_pack_version`,
+`last_pack_upgrade` and all other operator-set fields. Never run recompute
+before reconstructing a deferred missing state file.
+
+### Step 5 — Prepare the idempotent changelog transition
+
+Prepare this exact transition row for `doc/_meta/corpus-changelog.md`, but add
+it only in Step 8b after the pre-report P0 gate is clear:
 
 ```
 | <date> | pack upgrade | from <from> to <to>; schema fields added: <count>; orphan skills detected: <count> | <operator name or pack-upgrade skill> |
 ```
+
+Before appending, search for the same `from <from> to <to>` transition. If
+exactly one row already exists, reconcile that row in place with the final
+counts and do not append another. If several exist, stop and surface the
+duplicate audit trail instead of guessing which row to retain. This makes
+resume safe after an interruption between changelog and final validation
+without preserving stale counts.
 
 ### Step 5b — OKF conformance pass
 
@@ -200,7 +286,7 @@ genuinely lack a `type` are left for the validator to surface as P0 (next step)
 — do not hand-fix them in this skill unless the `type` is unambiguous from the
 doc's existing frontmatter.
 
-### Step 6 — Validate
+### Step 6 — Validate the migrated corpus
 
 Run `node scripts/validate-corpus.mjs --json` and capture:
 
@@ -210,20 +296,38 @@ Run `node scripts/validate-corpus.mjs --json` and capture:
 
 Compare against the previous validator state if recoverable (e.g. last run record). Note new findings as introduced-by-upgrade vs. pre-existing.
 
-### Step 7 — Rebuild the dashboard
+This is the pre-report validation pass. Step 8b is the final gate because the
+migration report itself is a new corpus document and must also be validated.
 
-Run `node scripts/build-corpus-site.mjs`. Capture the one-line summary. The dashboard at `doc/_site/corpus.html` now reflects the post-upgrade state.
+### Step 7 — Prepare the dashboard rebuild
+
+The authoritative dashboard rebuild runs in Step 8b after the report content
+and changelog are ready, so `doc/_site/corpus.html` reflects every durable
+migration artifact. Do not treat an earlier dashboard build as final.
 
 ### Step 8 — Write the migration report
 
-Create `doc/_meta/pack-upgrade-<from>-to-<to>.md`:
+Derive filesystem-safe slugs first: use `unknown` when a version is unavailable
+and otherwise replace every character outside `[A-Za-z0-9._-]` with `-`.
+Never put the display sentinel `<unknown>` (or any `<` / `>`) in a filename.
+Populate the checkpoint created in Step 1b at
+`doc/_meta/pack-upgrade-<from_slug>-to-<to_slug>.md`; never create a second
+report for the same transition:
 
 ```markdown
 ---
+type: meta
+confidence: confirmed
+source: mixed
+last_validated: <YYYY-MM-DD>
+title: "Pack upgrade <from> to <to>"
+description: "Schema migration, validation state and follow-up actions for this pack upgrade."
 date: <ISO>
 from_version: <from>
 to_version: <to>
-status: complete | incomplete-with-P0-findings | needs-operator-input
+status: in-progress | complete | incomplete-with-P0-findings | needs-operator-input
+validation_status: pending | passed | failed
+validated_at: <ISO or null>
 ---
 
 ## Summary
@@ -260,6 +364,37 @@ status: complete | incomplete-with-P0-findings | needs-operator-input
 <one or two sentences: what should happen in the next session>
 ```
 
+### Step 8b — Final validation gate
+
+If Step 6 has any P0, set the report to
+`status: incomplete-with-P0-findings`, `validation_status: failed`, keep the
+checkpoint resumable, and validate once more after recording the findings. Do
+not append the completion changelog row.
+
+If Step 6 has P0=0, finish in this order:
+
+1. Append the Step 5 changelog row only if the exact transition is absent.
+2. Fill the report with final counts and set `status: complete`, while keeping
+   `validation_status: pending`.
+3. Run `node scripts/build-corpus-site.mjs` and capture its summary.
+4. Run `node scripts/validate-corpus.mjs --json` against the state, changelog,
+   completed report content and rebuilt dashboard.
+5. If final P0 is 0, make the **last durable write** to the report:
+   `validation_status: passed` and `validated_at: <now>`. Perform no corpus or
+   dashboard write afterwards. Then run the validator once more in strictly
+   read-only mode against this exact terminal artifact. If it stays at P0=0,
+   the migration is complete and no further write occurs.
+6. If either the pending-report pass or the terminal read-only pass has a
+   non-zero P0, set
+   `status: incomplete-with-P0-findings`, `validation_status: failed`, update
+   the findings, and rerun the validator once so the recorded artifact matches
+   the reported failure.
+
+Use this final pass for the operator recap. Never declare the migration
+complete from Step 6 alone. A run interrupted anywhere before the last durable
+write remains discoverable through its checkpoint and resumes with the
+original `from_version`.
+
 ### Step 9 — Surface the result to the operator
 
 End the run with a concise high-level recap (per `continuous/corpus-run` style):
@@ -271,8 +406,8 @@ Corpus migration → pack <to_version>
 - <count> new skills available, their artifacts will be created on the next pipeline run
 - <count> orphaned skills detected (list in the report)
 - Validator: P0=<n> (must be 0 to commit) P1=<n> P2=<n>
-- Dashboard rebuilt
-- Report: doc/_meta/pack-upgrade-<from>-to-<to>.md
+- Dashboard: <rebuilt | not rebuilt because pre-report P0 blocked completion>
+- Report: doc/_meta/pack-upgrade-<from_slug>-to-<to_slug>.md
 
 Recommended next action: <one sentence>
 ```
@@ -286,6 +421,11 @@ If `P0 > 0`, do **not** mark the migration as complete in the report; status: `i
 - Touch any file under `doc/project/`, `doc/prod/`, `doc/spec/`, `doc/_runs/YYYY-*`, `doc/_meta/code-interview/`, `doc/_meta/interaction-history/`, `doc/_graph/`, `doc/_handover/`.
 - Auto-delete orphan skills. Surface them in the report; the operator decides.
 - Hide P0 findings introduced by the upgrade. They are the most important output of this skill.
+- Recapture `from_version` from an already-stamped state during resume, create
+  a second report for the same transition, or append a duplicate changelog
+  row. The checkpoint owns the original transition identity.
+- Skip the final post-report validator pass. The report is part of the corpus
+  and must pass the same gate as every other migration output.
 - Skip the dashboard rebuild. The dashboard reflects post-upgrade state — leaving it stale defeats the auto-sync contract from `continuous/corpus-run-audit`.
 
 ## Output destinations
@@ -298,7 +438,7 @@ If `P0 > 0`, do **not** mark the migration as complete in the report; status: `i
 | Audit trail | `doc/_meta/corpus-changelog.md` (appended row) |
 | Validator findings | CLI output + summarized in the migration report |
 | Dashboard | `doc/_site/corpus.html` (rebuilt) |
-| Migration report | `doc/_meta/pack-upgrade-<from>-to-<to>.md` |
+| Migration report | `doc/_meta/pack-upgrade-<from_slug>-to-<to_slug>.md` |
 
 ## Appendix — running the sync from a local pack checkout
 
@@ -312,7 +452,7 @@ node scripts/update-pack.mjs <source-pack-dir> --apply   # apply
 node scripts/update-pack.mjs <source-pack-dir> --apply --force   # overwrite modified agents
 ```
 
-Either entry point covers only the file-copy portion. The agent-side migration
-(this skill, steps 1–9) still runs **afterwards**, because neither detects
-schema gaps in existing `doc/_meta/**` files — they copy pack-owned files and
-report, nothing more.
+Either entry point covers only the file-copy portion and prints a console
+summary. The agent-side migration (this skill, steps 1–9) still runs
+**afterwards**, because neither detects schema gaps in existing
+`doc/_meta/**` files nor writes durable migration history.

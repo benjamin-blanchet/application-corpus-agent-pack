@@ -6,8 +6,8 @@
 //   node scripts/update-pack.mjs <source-pack-dir> [--apply] [--force]
 //   node scripts/update-pack.mjs --from-github[=<ref>] [--apply] [--force]
 //
-// Default mode is read-only: previews what would change and writes the report.
-// Pass --apply to actually copy files.
+// Default mode is read-only and previews what would change. Pass --apply to
+// copy files. Durable state and reports belong to the later Corpus migration.
 //
 //   <source-pack-dir>   path to a fresh checkout/download of the pack tree.
 //   --from-github[=ref] fetch the pack from GitHub (shallow clone) instead of

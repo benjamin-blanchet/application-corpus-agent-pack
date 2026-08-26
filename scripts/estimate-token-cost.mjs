@@ -29,6 +29,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { normalizeText } from './lib/text.mjs';
 
 const CHARS_PER_TOKEN = 3.5;
 const REPO_ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
@@ -54,7 +55,7 @@ function fileTokens(absPath) {
 
 function frontmatterOnly(absPath) {
   try {
-    const buf = fs.readFileSync(absPath, 'utf8');
+    const buf = normalizeText(fs.readFileSync(absPath, 'utf8'));
     const match = buf.match(/^---\n([\s\S]*?)\n---/);
     if (!match) return { chars: 0, tokens: 0 };
     const front = match[0];

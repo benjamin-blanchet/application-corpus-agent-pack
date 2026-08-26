@@ -87,6 +87,20 @@ Two foundation skills govern every action you take:
 
 ## Mandatory state load (every session)
 
+**Pack-upgrade preflight exception.** Before Step 0, check whether the state
+file exists. If `doc/_meta/corpus-state.yaml` is absent while both
+`PACK_VERSION` and the existing-corpus marker `doc/CORPUS_MANIFEST.md` are
+present, dispatch `governance/pack-upgrade` first — including for a generic
+"continue" or status request. Also do this when the operator explicitly
+requests a pack migration with a missing state, or when an upgrade report
+targeting the current `PACK_VERSION` is not both `status: complete` and
+`validation_status: passed`. The skill must resume that checkpoint with its
+original version identity; for a legacy missing state it reconstructs from
+`schemas/corpus-state.yaml.template`, stamps the migration, and only then runs
+recompute. A correct fresh install already has a state file. This is the sole
+exception to the ordering below; running recompute against a missing state
+would fail before the migration could repair it.
+
 **Step 0 (always run before reading state) — recompute corpus-state.yaml
 from on-disk reality.** `corpus-state.yaml` and `NEXT_BEST_ACTIONS.md`
 are *direction-carrying* files: every later read in this session orients
@@ -103,13 +117,21 @@ Run from the repository root, **first thing**:
 node scripts/recompute-corpus-state.mjs --apply --json
 ```
 
-The script is deterministic and idempotent (no drift → no write). It
-owns an allowlist of derived fields (every `*_status`, `last_*`,
-`indexes_initialized`, `first_*_pass_done`, `code_analysis_completed_at`,
-per-pass `p1…p9_*_status`, `corpus_inventory.bugs` / `risks`). Operator-set
-and configuration fields (`pack_version`, `kickstart_operator`,
-`ai_champion`, `maturity_level`, `adoption.maturity_stage`, custom
-fields, etc.) are preserved verbatim. Comments and ordering are kept.
+The script is deterministic and idempotent (no drift → no write). Its exact
+allowlist under `corpus` is: `indexes_initialized`, `first_code_pass_done`,
+`first_prod_pass_done`, `code_analysis_status`,
+`code_analysis_completed_at`, `brick_inventory_status`, `roadmap_status`,
+`graph_status`, `run_ledger_status`, `last_continuous_run`,
+`last_prod_discovery`, `prod_discovery_status`, `p1_tree_inventory_status`,
+`p2_logical_boundaries_status`, `p3_feature_candidates_status`,
+`p4_feature_silo_deep_dive_status`, `p5_cross_cutting_extraction_status`,
+`p6_code_style_naming_status`, `p7_structural_issues_status`,
+`p8_code_maturity_status`, and `p9_code_reconciliation_gate_status`. Under
+`corpus_inventory`, it owns `bugs`, `risks`, `features`, `apis`,
+`batches`, and `screens`. Operator-set and configuration fields
+(`pack_version`, `kickstart_operator`, `ai_champion`, `maturity_level`,
+`adoption.maturity_stage`, custom fields, etc.) are preserved verbatim.
+Comments and ordering are kept.
 
 If the script reports `changed: true`, surface the corrected fields
 in the opening resume report (one line per field, `before -> after`),
@@ -131,6 +153,7 @@ carries its own mandatory reads, procedure files, and end-of-run contract.
 
 | Operator intent | Mode skill |
 |---|---|
+| pack upgrade / migrate pack / migration après upgrade | `governance/pack-upgrade` (apply the preflight exception above when state is absent) |
 | init / kickstart / bootstrap / "start corpus" / "fais l'analyse complète" / "continue" / "where are we" | `modes/corpus-kickstart` |
 | continue (enrichment) / analyse prod / inspect / deepen / brainstorm | `continuous/corpus-run` + `continuous/corpus-run-audit` (default Continuous Enrichment mode) |
 | handover / adoption ready / team usage | `governance/team-handover` (only when the operator explicitly asks) |
