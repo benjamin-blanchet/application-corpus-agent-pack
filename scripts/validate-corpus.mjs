@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseBoundary, KINDS_INBOUND, KINDS_OUTBOUND, PROTOCOLS, CRITICALITY, CONFIDENCE, SOURCE, CONFIRMED_SOURCES } from './lib/boundary.mjs';
+import { normalizeText } from './lib/text.mjs';
 
 const root = process.cwd();
 const docRoot = path.join(root, 'doc');
@@ -26,8 +27,16 @@ function isDirectory(relPath) {
   }
 }
 
+// OKF reserves these names for generated listings. They are machine output,
+// so no corpus naming convention applies to them.
+const OKF_RESERVED = ['index.md', 'log.md'];
+
+function isGeneratedListing(name) {
+  return OKF_RESERVED.includes(name);
+}
+
 function read(relPath) {
-  return fs.readFileSync(path.join(root, relPath), 'utf8');
+  return normalizeText(fs.readFileSync(path.join(root, relPath), 'utf8'));
 }
 
 function walk(dirAbs) {
@@ -80,13 +89,15 @@ function parseSimpleYamlMap(text) {
 }
 
 function hasFrontmatter(content) {
-  return content.startsWith('---\n') && content.indexOf('\n---', 4) !== -1;
+  const text = normalizeText(content);
+  return text.startsWith('---\n') && text.indexOf('\n---', 4) !== -1;
 }
 
 function frontmatter(content) {
-  if (!hasFrontmatter(content)) return {};
-  const end = content.indexOf('\n---', 4);
-  return parseSimpleYamlMap(content.slice(4, end));
+  const text = normalizeText(content);
+  if (!hasFrontmatter(text)) return {};
+  const end = text.indexOf('\n---', 4);
+  return parseSimpleYamlMap(text.slice(4, end));
 }
 
 function checkRequiredStructure() {
@@ -185,7 +196,7 @@ function checkMarkdownLinks() {
   const linkPattern = /\[[^\]]+\]\(([^)]+)\)/g;
   for (const abs of markdownFiles) {
     const fileRel = rel(abs);
-    const content = fs.readFileSync(abs, 'utf8');
+    const content = normalizeText(fs.readFileSync(abs, 'utf8'));
     let match;
     while ((match = linkPattern.exec(content))) {
       let target = match[1].trim();
@@ -218,7 +229,7 @@ function checkFrontmatter() {
   });
   for (const abs of important) {
     const fileRel = rel(abs);
-    const content = fs.readFileSync(abs, 'utf8');
+    const content = normalizeText(fs.readFileSync(abs, 'utf8'));
     if (!hasFrontmatter(content)) {
       add('P2', 'missing-frontmatter', 'Important corpus Markdown file has no frontmatter', fileRel);
       continue;
@@ -242,7 +253,7 @@ function checkOkfConformance() {
     const fileRel = rel(abs);
     if (fileRel.includes('/spec/template/')) continue;
     if (/\/(index|log)\.md$/.test(fileRel)) continue; // reserved listings — not concept docs
-    const content = fs.readFileSync(abs, 'utf8');
+    const content = normalizeText(fs.readFileSync(abs, 'utf8'));
     if (!hasFrontmatter(content)) {
       add('P0', 'okf-missing-frontmatter', 'OKF: concept document has no frontmatter block (every non-reserved .md needs frontmatter + non-empty type)', fileRel);
       continue;
@@ -253,6 +264,7 @@ function checkOkfConformance() {
       add('P0', 'okf-missing-type', 'OKF: concept document frontmatter has no non-empty `type` (the only field OKF requires)', fileRel);
     }
   }
+
   // Bundle-root index + okf_version stamp (advisory — index is optional in OKF).
   const rootIndex = 'doc/index.md';
   if (!exists(rootIndex)) {
@@ -287,7 +299,7 @@ function checkProductionKnowledge() {
     const absDir = path.join(root, dir);
     if (!fs.existsSync(absDir)) continue;
     for (const entry of fs.readdirSync(absDir, { withFileTypes: true })) {
-      if (!entry.isFile() || entry.name === 'README.md' || entry.name === 'INDEX.md' || entry.name.endsWith('template.md')) continue;
+      if (!entry.isFile() || entry.name === 'README.md' || entry.name === 'INDEX.md' || isGeneratedListing(entry.name) || entry.name.endsWith('template.md')) continue;
       if (!pattern.test(entry.name)) {
         add('P2', 'nonstandard-prod-knowledge-name', `Production knowledge file does not follow naming convention: ${entry.name}`, `${dir}/${entry.name}`);
       }
@@ -404,7 +416,7 @@ function checkCorpusStateBackwardDrift() {
       // from the populated count so the pack template itself doesn't trigger.
       const populated = walk(indexDir)
         .filter((file) => file.endsWith('.md') && path.basename(file) !== 'by-source.md')
-        .filter((file) => countMarkdownTableRows(fs.readFileSync(file, 'utf8')) > 1);
+        .filter((file) => countMarkdownTableRows(normalizeText(fs.readFileSync(file, 'utf8'))) > 1);
       if (populated.length >= 1) {
         add('P1', 'corpus-state-backward-drift-indexes', `${populated.length} index file(s) under doc/_indexes/ have data rows, but corpus.indexes_initialized is ${corpus.indexes_initialized ?? 'unset'}`, 'doc/_meta/corpus-state.yaml');
       }
@@ -703,6 +715,32 @@ const PIPELINE_PASSES = [
   { key: 'p9_code_reconciliation_gate', label: 'P9 code-reconciliation-gate', artifacts: ['doc/_meta/reconciliation-ledger.yaml'] },
 ];
 
+// Scope the citation test to the section that claims to carry citations.
+// Tested against the whole document, a URL with a port or a path:line in an
+// unrelated section satisfies it while the evidence table stays unlocated.
+function codeEvidenceSection(text) {
+  const lines = text.split('\n');
+  const start = lines.findIndex((line) => /^(#{2,})\s+code\s+evidence\b/i.test(line));
+  if (start === -1) return null;
+  const level = lines[start].match(/^(#{2,})/)[1].length;
+  const body = [];
+  for (let i = start + 1; i < lines.length; i++) {
+    const heading = lines[i].match(/^(#{1,6})\s/);
+    if (heading && heading[1].length <= level) break;
+    body.push(lines[i]);
+  }
+  return body.join('\n');
+}
+
+// A path with a line number. Extensionless build files are legitimate targets
+// in plenty of stacks, and a URL with a port is not a citation.
+function hasLocatedCitation(section) {
+  return section
+    .split('\n')
+    .map((line) => line.replace(/[a-z][a-z0-9+.-]*:\/\/\S+/gi, ''))
+    .some((line) => /(^|[\s`(|])[\w./-]*[\w-](\.[A-Za-z0-9]+)?:\d+\b/.test(line));
+}
+
 function fileContainsMermaid(relPath) {
   if (!exists(relPath)) return false;
   return /```\s*mermaid/.test(read(relPath));
@@ -774,6 +812,21 @@ function yamlListHasEntries(text, key) {
     if (/^\s*-\s+/.test(line)) return true;
   }
   return false;
+}
+
+function yamlListItems(text, key) {
+  const lines = text.split(/\r?\n/);
+  const start = lines.findIndex((line) => new RegExp(`^${key}:\\s*$`).test(line.trim()));
+  if (start === -1) return [];
+  const items = [];
+  for (let i = start + 1; i < lines.length; i++) {
+    const line = lines[i];
+    if (!line.trim()) continue;
+    if (/^\S/.test(line)) break;
+    const match = line.match(/^\s*-\s+(.*)$/);
+    if (match) items.push(match[1].trim().replace(/^["']|["']$/g, ''));
+  }
+  return items;
 }
 
 function checkCodeAnalysisPipeline() {
@@ -868,6 +921,18 @@ function checkFeatureCandidatesProcessed() {
       if (exists(workflowsRel) && !fileContainsMermaid(workflowsRel)) {
         add('P0', 'p4-feature-workflow-diagram-missing', `Feature ${entry.name}/WORKFLOWS.md has no mermaid sequence diagram (P4 mandates one)`, workflowsRel);
       }
+      // Code evidence: a documented silo must say where in the analysed
+      // system its claims come from, located precisely enough to re-check.
+      // P1 for now — this is a newer contract than most corpora on disk, and
+      // a rule that fails every existing corpus on day one gets disabled
+      // rather than honoured. Promote once the fleet has caught up.
+      const readmeText = read(readmeRel);
+      const evidenceSection = codeEvidenceSection(readmeText);
+      if (evidenceSection === null) {
+        add('P1', 'p4-feature-no-code-evidence-section', `Feature ${entry.name} is documented but README.md has no '## Code Evidence' section; see .github/templates/patterns/code-evidence-table.md`, readmeRel);
+      } else if (!hasLocatedCitation(evidenceSection)) {
+        add('P1', 'p4-feature-code-evidence-unlocated', `Feature ${entry.name} has a Code Evidence section but no path:line citation; a bare filename is an assertion, not evidence`, readmeRel);
+      }
       const interviewRel = `doc/_meta/code-interview/${entry.name}.md`;
       const evidenceRel = `doc/project/features/${entry.name}/_evidence.yaml`;
       const evidenceFm = exists(evidenceRel) ? parseSimpleYamlMap(read(evidenceRel)) : {};
@@ -876,6 +941,20 @@ function checkFeatureCandidatesProcessed() {
         add('P0', 'p4-evidence-missing', `Feature ${entry.name} is documented but _evidence.yaml is missing`, evidenceRel);
       } else if (!yamlListHasEntries(evidenceText, 'files_read_in_silo')) {
         add('P0', 'p4-feature-no-silo-files-read', `P4 is covered but feature ${entry.name} has no files_read_in_silo entries; this is a structural map, not a deep dive`, evidenceRel);
+      } else {
+        // Evidence must point at the analysed system, not back at the corpus.
+        // A silo whose only "evidence" is the corpus files it produced proves
+        // nothing and cannot be re-verified when the code moves.
+        const siloFiles = yamlListItems(evidenceText, 'files_read_in_silo');
+        const outsideDoc = siloFiles.filter((item) => !item.startsWith('doc/'));
+        if (outsideDoc.length === 0) {
+          add(
+            'P0',
+            'p4-feature-evidence-self-referential',
+            `Feature ${entry.name} lists ${siloFiles.length} files_read_in_silo entries but none outside doc/; evidence must cite the analysed source, not the corpus it produced`,
+            evidenceRel,
+          );
+        }
       }
       const interviewSkipped = evidenceFm.interview && evidenceFm.interview.skipped === true;
       if (!exists(interviewRel) && !interviewSkipped) {
@@ -1082,7 +1161,7 @@ function lintFrontmatterContract(schema) {
       );
     }
 
-    const text = fs.readFileSync(abs, 'utf8');
+    const text = normalizeText(fs.readFileSync(abs, 'utf8'));
     if (!hasFrontmatter(text)) {
       // checkFrontmatter already reports missing frontmatter separately; skip
       continue;
@@ -1441,7 +1520,7 @@ function checkYamlHygiene() {
   const yamlFiles = walk(docRoot).filter((f) => f.endsWith('.yaml') || f.endsWith('.yml'));
   for (const abs of yamlFiles) {
     const fileRel = rel(abs);
-    const text = fs.readFileSync(abs, 'utf8');
+    const text = normalizeText(fs.readFileSync(abs, 'utf8'));
 
     // 1. Markdown-in-yaml detector: the file starts with `---\n` and contains
     // a second `---` on its own line. That's a Markdown frontmatter pattern,
@@ -1627,7 +1706,7 @@ function checkIndexColumns() {
   for (const name of fs.readdirSync(dir)) {
     if (!/^by-.+\.md$/.test(name)) continue;
     const abs = path.join(dir, name);
-    const text = fs.readFileSync(abs, 'utf8');
+    const text = normalizeText(fs.readFileSync(abs, 'utf8'));
     const lines = text.split(/\r?\n/);
     const headerLine = lines.find((l) => /^\|\s*\S/.test(l));
     if (!headerLine) {
@@ -1736,7 +1815,7 @@ function checkTimestampFormat() {
   const yamlFiles = walk(docRoot).filter((f) => f.endsWith('.yaml') || f.endsWith('.yml'));
   for (const abs of yamlFiles) {
     const fileRel = rel(abs);
-    const text = fs.readFileSync(abs, 'utf8');
+    const text = normalizeText(fs.readFileSync(abs, 'utf8'));
     const lines = text.split(/\r?\n/);
     const seen = new Set();
     for (let i = 0; i < lines.length; i++) {
@@ -1797,7 +1876,7 @@ function checkSpecLayout() {
     if (files.length === 0) return;
     const isSkeleton = files.length === 1 && files[0] === 'README.md';
     if (isSkeleton) {
-      const fm = frontmatter(fs.readFileSync(path.join(dirAbs, 'README.md'), 'utf8'));
+      const fm = frontmatter(normalizeText(fs.readFileSync(path.join(dirAbs, 'README.md'), 'utf8')));
       const normalize = (v) => (typeof v === 'string' ? v : '');
       if (normalize(fm.status) !== 'skeleton') {
         add(
@@ -1848,7 +1927,7 @@ function checkSecrets() {
     [/\b(api[_-]?key|token|secret)\s*[:=]\s*['"]?[A-Za-z0-9._~+/=-]{16,}/i, 'possible-token-or-secret'],
   ];
   for (const abs of files) {
-    const content = fs.readFileSync(abs, 'utf8');
+    const content = normalizeText(fs.readFileSync(abs, 'utf8'));
     for (const [pattern, code] of patterns) {
       if (pattern.test(content)) add('P0', code, `Potential secret detected by pattern: ${code}`, rel(abs));
     }
@@ -1999,4 +2078,8 @@ if (jsonMode) {
   }
 }
 
-process.exit(summary.counts.P0 > 0 ? 1 : 0);
+// Let Node drain stdout before terminating. `process.exit()` can truncate the
+// pretty-printed JSON when this command is piped (observed on Node 18 at the
+// platform pipe-buffer boundary), which makes otherwise valid reports
+// impossible for callers to parse.
+process.exitCode = summary.counts.P0 > 0 ? 1 : 0;

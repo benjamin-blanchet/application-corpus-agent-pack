@@ -68,6 +68,14 @@ For the feature being processed, read transitively from each entry point:
    - a generic shared utility (record the dependency, do not deep-read);
    - a layer below the application (driver, raw protocol).
 5. Record every file actually read in `_evidence.yaml` under `files_read_in_silo`.
+   These are paths into the **analysed system**. A corpus file is the output of
+   this pass, never evidence for it — a silo citing only `doc/` paths is
+   rejected by `validate-corpus` (`p4-feature-evidence-self-referential`).
+6. Write the `## Code Evidence` section of `README.md` as you read, not
+   afterwards: entry points, key operations and any divergence found, each
+   located as `path/to/file.ext:LINE`. A line number is what makes a claim
+   re-verifiable when the code moves; a bare filename is an assertion. Shape:
+   `.github/templates/patterns/code-evidence-table.md`.
 
 You must read **at minimum**:
 
@@ -87,6 +95,7 @@ When the silo crosses module boundaries, follow the dependency. Do not stop at t
 
 | Extract | Source | Goes into |
 |---|---|---|
+| **Code evidence — entry points, key operations and divergences, each cited as `path:line`** | the analysed source | `README.md` (`## Code Evidence`, see `.github/templates/patterns/code-evidence-table.md`) |
 | Purpose (one paragraph, evidence-cited) | code + operator | `README.md` |
 | Architecture diagram (mermaid or ASCII) | call graph | `ARCHITECTURE.md` |
 | Workflow (step-by-step end-to-end) | call graph + state changes | `WORKFLOWS.md` |

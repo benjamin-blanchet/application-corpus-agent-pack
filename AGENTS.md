@@ -139,9 +139,14 @@ important before broad team use; P2 is hygiene work.
 
 ## Pack upgrade
 
-Operator-triggered only: copy a newer pack over the repo (excluding `doc/`),
-then ask the `corpus` agent to migrate. The agent runs `governance/pack-upgrade`,
-stamps `pack_version`, fills schema gaps, writes a migration report.
+Operator-triggered only: preview and apply the safe `sync` command, then ask
+the `corpus` agent to migrate. Sync refreshes pack-owned files, confirms before
+replacing divergent local agents, and never overwrites an existing `doc/`
+file; missing scaffolds may be added. The agent runs `governance/pack-upgrade`,
+reconstructs a legacy missing state from the shipped schema scaffold, stamps
+`pack_version`, fills schema gaps, and writes a validator-clean durable
+migration report. That report is also a resumable checkpoint: an interrupted
+migration is detected and continued with its original version provenance.
 Full procedure: [doc/_agents/pack-upgrade.md](doc/_agents/pack-upgrade.md).
 
 ## Cache discipline

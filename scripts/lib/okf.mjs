@@ -34,6 +34,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { normalizeText } from './text.mjs';
 
 export const OKF_VERSION = '0.1';
 
@@ -57,13 +58,14 @@ const SKIP_PATH_FRAGMENTS = ['/spec/template'];
 const toPosix = (p) => p.split(path.sep).join('/');
 
 export function splitFrontmatter(content) {
-  if (!content.startsWith('---\n')) return { fm: null, fmRaw: null, body: content };
-  const end = content.indexOf('\n---', 4);
-  if (end === -1) return { fm: null, fmRaw: null, body: content };
-  const fmRaw = content.slice(4, end);
+  const text = normalizeText(content);
+  if (!text.startsWith('---\n')) return { fm: null, fmRaw: null, body: text };
+  const end = text.indexOf('\n---', 4);
+  if (end === -1) return { fm: null, fmRaw: null, body: text };
+  const fmRaw = text.slice(4, end);
   // body starts after the closing fence line
-  const afterFence = content.indexOf('\n', end + 1);
-  const body = afterFence === -1 ? '' : content.slice(afterFence + 1);
+  const afterFence = text.indexOf('\n', end + 1);
+  const body = afterFence === -1 ? '' : text.slice(afterFence + 1);
   return { fmRaw, body, fm: parseTopLevelKeys(fmRaw) };
 }
 

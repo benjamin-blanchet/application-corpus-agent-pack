@@ -40,7 +40,23 @@ Use this skill when the operator says:
 
 0. **State recompute (always run before any read)**
    - Run `node scripts/recompute-corpus-state.mjs --apply --json` from the repo root.
-   - The script is deterministic, idempotent, and only touches the allowlist of derived fields (every `*_status`, `last_*`, `indexes_initialized`, `first_*_pass_done`, per-pass `p1…p9_*_status`, `corpus_inventory.bugs` / `risks`). Operator-set fields (`pack_version`, `kickstart_operator`, `ai_champion`, `maturity_level`, `adoption.maturity_stage`, custom fields) are preserved verbatim.
+   - The script is deterministic, idempotent, and only touches its exact
+     allowlist:
+     - under `corpus`: `indexes_initialized`, `first_code_pass_done`,
+       `first_prod_pass_done`, `code_analysis_status`,
+       `code_analysis_completed_at`, `brick_inventory_status`,
+       `roadmap_status`, `graph_status`, `run_ledger_status`,
+       `last_continuous_run`, `last_prod_discovery`, `prod_discovery_status`,
+       `p1_tree_inventory_status`, `p2_logical_boundaries_status`,
+       `p3_feature_candidates_status`, `p4_feature_silo_deep_dive_status`,
+       `p5_cross_cutting_extraction_status`, `p6_code_style_naming_status`,
+       `p7_structural_issues_status`, `p8_code_maturity_status`, and
+       `p9_code_reconciliation_gate_status`;
+     - under `corpus_inventory`: `bugs`, `risks`, `features`, `apis`,
+       `batches`, `screens`.
+   - Operator-set fields (`pack_version`, `kickstart_operator`, `ai_champion`,
+     `maturity_level`, `adoption.maturity_stage`, custom fields) are preserved
+     verbatim.
    - If `changed: true`, surface the corrected fields in the opening resume report (`before -> after`, one line per field). Do not silently apply.
    - This step exists because `corpus-state.yaml` is a direction-carrying file — reading a stale version locks the agent on a stale direction. See `corpus.agent.md` § Mandatory state load and the usage-log entry on direction-carrying files.
 

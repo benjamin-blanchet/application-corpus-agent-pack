@@ -6,6 +6,7 @@ Reusable stack-neutral content blocks for corpus files.
 
 | Pattern | When to use |
 |---|---|
+| [code-evidence-table.md](./code-evidence-table.md) | **Required on every documented feature.** Where in the analysed system each claim comes from, cited as `path:line`. |
 | [two-flow-table.md](./two-flow-table.md) | Two similar but distinct flows. |
 | [legal-context-table.md](./legal-context-table.md) | Regulation, policy or contractual constraints. |
 | [key-business-rules-summary.md](./key-business-rules-summary.md) | Short list of the most important rules. |

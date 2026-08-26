@@ -1,12 +1,13 @@
 {
   "name": "application-corpus-agent-pack",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Copy-into-repo context engineering toolkit that turns an application repository into an agent-readable, code-true knowledge corpus.",
   "type": "module",
   "bin": {
     "corpus-pack": "scripts/cli.mjs"
   },
   "scripts": {
+    "test": "node scripts/test-pack.mjs && node scripts/test-upgrade.mjs && node scripts/test-recompute.mjs && node scripts/test-frontmatter.mjs && node --expose-gc scripts/benchmark-text-normalization.mjs",
     "sync": "node scripts/cli.mjs sync",
     "load": "node scripts/corpus-load.mjs",
     "validate": "node scripts/validate-corpus.mjs",
