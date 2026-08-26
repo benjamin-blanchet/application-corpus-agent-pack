@@ -4,11 +4,11 @@
   "delivery": null,
   "derived_from": {
     "current_inputs_sha256": "b8662eebbb9146036fcbb631d3c66694e0f76a37c5ec16321e5fa07ce6dffac5",
-    "events_sha256": "d66028e4c4d51d605fddc5a39b9fec6aaaa8f8aa2588c9bcaaaf3b651bd45100",
-    "last_seq": 43
+    "events_sha256": "0aece57ae77ada151e36cc15fed997ec48d32f9d81bb76fa9131bf8e288a90e6",
+    "last_seq": 46
   },
   "digests": {
-    "corpus_tree_sha256": null,
+    "corpus_tree_sha256": "6a3e951d1ec553a180e0f689e53284aa2b72b0843e6ecf0c3b6fb2411a6558bd",
     "evidence_manifest_sha256": null,
     "plan_sha256": "694952924c26a11a9179a087d496ef05b68f0e21de88a501eff51b67379892d4",
     "spec_sha256": "c268ed3663d791bd5004acdb840efc3b31d0d7b2e19df831079a1e6a213dd962",
@@ -40,23 +40,23 @@
       "status": "pending"
     },
     "consolidated_review": {
-      "basis_event": null,
-      "status": "pending"
+      "basis_event": "EVT-000045",
+      "status": "valid"
     },
     "corpus_closeout": {
-      "basis_event": null,
-      "status": "pending"
+      "basis_event": "EVT-000046",
+      "status": "valid"
     },
     "evidence": {
       "basis_event": null,
       "status": "pending"
     },
     "integration": {
-      "basis_event": null,
-      "status": "pending"
+      "basis_event": "EVT-000044",
+      "status": "valid"
     },
     "lot_reviews": {
-      "basis_event": "EVT-000043",
+      "basis_event": "EVT-000044",
       "status": "valid"
     },
     "release": {
@@ -722,13 +722,27 @@
       }
     }
   },
-  "phase": "executing",
+  "phase": "corpus_closed",
   "provenance": {
     "candidate_binding": null,
     "candidate_sha": null,
-    "consolidated_snapshot": null,
+    "consolidated_snapshot": {
+      "algorithm": "sha256-git-tree-inventory-v1",
+      "commit_sha": "4840a4fb46bb96ec53592147387e6900f420bedc",
+      "file_count": 845,
+      "git_tree": "6ff2eb7f95902eb86320c4f56d9468bf13d59a4a",
+      "snapshot_sha256": "1dcdea2cde18cbbc38eb82fc616bc0b26051950785ee2d19010073627e3f2305",
+      "tree_sha256": "6c5e887317ac4a65f4029dd034a17b88d7fc187fc02a9a5a6d99744ef372d397"
+    },
     "evidence_sha": null,
-    "integration_snapshot": null,
+    "integration_snapshot": {
+      "algorithm": "sha256-git-tree-inventory-v1",
+      "commit_sha": "4840a4fb46bb96ec53592147387e6900f420bedc",
+      "file_count": 845,
+      "git_tree": "6ff2eb7f95902eb86320c4f56d9468bf13d59a4a",
+      "snapshot_sha256": "1dcdea2cde18cbbc38eb82fc616bc0b26051950785ee2d19010073627e3f2305",
+      "tree_sha256": "6c5e887317ac4a65f4029dd034a17b88d7fc187fc02a9a5a6d99744ef372d397"
+    },
     "publication": null,
     "tested_sha": null
   },
@@ -1154,7 +1168,26 @@
     }
   },
   "reviews": {
-    "consolidated": null,
+    "consolidated": {
+      "actor": {
+        "capabilities": [
+          "read",
+          "execute"
+        ],
+        "capability_grants": [],
+        "execution_id": "consolidated-reviewer-001",
+        "model": {
+          "model_family": "gpt-5",
+          "planned": "reviewer",
+          "requested": "gpt-5",
+          "used": "gpt-5"
+        },
+        "role": "reviewer"
+      },
+      "event_id": "EVT-000045",
+      "findings": [],
+      "verdict": "passed"
+    },
     "release": null
   },
   "run_id": "software-factory-v3-2026-08-26",
