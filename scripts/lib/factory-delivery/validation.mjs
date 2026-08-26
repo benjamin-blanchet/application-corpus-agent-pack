@@ -1700,7 +1700,7 @@ export function validateCrossContracts({ environment, ci, plan, pr }, files = {}
   const profiles = new Map(asArray(environment?.profiles).map((profile) => [profile.id, profile]));
   if (plan?.environment_profile && !profiles.has(plan.environment_profile)) findings.push(finding('acceptance-environment-unknown', `acceptance profile ${plan.environment_profile} is not declared`, files.plan));
   const profile = profiles.get(plan?.environment_profile);
-  if (plan?.campaign?.unattended_required === true && profile?.automated !== true) findings.push(finding('acceptance-not-unattended', `${profile.id} is not automation-compatible`, files.plan));
+  if (plan?.campaign?.unattended_required === true && profile?.automated !== true) findings.push(finding('acceptance-not-unattended', `${profile?.id ?? String(plan?.environment_profile)} is not automation-compatible`, files.plan));
   if (plan?.campaign?.adapter === 'command') {
     const operation = ci?.operations?.[plan?.campaign?.operation];
     if (!operation) findings.push(finding('acceptance-command-operation-unknown', `command campaign references unknown operation ${String(plan?.campaign?.operation)}`, files.plan));

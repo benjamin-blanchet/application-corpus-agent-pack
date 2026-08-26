@@ -28,7 +28,7 @@ operations:
     privilege: unprivileged
     side_effect: none
   factory-delivery-validate:
-    argv: [node, scripts/validate-delivery.mjs, --package, doc/spec/1.2.0/software-factory-v3, --environment, doc/project/runtime/ENVIRONMENTS.yaml, --ci, doc/project/cicd/FACTORY_CI.yaml, --json]
+    argv: [node, scripts/validate-delivery.mjs, --lint-template, --allow-unadopted-workflows, --json]
     cwd: .
     timeout_seconds: 120
     privilege: unprivileged

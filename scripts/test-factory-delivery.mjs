@@ -101,6 +101,29 @@ function runNode(script, args, options = {}) {
   });
 }
 
+// The adopted copy of a delivery workflow, materialized from its installable
+// template. The pack ships the template and no longer adopts three of the four
+// itself, so sourcing fixtures from .github/workflows/ would tie this suite to
+// one repository's adoption choices. delivery-workflow-active-drift already
+// requires the two to be semantically identical wherever a repository does
+// adopt, so the template is the faithful — and the shipped — subject.
+const ADOPTED_WORKFLOW_TEMPLATES = {
+  'factory-policy.yml': 'factory-policy.workflow.yml',
+  'factory-acceptance.yml': 'factory-acceptance.workflow.yml',
+  'factory-release.yml': 'factory-release.workflow.yml',
+  'factory-draft-pr.yml': 'factory-draft-pr.workflow.yml',
+};
+
+function adoptedWorkflowSource(active) {
+  const template = ADOPTED_WORKFLOW_TEMPLATES[active];
+  if (!template) throw new Error(`no installable template for ${active}`);
+  return path.join(repository, '.github/templates/software-factory/delivery', template);
+}
+
+function installAdoptedWorkflow(destinationRoot, active) {
+  fs.copyFileSync(adoptedWorkflowSource(active), path.join(destinationRoot, '.github/workflows', active));
+}
+
 function workflowValidationSandbox() {
   const root = temporary('factory-workflow-sandbox-');
   fs.mkdirSync(path.join(root, '.github/templates/software-factory'), { recursive: true });
@@ -111,7 +134,7 @@ function workflowValidationSandbox() {
     { recursive: true },
   );
   for (const active of ['factory-policy.yml', 'factory-acceptance.yml', 'factory-release.yml', 'factory-draft-pr.yml']) {
-    fs.copyFileSync(path.join(repository, '.github/workflows', active), path.join(root, '.github/workflows', active));
+    installAdoptedWorkflow(root, active);
   }
   return root;
 }
@@ -136,7 +159,7 @@ function buildReleasedDeliveryScenario({ publicationMode = 'ci_artifact' } = {})
   fs.mkdirSync(path.dirname(packageRoot), { recursive: true });
   fs.cpSync(fixtureRoot, packageRoot, { recursive: true });
   fs.mkdirSync(path.join(repo, '.github/workflows'), { recursive: true });
-  fs.copyFileSync(path.join(repository, '.github/workflows/factory-policy.yml'), path.join(repo, '.github/workflows/factory-policy.yml'));
+  installAdoptedWorkflow(repo, 'factory-policy.yml');
   const corpusManifestFile = path.join(repo, 'doc/CORPUS_MANIFEST.md');
   fs.mkdirSync(path.dirname(corpusManifestFile), { recursive: true });
   fs.writeFileSync(corpusManifestFile, '# Synthetic delivery corpus manifest\n');
@@ -539,7 +562,7 @@ function buildAcceptanceLifecycleScenario() {
   fs.cpSync(path.join(repository, 'scripts'), path.join(repo, 'scripts'), { recursive: true });
   fs.mkdirSync(path.join(repo, '.github/workflows'), { recursive: true });
   fs.copyFileSync(
-    path.join(repository, '.github/workflows/factory-policy.yml'),
+    adoptedWorkflowSource('factory-policy.yml'),
     path.join(repo, '.github/workflows/factory-policy.yml'),
   );
 
@@ -705,12 +728,13 @@ test('the stack-neutral fixture contracts validate together', () => {
   assert.deepEqual(validateEnvironment(environment, ci), []);
   assert.deepEqual(validateAcceptancePlan(plan, { root: repository, checkFiles: true }), []);
   assert.deepEqual(validatePrDraft(pr, ci), []);
-  assert.deepEqual(validateDeliveryWorkflowTemplates({ root: repository }), []);
+  assert.deepEqual(validateDeliveryWorkflowTemplates({ root: repository, requireActiveWorkflows: false }), []);
 
   const result = runNode('scripts/validate-delivery.mjs', [
     '--package', 'scripts/fixtures/factory-delivery',
     '--environment', 'scripts/fixtures/factory-delivery/environment.yaml',
     '--ci', 'scripts/fixtures/factory-delivery/ci.yaml',
+    '--allow-unadopted-workflows',
     '--json',
   ]);
   assert.equal(result.status, 0, result.stderr || result.stdout);
@@ -885,7 +909,7 @@ test('ordinary repository CI operation runs with a scrubbed process environment'
   const root = temporary('factory-ci-check-');
   fs.mkdirSync(path.join(root, '.github/workflows'), { recursive: true });
   fs.copyFileSync(
-    path.join(repository, '.github/workflows/factory-policy.yml'),
+    adoptedWorkflowSource('factory-policy.yml'),
     path.join(root, '.github/workflows/factory-policy.yml'),
   );
   const ci = fixture('ci.yaml');
@@ -940,7 +964,7 @@ test('workflow validation rejects direct shell interpolation and active/template
     { recursive: true },
   );
   for (const active of ['factory-policy.yml', 'factory-acceptance.yml', 'factory-release.yml', 'factory-draft-pr.yml']) {
-    fs.copyFileSync(path.join(repository, '.github/workflows', active), path.join(root, '.github/workflows', active));
+    installAdoptedWorkflow(root, active);
   }
   const acceptance = path.join(root, '.github/templates/software-factory/delivery/factory-acceptance.workflow.yml');
   const acceptanceText = fs.readFileSync(acceptance, 'utf8').replace(
@@ -960,7 +984,7 @@ test('workflow validation rejects direct shell interpolation and active/template
 });
 
 test('required policy rejects an unprotected definition, checkout or validator', () => {
-  const protectedPolicy = fs.readFileSync(path.join(repository, '.github/workflows/factory-policy.yml'), 'utf8');
+  const protectedPolicy = fs.readFileSync(adoptedWorkflowSource('factory-policy.yml'), 'utf8');
   assert.doesNotMatch(protectedPolicy, /factory-ci-check|working-directory:\s*candidate|\bnpm\s+(?:ci|install|test)\b/);
 
   const sourceFindings = mutateWorkflowTemplate('factory-policy.workflow.yml', (text) => text.replace(
@@ -1010,7 +1034,7 @@ test('candidate exit-zero validators cannot replace the protected policy guard',
   );
   fs.mkdirSync(path.join(root, '.github/workflows'), { recursive: true });
   for (const active of ['factory-policy.yml', 'factory-acceptance.yml', 'factory-release.yml', 'factory-draft-pr.yml']) {
-    fs.copyFileSync(path.join(repository, '.github/workflows', active), path.join(root, '.github/workflows', active));
+    installAdoptedWorkflow(root, active);
   }
   fs.mkdirSync(path.join(root, 'scripts'), { recursive: true });
   fs.writeFileSync(path.join(root, 'scripts/validate-delivery.mjs'), 'process.exit(0);\n', 'utf8');
@@ -1173,7 +1197,7 @@ test('protected workflow context binds disjoint full SHAs and exports selected C
   const ci = fixture('ci.yaml');
   ci.artifacts.retention_days = 17;
   writeData(path.join(candidate, 'scripts/fixtures/factory-delivery/ci.yaml'), ci);
-  fs.copyFileSync(path.join(repository, '.github/workflows/factory-policy.yml'), path.join(candidate, '.github/workflows/factory-policy.yml'));
+  installAdoptedWorkflow(candidate, 'factory-policy.yml');
   git(candidate, ['init', '--quiet']);
   git(candidate, ['config', 'user.email', 'fixture@example.invalid']);
   git(candidate, ['config', 'user.name', 'Fixture']);
@@ -1219,7 +1243,7 @@ test('the acceptance workflow installs the browser declared by the CI contract',
   assert.match(workflow, /node ["']?\$GITHUB_WORKSPACE\/factory-controller\/scripts\/factory-acceptance\.mjs/);
   const planTemplate = readData(path.join(repository, '.github/templates/software-factory/acceptance/acceptance-plan.yaml'));
   assert.equal(planTemplate.campaign.bootstrap_operation, 'acceptance-browser-bootstrap');
-  assert.deepEqual(validateDeliveryWorkflowTemplates({ root: repository }), []);
+  assert.deepEqual(validateDeliveryWorkflowTemplates({ root: repository, requireActiveWorkflows: false }), []);
 });
 
 test('copied Playwright packages discover planned tests and retain protected failure media', () => {
@@ -1768,7 +1792,7 @@ test('minimized staging never publishes raw or unreferenced secret files and bin
   fs.mkdirSync(path.dirname(stagingFixtureRoot), { recursive: true });
   fs.cpSync(fixtureRoot, stagingFixtureRoot, { recursive: true });
   fs.mkdirSync(path.join(stagingRepository, '.github/workflows'), { recursive: true });
-  fs.copyFileSync(path.join(repository, '.github/workflows/factory-policy.yml'), path.join(stagingRepository, '.github/workflows/factory-policy.yml'));
+  installAdoptedWorkflow(stagingRepository, 'factory-policy.yml');
   git(stagingRepository, ['init', '--quiet']);
   git(stagingRepository, ['config', 'user.email', 'fixture@example.invalid']);
   git(stagingRepository, ['config', 'user.name', 'Fixture']);
