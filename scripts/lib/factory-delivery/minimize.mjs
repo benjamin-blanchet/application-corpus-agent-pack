@@ -42,11 +42,30 @@ export function scanEvidenceFile(file, relativePath) {
     findings.push({ code: 'evidence-artifact-too-large', message: `${relativePath} exceeds the inspectable evidence size limit` });
     return findings;
   }
-  if (!TEXT_EXTENSIONS.has(extension)) return findings;
+  if (INSPECTABLE_BINARY_EXTENSIONS.has(extension)) {
+    const buffer = fs.readFileSync(file);
+    const isPng = extension === '.png' && buffer.length >= 8 && buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+    const isJpeg = (extension === '.jpg' || extension === '.jpeg') && buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
+    const isWebp = extension === '.webp' && buffer.length >= 12 && buffer.subarray(0, 4).toString('ascii') === 'RIFF' && buffer.subarray(8, 12).toString('ascii') === 'WEBP';
+    if (!isPng && !isJpeg && !isWebp) {
+      findings.push({ code: 'evidence-artifact-format-mismatch', message: `${relativePath} content does not match its declared inspectable image extension` });
+      return findings;
+    }
+    const metadataText = buffer.toString('latin1');
+    for (const [code, pattern] of TEXT_PATTERNS) if (pattern.test(metadataText)) findings.push({ code, message: `${relativePath} contains sensitive textual metadata` });
+    return findings;
+  }
   const text = fs.readFileSync(file, 'utf8');
   for (const [code, pattern] of TEXT_PATTERNS) {
     if (pattern.test(text)) findings.push({ code, message: `${relativePath} contains material that must be removed or pseudonymized` });
   }
+  return findings;
+}
+
+export function scanEvidenceText(value, label = '<text>') {
+  const findings = [];
+  const text = String(value || '');
+  for (const [code, pattern] of TEXT_PATTERNS) if (pattern.test(text)) findings.push({ code, message: `${label} contains material that must be removed or pseudonymized` });
   return findings;
 }
 

@@ -5,7 +5,7 @@ import path from 'node:path';
 import { createRequire } from 'node:module';
 import { spawnSync } from 'node:child_process';
 
-import { SHA_PATTERN, asArray, parseArgs, printResult, sha256File } from '../../lib/factory-delivery/core.mjs';
+import { SHA_PATTERN, asArray, isWithin, parseArgs, printResult, sha256File } from '../../lib/factory-delivery/core.mjs';
 import { readData } from '../../lib/factory-delivery/files.mjs';
 import { currentHead, verifyFileAtRevision } from '../../lib/factory-delivery/provenance.mjs';
 import { validatePlaywrightSource } from './policy.mjs';
@@ -36,16 +36,32 @@ try {
   const observationFile = path.resolve(root, args.observation);
   const configFile = path.resolve(root, args.config);
   const plan = readData(planFile);
+  const environment = readData(environmentFile);
   const observation = readData(observationFile);
+  const profile = asArray(environment?.profiles).find((candidate) => candidate?.id === plan?.environment_profile);
   const planDigest = sha256File(planFile);
   const environmentDigest = sha256File(environmentFile);
   const findings = validateAcceptancePlan(plan, { file: args.plan, root, checkFiles: true });
-  findings.push(...validateEnvironmentObservation(observation, { provenanceWaiver: plan?.subject?.provenance_waiver || null }));
+  findings.push(...validateEnvironmentObservation(observation, { provenanceWaiver: plan?.subject?.provenance_waiver || null, environment }));
   if (observation?.run_id !== args['run-id']) findings.push({ severity: 'P0', code: 'playwright-observation-run-mismatch', message: 'observation run_id differs from --run-id' });
   if (observation?.subject_sha?.toLowerCase() !== args['subject-sha'].toLowerCase()) findings.push({ severity: 'P0', code: 'playwright-observation-sha-mismatch', message: 'observation subject differs from --subject-sha' });
   if (observation?.environment_contract_digest !== environmentDigest) findings.push({ severity: 'P0', code: 'playwright-environment-digest-mismatch', message: 'observation environment digest differs from the supplied contract' });
   if (currentHead(root) !== args['subject-sha'].toLowerCase()) findings.push({ severity: 'P0', code: 'playwright-working-revision-mismatch', message: 'repository HEAD differs from the frozen subject SHA' });
   if (plan?.campaign?.adapter !== 'playwright') findings.push({ severity: 'P0', code: 'playwright-adapter-not-selected', message: 'acceptance plan does not select the Playwright adapter' });
+  if (!profile) findings.push({ severity: 'P0', code: 'playwright-environment-profile-missing', message: 'planned environment profile is absent from the environment contract' });
+  if (profile?.endpoint?.not_applicable === true) findings.push({ severity: 'P0', code: 'playwright-endpoint-missing', message: 'Playwright requires a concrete preflighted endpoint' });
+  const ephemeralStorageState = process.env.FACTORY_EPHEMERAL_STORAGE_STATE;
+  if (ephemeralStorageState) {
+    const storagePath = path.resolve(ephemeralStorageState);
+    try {
+      if (profile?.auth?.mode !== 'ephemeral_storage_state') throw new Error('environment profile does not authorize ephemeral storage state');
+      if (isWithin(root, storagePath)) throw new Error('ephemeral storage state must remain outside the repository');
+      if (!fs.existsSync(storagePath) || fs.lstatSync(storagePath).isSymbolicLink() || !fs.statSync(storagePath).isFile()) throw new Error('ephemeral storage state must be a real external file');
+      if ((fs.statSync(storagePath).mode & 0o077) !== 0) throw new Error('ephemeral storage state must not be group/world accessible');
+    } catch (error) {
+      findings.push({ severity: 'P0', code: 'playwright-storage-state-unsafe', message: error.message });
+    }
+  }
   if (!fs.existsSync(configFile)) findings.push({ severity: 'P0', code: 'playwright-config-missing', message: `config does not exist: ${args.config}` });
   for (const file of [planFile, environmentFile, configFile, ...asArray(plan.cases).map((testCase) => path.resolve(root, testCase.test_ref.path))]) {
     if (!fs.existsSync(file)) continue;
@@ -71,8 +87,16 @@ try {
   const tests = [...new Set(asArray(plan.cases).map((testCase) => testCase.test_ref.path))];
   const commandArgs = [playwright.cli, 'test', ...tests, '--config', configFile];
   if (args['list-only'] === true) commandArgs.push('--list');
+  const allowedEnvironmentNames = new Set([
+    'PATH', 'SystemRoot', 'HOME', 'TMPDIR', 'TMP', 'TEMP', 'CI', 'PLAYWRIGHT_BROWSERS_PATH',
+    profile?.endpoint?.base_url_from,
+    profile?.data?.not_applicable === true ? null : profile?.data?.dataset_id_from,
+    profile?.data?.not_applicable === true ? null : profile?.data?.dataset_version_from,
+    ...asArray(profile?.auth?.secret_refs),
+  ].filter(Boolean));
   const env = {
-    ...process.env,
+    ...Object.fromEntries([...allowedEnvironmentNames].filter((key) => Object.hasOwn(process.env, key)).map((key) => [key, process.env[key]])),
+    FACTORY_BASE_URL: process.env[profile.endpoint.base_url_from],
     FACTORY_ACCEPTANCE_PLAN: planFile,
     FACTORY_EVIDENCE_ROOT: evidenceRoot,
     FACTORY_RESULTS_PATH: resultsPath,
@@ -82,6 +106,8 @@ try {
     FACTORY_ENVIRONMENT_DIGEST: environmentDigest,
     FACTORY_OBSERVATION_RUN_ID: observation.run_id,
     FACTORY_ADAPTER_VERSION: playwright.version,
+    FACTORY_LOCAL_SELF_SIGNED: profile.endpoint.tls === 'local_self_signed' ? 'true' : 'false',
+    ...(ephemeralStorageState ? { FACTORY_EPHEMERAL_STORAGE_STATE: path.resolve(ephemeralStorageState) } : {}),
   };
   const result = spawnSync(process.execPath, commandArgs, {
     cwd: root,

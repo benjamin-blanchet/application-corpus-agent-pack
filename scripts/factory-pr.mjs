@@ -6,7 +6,7 @@ import { spawnSync } from 'node:child_process';
 
 import { SHA_PATTERN, isWithin, parseArgs, printResult, resolveContainedRegularFile } from './lib/factory-delivery/core.mjs';
 import { readData, writeData, writeText } from './lib/factory-delivery/files.mjs';
-import { scanEvidenceFile } from './lib/factory-delivery/minimize.mjs';
+import { scanEvidenceFile, scanEvidenceText } from './lib/factory-delivery/minimize.mjs';
 import { sourceTreeDigest, verifyEvidenceOnlyCommit } from './lib/factory-delivery/provenance.mjs';
 import { validateEvidence, validateFactoryCi, validatePrDraft } from './lib/factory-delivery/validation.mjs';
 
@@ -63,13 +63,19 @@ function bodyWithEvidence(body, manifest, contract) {
   return index === -1 ? `${body.trim()}\n\n${generated}` : `${body.slice(0, index).trim()}\n\n${generated}`;
 }
 
-function validateAuthorizationReceipt(file, contract, { candidateSha, headRef, baseRef }) {
+function validateAuthorizationReceipt(file, contract, { candidateSha, prHeadSha, headRef, baseRef }) {
   const absolute = path.resolve(file);
   if (isWithin(root, absolute)) throw new Error('authorization receipt must come from an external gate, not the repository');
   if (!fs.existsSync(absolute) || fs.lstatSync(absolute).isSymbolicLink() || !fs.statSync(absolute).isFile()) throw new Error('authorization receipt must be a real external file');
+  const realRepository = fs.realpathSync(root);
+  const realReceipt = fs.realpathSync(absolute);
+  if (isWithin(realRepository, realReceipt)) throw new Error('authorization receipt resolves inside the repository');
+  const receiptScan = scanEvidenceFile(realReceipt, path.basename(realReceipt));
+  if (receiptScan.length) throw new Error(`authorization receipt failed minimization: ${receiptScan.map((item) => item.code).join(', ')}`);
   const receipt = readData(absolute);
-  for (const key of ['gate_id', 'candidate_sha', 'head_ref', 'base_ref', 'approver_ref', 'authorized_at']) if (!receipt?.[key]) throw new Error(`authorization receipt is missing ${key}`);
-  if (receipt.gate_id !== contract.authorization.gate_id || receipt.candidate_sha?.toLowerCase() !== candidateSha || receipt.head_ref !== headRef || receipt.base_ref !== baseRef) throw new Error('authorization receipt is not bound to this exact draft operation');
+  for (const key of ['gate_id', 'candidate_sha', 'head_sha', 'head_ref', 'base_ref', 'approver_ref', 'authorized_at']) if (!receipt?.[key]) throw new Error(`authorization receipt is missing ${key}`);
+  if (receipt.gate_id !== contract.authorization.gate_id || receipt.candidate_sha?.toLowerCase() !== candidateSha || receipt.head_sha?.toLowerCase() !== prHeadSha || receipt.head_ref !== headRef || receipt.base_ref !== baseRef) throw new Error('authorization receipt is not bound to this exact draft operation');
+  if (!/^[A-Za-z][A-Za-z0-9._/-]{0,127}$/.test(receipt.approver_ref)) throw new Error('authorization receipt approver_ref is invalid');
   const authorizedAt = Date.parse(receipt.authorized_at);
   if (Number.isNaN(authorizedAt) || Date.now() - authorizedAt > 24 * 60 * 60 * 1000 || authorizedAt > Date.now() + 5 * 60 * 1000) throw new Error('authorization receipt is expired or invalid');
   return receipt;
@@ -134,6 +140,7 @@ try {
     const resolvedBody = resolveContainedRegularFile(root, bodyPath);
     for (const issue of scanEvidenceFile(resolvedBody.absolute, resolvedBody.relative)) findings.push({ severity: 'P0', ...issue, file: resolvedBody.relative });
     body = bodyWithEvidence(fs.readFileSync(resolvedBody.absolute, 'utf8'), manifest, contract);
+    for (const issue of scanEvidenceText(body, 'generated PR body')) findings.push({ severity: 'P0', ...issue, file: resolvedBody.relative });
   } catch (error) {
     findings.push({ severity: 'P0', code: 'pr-body-path-invalid', message: error.message });
   }
@@ -163,7 +170,7 @@ try {
     process.exit(0);
   }
   if (!args['authorization-receipt']) throw new Error('--authorization-receipt is required for execution');
-  const authorization = validateAuthorizationReceipt(args['authorization-receipt'], contract, { candidateSha: headSha, headRef, baseRef });
+  const authorization = validateAuthorizationReceipt(args['authorization-receipt'], contract, { candidateSha: testedSha, prHeadSha: headSha, headRef, baseRef });
 
   run('gh', ['auth', 'status']);
   const repositoryInfo = JSON.parse(run('gh', ['repo', 'view', '--json', 'nameWithOwner']).stdout);
@@ -178,6 +185,7 @@ try {
   }
   const existing = run('gh', ['pr', 'list', '--head', headRef, '--state', 'open', '--json', 'number,url,isDraft,headRefOid,baseRefName,title,body'], { allowFailure: false });
   const rows = JSON.parse(existing.stdout || '[]');
+  if (rows.length > 1) throw new Error('multiple open PRs exist for the same head branch; refusing an ambiguous update');
   let operation;
   if (rows.length) {
     const current = rows[0];

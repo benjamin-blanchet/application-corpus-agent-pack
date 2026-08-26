@@ -87,13 +87,11 @@ export function validateEvidenceManifest(manifest, {
   const publication = isObject(manifest.publication) ? manifest.publication : {};
   requireKeys(publication, ['mode'], 'evidence.publication', findings);
   if (!['ci_artifact', 'evidence_only_commit'].includes(publication.mode)) findings.push(finding('factory-evidence-publication-mode', `unsupported publication mode ${String(publication.mode)}`));
+  if (subject.evidence_commit_sha !== undefined) findings.push(finding('factory-evidence-self-referential-sha', 'the manifest must not claim its own publication commit; the evidence_committed event records that Git SHA'));
   if (publication.mode === 'evidence_only_commit') {
-    if (!validateEvidenceSha(subject.evidence_commit_sha)) findings.push(finding('factory-evidence-sha-required', 'evidence_only_commit requires subject.evidence_commit_sha'));
     for (const key of ['ci_run_id', 'artifact_id', 'artifact_url', 'retention_days', 'bundle_digest']) {
       if (Object.hasOwn(publication, key)) findings.push(finding('factory-evidence-publication-conflict', `evidence_only_commit must not carry CI field ${key}`));
     }
-  } else if (subject.evidence_commit_sha !== undefined) {
-    findings.push(finding('factory-ci-artifact-false-sha', 'ci_artifact evidence must not claim evidence_commit_sha'));
   }
   if (publication.mode === 'ci_artifact') validateCiPublication(publication, manifest.artifacts, findings);
 
@@ -183,13 +181,12 @@ export function validateReleaseProvenance({ repoRoot, state, manifest }) {
 
   let expectedHead = resolvedCandidate;
   if (publication?.mode === 'ci_artifact') {
-    if (state.provenance.evidence_sha !== null || manifest?.subject?.evidence_commit_sha !== undefined) findings.push(finding('factory-ci-artifact-false-sha', 'ci_artifact mode must not carry an evidence Git SHA'));
+    if (state.provenance.evidence_sha !== null) findings.push(finding('factory-ci-artifact-false-sha', 'ci_artifact mode must not carry an evidence Git SHA'));
     if (!publication.artifact_locator || !TYPED_SHA256.test(publication.artifact_digest || '') || !publication.media_type) findings.push(finding('factory-ci-artifact-envelope', 'ci_artifact requires locator, digest and media type'));
     if (publication.artifact_locator && publication.artifact_locator !== manifest?.publication?.artifact_url) findings.push(finding('factory-ci-artifact-locator-mismatch', 'event artifact locator differs from manifest publication.artifact_url'));
     if (publication.artifact_digest && publication.artifact_digest !== manifest?.publication?.bundle_digest) findings.push(finding('factory-ci-artifact-digest-mismatch', 'event artifact digest differs from manifest publication.bundle_digest'));
   } else if (publication?.mode === 'evidence_only_commit') {
     const evidenceSha = resolveCommit(repoRoot, state.provenance.evidence_sha, findings, 'evidence');
-    if (evidenceSha && manifest?.subject?.evidence_commit_sha !== evidenceSha) findings.push(finding('factory-evidence-sha-mismatch', 'manifest evidence_commit_sha differs from the event'));
     if (resolvedCandidate && evidenceSha) {
       expectedHead = evidenceSha;
       if (!gitOk(repoRoot, ['merge-base', '--is-ancestor', resolvedCandidate, evidenceSha])) findings.push(finding('factory-evidence-not-descendant', 'evidence commit must descend from candidate'));
@@ -288,8 +285,43 @@ function validateArtifact(artifact, ids, { manifestPath, artifactsRoot, requireF
   const root = path.resolve(artifactsRoot || (manifestPath ? path.dirname(manifestPath) : '.'));
   const absolute = path.resolve(root, artifact.path);
   if (absolute !== root && !absolute.startsWith(`${root}${path.sep}`)) findings.push(finding('factory-evidence-path-escape', `${artifact.id}: artifact escapes its root`));
-  else if (!fs.existsSync(absolute) || !fs.statSync(absolute).isFile()) findings.push(finding('factory-evidence-file-missing', `${artifact.id}: evidence file is missing`));
-  else if (`sha256:${fileHash(absolute)}` !== artifact.sha256) findings.push(finding('factory-evidence-file-changed', `${artifact.id}: checksum does not match`));
+  else {
+    const safeFile = containedRegularFile(root, absolute, artifact.id, findings);
+    if (!safeFile) return;
+    if (`sha256:${fileHash(safeFile)}` !== artifact.sha256) findings.push(finding('factory-evidence-file-changed', `${artifact.id}: checksum does not match`));
+    if (fs.statSync(safeFile).size !== artifact.bytes) findings.push(finding('factory-evidence-file-size-changed', `${artifact.id}: byte size does not match`));
+  }
+}
+
+function containedRegularFile(root, absolute, artifactId, findings) {
+  if (!fs.existsSync(root) || fs.lstatSync(root).isSymbolicLink() || !fs.lstatSync(root).isDirectory()) {
+    findings.push(finding('factory-evidence-root-invalid', `${artifactId}: evidence root must be a real directory`));
+    return null;
+  }
+  const relative = path.relative(root, absolute);
+  let cursor = root;
+  for (const part of relative.split(path.sep).filter(Boolean)) {
+    cursor = path.join(cursor, part);
+    if (!fs.existsSync(cursor)) {
+      findings.push(finding('factory-evidence-file-missing', `${artifactId}: evidence file is missing`));
+      return null;
+    }
+    if (fs.lstatSync(cursor).isSymbolicLink()) {
+      findings.push(finding('factory-evidence-file-symlink', `${artifactId}: symbolic links are forbidden in evidence paths`));
+      return null;
+    }
+  }
+  const realRoot = fs.realpathSync(root);
+  const realFile = fs.realpathSync(absolute);
+  if (realFile !== realRoot && !realFile.startsWith(`${realRoot}${path.sep}`)) {
+    findings.push(finding('factory-evidence-path-escape', `${artifactId}: evidence file escapes its root after canonicalization`));
+    return null;
+  }
+  if (!fs.statSync(realFile).isFile()) {
+    findings.push(finding('factory-evidence-file-missing', `${artifactId}: evidence path is not a regular file`));
+    return null;
+  }
+  return realFile;
 }
 
 function validateCiPublication(publication, artifacts, findings) {

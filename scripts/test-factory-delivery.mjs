@@ -375,6 +375,8 @@ test('evidence, report and draft-PR CLIs compose without push or merge capabilit
   const exactObservation = fixture('observation.json');
   exactObservation.subject_sha = exactHead;
   exactObservation.deployed_revision = exactHead;
+  const revisionOperation = exactObservation.operations.find((operation) => operation.id === 'fixture-revision');
+  revisionOperation.stdout = `${exactHead}\n`;
   const observationFile = path.join(output, 'observation.json');
   fs.writeFileSync(observationFile, `${JSON.stringify(exactObservation, null, 2)}\n`, 'utf8');
   const artifactRoot = path.join(output, 'artifacts');

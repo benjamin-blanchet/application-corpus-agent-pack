@@ -474,7 +474,6 @@ test('[BF-038] unresolvable candidate and evidence commit objects block release 
   const manifest = evidenceManifest({ entryHash: '0'.repeat(64) });
   manifest.publication = { mode: 'evidence_only_commit' };
   manifest.subject.tested_sha = null;
-  manifest.subject.evidence_commit_sha = SHA.evidence;
   manifest.waiver = { reason: 'fixture waiver', approved_by: 'quality-owner', approved_at: AT };
   manifest.verdict = 'waived';
   manifest.cases = [];
@@ -505,6 +504,16 @@ test('a complete CI-artifact envelope with resolvable Git provenance is release-
   assert.deepEqual(loaded.provenanceFindings, []);
   assert.equal(loaded.derived.phase, 'release_ready');
   assert.equal(loaded.derived.provenance.evidence_sha, null);
+  assert.deepEqual(validateFactoryPackageV3(built.packageDir), []);
+});
+
+test('evidence-only publication binds its Git commit in the event without a self-referential manifest SHA', (t) => {
+  const built = validGitBackedPackage(t, { publicationMode: 'evidence_only_commit' });
+  assert.equal(Object.hasOwn(built.manifest.subject, 'evidence_commit_sha'), false);
+  const loaded = loadFactoryPackage(built.packageDir);
+  assert.deepEqual(loaded.provenanceFindings, []);
+  assert.equal(loaded.derived.phase, 'release_ready');
+  assert.equal(loaded.derived.provenance.evidence_sha, built.evidenceSha);
   assert.deepEqual(validateFactoryPackageV3(built.packageDir), []);
 });
 
@@ -844,7 +853,7 @@ function ciEventPublication(overrides = {}) {
   };
 }
 
-function validGitBackedPackage(t) {
+function validGitBackedPackage(t, { publicationMode = 'ci_artifact' } = {}) {
   const repoRoot = temporary(t);
   git(repoRoot, ['init', '-q']);
   git(repoRoot, ['config', 'user.email', 'factory@example.invalid']);
@@ -911,14 +920,14 @@ function validGitBackedPackage(t) {
     },
     toolchain: { adapter: 'playwright', adapter_version: '1.0.0', browser: 'chromium', browser_version: '140.0' },
     acceptance: { plan_path: `${packageRef}/acceptance-plan.yaml`, plan_digest: `sha256:${fileHash(acceptancePath)}` },
-    publication: {
+    publication: publicationMode === 'ci_artifact' ? {
       mode: 'ci_artifact',
       ci_run_id: 'ci-run-123',
       artifact_id: 'artifact-123',
       artifact_url: 'https://ci.example/artifacts/artifact-123',
       retention_days: 30,
       bundle_digest: `sha256:${canonicalHash(artifacts)}`,
-    },
+    } : { mode: 'evidence_only_commit' },
     criteria_waivers: [],
     cases: [{
       id: 'CASE-001', criteria: ['AC-001'], outcome: 'passed', attempts: 1,
@@ -933,21 +942,29 @@ function validGitBackedPackage(t) {
   const manifestPath = path.join(runDir, 'evidence-manifest.json');
   fs.writeFileSync(manifestPath, canonicalJsonPretty(manifest));
 
+  let evidenceSha = null;
+  if (publicationMode === 'evidence_only_commit') {
+    git(repoRoot, ['add', `${packageRef}/acceptance/runs`]);
+    git(repoRoot, ['commit', '-qm', 'publish evidence']);
+    evidenceSha = git(repoRoot, ['rev-parse', 'HEAD']);
+  }
+
   const events = throughPassingAcceptance(plan, { specSha, candidateSha });
-  const publication = ciEventPublication({
+  const publication = publicationMode === 'ci_artifact' ? ciEventPublication({
     artifact_locator: manifest.publication.artifact_url,
     artifact_digest: manifest.publication.bundle_digest,
-  });
+  }) : { mode: 'evidence_only_commit' };
   push(events, 'evidence_committed', {
     evidence_manifest_path: `${packageRef}/acceptance/runs/${RUN_ID}/evidence-manifest.json`,
     evidence_manifest_sha256: canonicalHash(manifest),
     publication,
+    ...(evidenceSha ? { evidence_sha: evidenceSha } : {}),
   });
   push(events, 'release_reviewed', { verdict: 'passed', fresh_context: true }, { actor: actors.reviewer });
   fs.writeFileSync(path.join(factoryDir, 'events.v3.jsonl'), serializeEventLog(events));
   const loaded = loadFactoryPackage(packageDir);
   fs.writeFileSync(path.join(factoryDir, 'state.v3.json'), canonicalJsonPretty(loaded.derived));
-  return { repoRoot, packageDir, factoryDir, specPath, environmentPath, acceptancePath, manifestPath, plan, manifest, candidateSha };
+  return { repoRoot, packageDir, factoryDir, specPath, environmentPath, acceptancePath, manifestPath, plan, manifest, candidateSha, evidenceSha };
 }
 
 function git(cwd, args) {

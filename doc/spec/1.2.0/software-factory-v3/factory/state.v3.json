@@ -3,7 +3,7 @@
   "blockers": [],
   "delivery": null,
   "derived_from": {
-    "current_inputs_sha256": "b8fb2e8800216fe3faae69b3d2f1eb27cab8060aff7a88879cc6f1a93cfd0525",
+    "current_inputs_sha256": "8ccc85f8b73061bf142f80467027194eb195bd53ca86cf380ac9aec03c3748b4",
     "events_sha256": "a88b8a20487d99171631db5afee348f314ce315048b71b503e6e1ab4789010ca",
     "last_seq": 6
   },

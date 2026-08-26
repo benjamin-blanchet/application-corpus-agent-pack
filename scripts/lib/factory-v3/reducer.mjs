@@ -33,6 +33,7 @@ export function reduceFactory({ plan, events, current = {}, allowInvalidPlan = f
   }
   state.ready_lots = nextWave(plan, state).map((reservation) => reservation.lot_id);
   state.phase = derivePhase(state);
+  const gitHeadInput = state.gates.candidate.status === 'valid' ? current.git_head ?? null : null;
   state.derived_from = {
     last_seq: events.length,
     events_sha256: eventLogHash(events),
@@ -40,7 +41,7 @@ export function reduceFactory({ plan, events, current = {}, allowInvalidPlan = f
       spec_exists: current.spec_exists ?? null,
       spec_sha256: current.spec_sha256 ?? null,
       plan_sha256: currentPlanHash,
-      git_head: current.git_head ?? null,
+      git_head: gitHeadInput,
       evidence_manifest_sha256: current.evidence_manifest_sha256 ?? null,
       provenance_status: current.provenance_status ?? null,
     }),

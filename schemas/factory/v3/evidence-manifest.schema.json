@@ -18,8 +18,7 @@
         "head_sha": { "$ref": "#/$defs/gitSha" },
         "base_sha": { "$ref": "#/$defs/gitSha" },
         "tested_sha": { "oneOf": [{ "$ref": "#/$defs/gitSha" }, { "type": "null" }] },
-        "source_tree_digest": { "$ref": "#/$defs/typedSha256" },
-        "evidence_commit_sha": { "$ref": "#/$defs/gitSha" }
+        "source_tree_digest": { "$ref": "#/$defs/typedSha256" }
       }
     },
     "waiver": {
@@ -114,7 +113,7 @@
       "if": { "properties": { "publication": { "properties": { "mode": { "const": "evidence_only_commit" } }, "required": ["mode"] } } },
       "then": {
         "properties": {
-          "subject": { "required": ["head_sha", "tested_sha", "source_tree_digest", "evidence_commit_sha"] },
+          "subject": { "required": ["head_sha", "tested_sha", "source_tree_digest"] },
           "publication": {
             "not": {
               "anyOf": [
@@ -130,7 +129,6 @@
       },
       "else": {
         "properties": {
-          "subject": { "not": { "required": ["evidence_commit_sha"] } },
           "publication": { "required": ["mode", "ci_run_id", "artifact_id", "artifact_url", "retention_days", "bundle_digest"] }
         }
       }

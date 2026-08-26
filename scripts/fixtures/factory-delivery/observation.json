@@ -15,9 +15,17 @@
   "ci_contract_digest": "sha256:4ee9cfcaee70d2e0bc3465e0d8d285a34e359535c2cc1a5ed066437221485507",
   "checks": [
     { "id": "fixture-health", "kind": "health", "required": true, "outcome": "pass" },
+    { "id": "fixture-revision", "kind": "revision", "required": true, "outcome": "pass" },
     { "id": "fixture-schema", "kind": "schema", "required": true, "outcome": "pass" },
     { "id": "fixture-dataset", "kind": "dataset", "required": true, "outcome": "pass" },
     { "id": "fixture-credential", "kind": "credential", "required": true, "outcome": "pass" }
+  ],
+  "operations": [
+    { "id": "fixture-health", "argv": ["node", "-e", "console.log('healthy')"], "cwd": ".", "timeout_seconds": 30, "side_effect": "none", "outcome": "pass", "stdout": "healthy\n", "stderr": "" },
+    { "id": "fixture-revision", "argv": ["node", "-e", "console.log('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')"], "cwd": ".", "timeout_seconds": 30, "side_effect": "none", "outcome": "pass", "stdout": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n", "stderr": "" },
+    { "id": "fixture-schema", "argv": ["node", "-e", "process.exit(0)"], "cwd": ".", "timeout_seconds": 30, "side_effect": "none", "outcome": "pass", "stdout": "", "stderr": "" },
+    { "id": "fixture-dataset", "argv": ["node", "-e", "process.exit(0)"], "cwd": ".", "timeout_seconds": 30, "side_effect": "none", "outcome": "pass", "stdout": "", "stderr": "" },
+    { "id": "fixture-credential", "argv": ["node", "-e", "process.exit(0)"], "cwd": ".", "timeout_seconds": 30, "side_effect": "none", "outcome": "pass", "stdout": "", "stderr": "" }
   ],
   "status": "ready"
 }

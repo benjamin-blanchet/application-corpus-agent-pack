@@ -12,8 +12,12 @@ runtime or add it to its own dependencies.
 Replay a frozen campaign from the repository root:
 
 ```text
-node scripts/adapters/playwright/run.mjs --plan <acceptance-plan> --config <playwright-config> --subject-sha <full-commit-sha> --evidence-root <run-directory>
+node scripts/adapters/playwright/run.mjs --plan <acceptance-plan> --environment <environment-contract> --observation <run-observation> --config <playwright-config> --subject-sha <full-commit-sha> --run-id <run-id> --evidence-root <run-directory>
 ```
+
+Start and stop the application through the operation IDs declared by the
+environment and CI contracts. The Playwright config accepts only the
+preflighted `FACTORY_BASE_URL`; it does not execute an ad-hoc shell command.
 
 Prefer locator-level checkpoints over full-page captures. Never attach browser
 storage state, cookies, credentials, secrets, or unredacted personal data.

@@ -383,6 +383,9 @@ export function validateAcceptanceResults(results, {
   const findings = [];
   ensureRequired(results, ['schema_version', 'run_id', 'candidate_sha', 'plan_digest', 'environment_digest', 'observation_run_id', 'overall_status', 'toolchain', 'cases', 'mutations'], 'acceptance_results', findings, file);
   if (results?.schema_version !== 1) findings.push(finding('acceptance-results-version-invalid', 'acceptance results schema_version must be 1', file));
+  if (!SAFE_REFERENCE_PATTERN.test(results?.run_id || '') || isPlaceholder(results?.run_id)) findings.push(finding('acceptance-results-run-invalid', 'results.run_id must be a concrete logical identifier', file));
+  if (results?.observation_run_id !== results?.run_id) findings.push(finding('acceptance-results-run-mismatch', 'results.observation_run_id must equal results.run_id', file));
+  for (const key of ['plan_digest', 'environment_digest']) if (!/^sha256:[0-9a-f]{64}$/i.test(results?.[key] || '')) findings.push(finding('acceptance-results-digest-invalid', `${key} must be sha256:<64 hex>`, file));
   if (!SHA_PATTERN.test(results?.candidate_sha || '')) findings.push(finding('acceptance-results-sha-invalid', 'results.candidate_sha must be a full SHA', file));
   if (subjectSha && results?.candidate_sha?.toLowerCase() !== subjectSha.toLowerCase()) findings.push(finding('acceptance-results-sha-mismatch', 'results.candidate_sha differs from the frozen candidate', file));
   if (observationRunId && (results?.run_id !== observationRunId || results?.observation_run_id !== observationRunId)) findings.push(finding('acceptance-results-run-mismatch', 'results and environment observation run identities differ', file));
@@ -391,7 +394,12 @@ export function validateAcceptanceResults(results, {
   if (!['passed', 'failed', 'blocked'].includes(results?.overall_status)) findings.push(finding('acceptance-results-status-invalid', 'overall_status must be passed, failed or blocked', file));
   else if (results.overall_status !== 'passed') findings.push(finding('acceptance-campaign-failed', `campaign overall_status is ${results.overall_status}`, file));
   const provenanceWaived = hasValidWaiver(provenanceWaiver);
-  for (const key of ['adapter', 'adapter_version', 'browser', 'browser_version']) if ((!results?.toolchain?.[key] || isPlaceholder(results.toolchain[key])) && !provenanceWaived) findings.push(finding('acceptance-results-toolchain-incomplete', `toolchain.${key} must be non-placeholder`, file));
+  for (const key of ['adapter', 'adapter_version']) if ((!results?.toolchain?.[key] || isPlaceholder(results.toolchain[key]) || results.toolchain[key] === 'not_applicable') && !provenanceWaived) findings.push(finding('acceptance-results-toolchain-incomplete', `toolchain.${key} must be non-placeholder`, file));
+  for (const key of ['browser', 'browser_version']) {
+    const value = results?.toolchain?.[key];
+    const validNonBrowserValue = results?.toolchain?.adapter !== 'playwright' && value === 'not_applicable';
+    if ((!value || isPlaceholder(value) || (value === 'not_applicable' && !validNonBrowserValue)) && !provenanceWaived) findings.push(finding('acceptance-results-toolchain-incomplete', `toolchain.${key} must identify Playwright's browser or be not_applicable for another adapter`, file));
+  }
   const plannedCases = new Map(asArray(plan?.cases).map((item) => [item.id, item]));
   const actualCases = new Map(asArray(results?.cases).map((item) => [item.id, item]));
   if (!Array.isArray(results?.cases)) findings.push(finding('acceptance-results-case-invalid', 'results.cases must be an array', file));
@@ -468,13 +476,25 @@ export function validateAcceptanceResults(results, {
   return findings;
 }
 
-export function validateEnvironmentObservation(observation, { file = 'environment-observation.json', provenanceWaiver = null } = {}) {
+export function validateEnvironmentObservation(observation, {
+  file = 'environment-observation.json',
+  provenanceWaiver = null,
+  environment = null,
+} = {}) {
   const findings = [];
-  ensureRequired(observation, ['schema_version', 'run_id', 'observed_at', 'profile', 'subject_sha', 'deployed_revision', 'instance_id', 'build_or_image', 'schema_version_value', 'dataset_id', 'dataset_version', 'auth_actor_type', 'environment_contract_digest', 'ci_contract_digest', 'checks', 'status'], 'environment_observation', findings, file);
+  ensureRequired(observation, ['schema_version', 'run_id', 'observed_at', 'profile', 'subject_sha', 'deployed_revision', 'instance_id', 'build_or_image', 'schema_version_value', 'dataset_id', 'dataset_version', 'auth_actor_type', 'environment_contract_digest', 'ci_contract_digest', 'checks', 'operations', 'status'], 'environment_observation', findings, file);
   if (observation?.schema_version !== 1) findings.push(finding('environment-observation-version-invalid', 'environment observation schema_version must be 1', file));
+  if (!SAFE_REFERENCE_PATTERN.test(observation?.run_id || '') || isPlaceholder(observation?.run_id)) findings.push(finding('environment-run-id-invalid', 'observation.run_id must be a concrete logical identifier', file));
   if (observation?.observed_at && Number.isNaN(Date.parse(observation.observed_at))) findings.push(finding('environment-observation-date-invalid', 'observed_at must be an ISO date', file));
   if (!['ready', 'blocked'].includes(observation?.status)) findings.push(finding('environment-status-invalid', 'observation.status must be ready or blocked', file));
   if (!Array.isArray(observation?.checks) || observation.checks.length === 0) findings.push(finding('environment-checks-missing', 'at least one environment preflight check is required', file));
+  if (!Array.isArray(observation?.operations) || observation.operations.length === 0) findings.push(finding('environment-operations-missing', 'at least one executed preflight operation is required', file));
+  for (const operation of asArray(observation?.operations)) {
+    ensureRequired(operation, ['id', 'argv', 'cwd', 'timeout_seconds', 'side_effect', 'outcome'], `environment_observation.operations.${operation?.id || '?'}`, findings, file);
+    for (const key of ['stdout', 'stderr']) if (!Object.hasOwn(operation || {}, key) || typeof operation[key] !== 'string') findings.push(finding('environment-operation-output-missing', `${operation?.id}.${key} must be a bounded string`, file));
+    if (operation?.side_effect !== 'none') findings.push(finding('environment-probe-side-effect-invalid', `${operation?.id} observation is not side-effect-free`, file));
+    if (!['planned', 'pass', 'fail'].includes(operation?.outcome)) findings.push(finding('environment-operation-outcome-invalid', `${operation?.id} has invalid operation outcome`, file));
+  }
   if (!SHA_PATTERN.test(observation?.subject_sha || '') || !SHA_PATTERN.test(observation?.deployed_revision || '')) {
     findings.push(finding('environment-revision-invalid', 'subject and deployed revisions must be full 40-hex SHAs', file));
   } else if (observation.subject_sha.toLowerCase() !== observation.deployed_revision.toLowerCase()) {
@@ -493,6 +513,38 @@ export function validateEnvironmentObservation(observation, { file = 'environmen
       findings.push(finding(code, `${check?.id || 'environment check'} did not pass`, file, check?.message || null));
     }
   }
+  const profile = asArray(environment?.profiles).find((candidate) => candidate?.id === observation?.profile);
+  if (environment && !profile) findings.push(finding('environment-observation-profile-unknown', `observation profile ${observation?.profile} is absent from the environment contract`, file));
+  if (profile) {
+    const expectedChecks = new Map();
+    if (typeof profile.operations?.health === 'string') expectedChecks.set(profile.operations.health, { kind: 'health', required: true });
+    if (typeof profile.operations?.revision_probe === 'string') expectedChecks.set(profile.operations.revision_probe, { kind: 'revision', required: true });
+    for (const dependency of asArray(profile.dependencies)) {
+      expectedChecks.set(dependency.readiness_operation, { kind: dependency.kind || 'dependency', required: dependency.required !== false });
+      if (dependency.version_operation) expectedChecks.set(dependency.version_operation, { kind: dependency.version_kind || 'version', required: dependency.required !== false });
+    }
+    const checksById = new Map(asArray(observation?.checks).map((check) => [check?.id, check]));
+    const operationsById = new Map(asArray(observation?.operations).map((operation) => [operation?.id, operation]));
+    for (const duplicate of duplicateIds(observation?.checks)) findings.push(finding('environment-check-duplicate', `duplicate observation check ${duplicate}`, file));
+    for (const duplicate of duplicateIds(observation?.operations)) findings.push(finding('environment-operation-duplicate', `duplicate observed operation ${duplicate}`, file));
+    for (const [id, expected] of expectedChecks) {
+      const check = checksById.get(id);
+      const operation = operationsById.get(id);
+      if (!check || !operation) findings.push(finding('environment-required-probe-missing', `${id} was required by the environment contract but was not observed`, file));
+      else {
+        if (check.kind !== expected.kind || check.required !== expected.required) findings.push(finding('environment-probe-contract-mismatch', `${id} observation metadata differs from the environment contract`, file));
+        if (check.outcome !== operation.outcome) findings.push(finding('environment-probe-contract-mismatch', `${id} check outcome differs from its operation outcome`, file));
+      }
+    }
+    for (const id of checksById.keys()) if (!expectedChecks.has(id)) findings.push(finding('environment-unplanned-probe', `${id} was not declared by the environment profile`, file));
+    for (const id of operationsById.keys()) if (!expectedChecks.has(id)) findings.push(finding('environment-unplanned-probe', `${id} operation was not declared by the environment profile`, file));
+    const revisionId = typeof profile.operations?.revision_probe === 'string' ? profile.operations.revision_probe : null;
+    const revisionOperation = revisionId ? operationsById.get(revisionId) : null;
+    const observedRevision = String(revisionOperation?.stdout || '').match(/\b[0-9a-f]{40}\b/i)?.[0]?.toLowerCase() || null;
+    if (!revisionOperation || revisionOperation.outcome !== 'pass' || observedRevision !== String(observation?.deployed_revision || '').toLowerCase()) {
+      findings.push(finding('environment-revision-not-observed', 'deployed_revision must come from the declared successful revision probe output', file));
+    }
+  }
   if (observation?.status === 'blocked') findings.push(finding('environment-not-ready', 'environment observation is blocked', file));
   if (observation?.status === 'ready' && findings.length) findings.push(finding('environment-false-ready', 'observation says ready while a required preflight check failed', file));
   return findings;
@@ -509,6 +561,8 @@ export function validateEvidence(manifest, plan = null, {
   const findings = [];
   ensureRequired(manifest, ['schema_version', 'run_id', 'generated_at', 'spec_package', 'subject', 'environment', 'toolchain', 'acceptance', 'publication', 'criteria_waivers', 'cases', 'mutations', 'artifacts', 'summary', 'verdict'], 'evidence', findings, file);
   if (manifest?.schema_version !== 1) findings.push(finding('evidence-version-unsupported', 'evidence.schema_version must be 1', file));
+  if (!SAFE_REFERENCE_PATTERN.test(manifest?.run_id || '') || isPlaceholder(manifest?.run_id)) findings.push(finding('evidence-run-id-invalid', 'run_id must be a concrete logical identifier', file));
+  if (Number.isNaN(Date.parse(manifest?.generated_at))) findings.push(finding('evidence-generated-at-invalid', 'generated_at must be an ISO date', file));
   if (!validReferencePath(manifest?.spec_package)) findings.push(finding('evidence-spec-package-invalid', 'spec_package must be repository-relative', file));
   const subject = manifest?.subject || {};
   for (const key of ['head_sha', 'tested_sha']) if (!SHA_PATTERN.test(subject[key] || '')) findings.push(finding('evidence-sha-invalid', `subject.${key} must be a full 40-hex SHA`, file));
@@ -526,7 +580,7 @@ export function validateEvidence(manifest, plan = null, {
     if (isPlaceholder(manifest.publication.ci_run_id) || isPlaceholder(manifest.publication.artifact_id)) findings.push(finding('evidence-publication-provenance-incomplete', 'CI publication identifiers must be non-placeholder', file));
     try {
       const url = new URL(manifest.publication.artifact_url);
-      if (url.protocol !== 'https:') throw new Error('not https');
+      if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash) throw new Error('not a stable credential-free HTTPS URL');
     } catch {
       findings.push(finding('evidence-publication-url-invalid', 'publication.artifact_url must be an HTTPS URL', file));
     }
@@ -543,8 +597,13 @@ export function validateEvidence(manifest, plan = null, {
   for (const key of ['instance_id', 'build_or_image', 'schema_version', 'dataset_id', 'dataset_version', 'auth_actor_type']) {
     if ((!manifest?.environment?.[key] || isPlaceholder(manifest.environment[key])) && !provenanceWaived) findings.push(finding('evidence-provenance-incomplete', `environment.${key} must be non-placeholder or explicitly waived`, file));
   }
-  for (const key of ['adapter', 'adapter_version', 'browser', 'browser_version']) {
+  for (const key of ['adapter', 'adapter_version']) {
     if ((!manifest?.toolchain?.[key] || isPlaceholder(manifest.toolchain[key]) || manifest.toolchain[key] === 'not_applicable') && !provenanceWaived) findings.push(finding('evidence-provenance-incomplete', `toolchain.${key} must be non-placeholder or explicitly waived`, file));
+  }
+  for (const key of ['browser', 'browser_version']) {
+    const value = manifest?.toolchain?.[key];
+    const validNonBrowserValue = manifest?.toolchain?.adapter !== 'playwright' && value === 'not_applicable';
+    if ((!value || isPlaceholder(value) || (value === 'not_applicable' && !validNonBrowserValue)) && !provenanceWaived) findings.push(finding('evidence-provenance-incomplete', `toolchain.${key} must identify the browser for Playwright, or be not_applicable for a non-browser adapter`, file));
   }
   ensureRequired(manifest?.acceptance, ['plan_path', 'plan_digest'], 'evidence.acceptance', findings, file);
   if (!validReferencePath(manifest?.acceptance?.plan_path)) findings.push(finding('evidence-plan-path-invalid', 'acceptance.plan_path must be repository-relative', file));
@@ -567,6 +626,7 @@ export function validateEvidence(manifest, plan = null, {
   const artifacts = new Map(asArray(manifest?.artifacts).map((artifact) => [artifact.id, artifact]));
   const planCases = new Map(asArray(plan?.cases).map((testCase) => [testCase.id, testCase]));
   const actualCases = new Map(asArray(manifest?.cases).map((testCase) => [testCase.id, testCase]));
+  const globallyBoundArtifactIds = new Set();
   const plannedCriterionWaivers = new Map(asArray(plan?.criteria)
     .filter((criterion) => criterion?.waiver)
     .map((criterion) => [criterion.id, criterion.waiver]));
@@ -589,8 +649,15 @@ export function validateEvidence(manifest, plan = null, {
   }
   for (const id of planCases.keys()) if (!actualCases.has(id)) findings.push(finding('evidence-case-missing', `${id} was planned but has no result`, file));
   for (const testCase of actualCases.values()) {
+    ensureRequired(testCase, ['id', 'criteria', 'outcome', 'attempts', 'oracle_results', 'evidence_ids', 'evidence_bindings'], `evidence.cases.${testCase?.id || '?'}`, findings, file);
     const planned = planCases.get(testCase?.id);
     if (plan && !planned) findings.push(finding('evidence-case-unplanned', `${testCase?.id} was not declared in the acceptance plan`, file));
+    if (planned) {
+      const expectedCriteria = [...new Set(asArray(planned.criteria))].sort();
+      const actualCriteria = [...new Set(asArray(testCase.criteria))].sort();
+      if (sha256Object(actualCriteria) !== sha256Object(expectedCriteria)) findings.push(finding('evidence-criteria-mismatch', `${testCase.id} criteria differ from the acceptance plan`, file));
+    }
+    if (!Number.isInteger(testCase?.attempts) || testCase.attempts < 1) findings.push(finding('evidence-attempts-invalid', `${testCase?.id} attempts must be a positive integer`, file));
     if (!OUTCOMES.has(testCase?.outcome)) findings.push(finding('evidence-outcome-invalid', `${testCase?.id} has invalid outcome ${testCase?.outcome}`, file));
     else if (testCase.outcome === 'waived') {
       validateWaiver(testCase?.waiver, `cases.${testCase.id}.waiver`, findings, file);
@@ -604,11 +671,17 @@ export function validateEvidence(manifest, plan = null, {
     if (testCase?.outcome === 'passed' && asArray(testCase?.oracle_results).length === 0) findings.push(finding('evidence-oracle-result-missing', `${testCase.id} is passed without an oracle result`, file));
     if (planned) {
       const oracleResults = new Map(asArray(testCase?.oracle_results).map((oracle) => [oracle.id, oracle]));
+      for (const duplicate of duplicateIds(testCase?.oracle_results)) findings.push(finding('evidence-oracle-result-duplicate', `${testCase.id} has duplicate oracle result ${duplicate}`, file));
       for (const oracle of asArray(planned.oracle)) {
         if (!oracleResults.has(oracle.id)) findings.push(finding('evidence-oracle-result-missing', `${testCase.id} has no result for oracle ${oracle.id}`, file));
       }
+      const plannedOracleIds = new Set(asArray(planned.oracle).map((oracle) => oracle.id));
+      for (const oracleId of oracleResults.keys()) if (!plannedOracleIds.has(oracleId)) findings.push(finding('evidence-oracle-result-unplanned', `${testCase.id} reports unplanned oracle ${oracleId}`, file));
       const requiredEvidence = asArray(planned?.evidence?.required);
+      for (const binding of asArray(testCase?.evidence_bindings)) ensureRequired(binding, ['requirement_id', 'artifact_id', 'type', 'checkpoint'], `evidence.cases.${testCase.id}.evidence_bindings`, findings, file);
       const evidenceBindings = new Map(asArray(testCase?.evidence_bindings).map((binding) => [binding.requirement_id, binding]));
+      const bindingRequirementIds = asArray(testCase?.evidence_bindings).map((binding) => ({ id: binding?.requirement_id }));
+      for (const duplicate of duplicateIds(bindingRequirementIds)) findings.push(finding('evidence-binding-duplicate', `${testCase.id} binds requirement ${duplicate} more than once`, file));
       const boundArtifactIds = new Set();
       for (const requirement of requiredEvidence) {
         const binding = evidenceBindings.get(requirement.id);
@@ -619,11 +692,16 @@ export function validateEvidence(manifest, plan = null, {
           if (!artifact) findings.push(finding('evidence-artifact-missing', `${testCase.id}.${requirement.id} references missing artifact ${binding.artifact_id}`, file));
           else if (EVIDENCE_MEDIA_TYPES[requirement.type] && !EVIDENCE_MEDIA_TYPES[requirement.type].has(artifact.media_type)) findings.push(finding('evidence-artifact-media-mismatch', `${testCase.id}.${requirement.id} media type does not satisfy ${requirement.type}`, file));
           if (boundArtifactIds.has(binding.artifact_id)) findings.push(finding('evidence-artifact-reused', `${testCase.id}.${requirement.id} reuses an artifact already bound to another requirement`, file));
+          if (globallyBoundArtifactIds.has(binding.artifact_id)) findings.push(finding('evidence-artifact-reused', `${testCase.id}.${requirement.id} reuses an artifact bound to another case`, file));
           boundArtifactIds.add(binding.artifact_id);
+          globallyBoundArtifactIds.add(binding.artifact_id);
         }
       }
-      if (evidenceBindings.size !== requiredEvidence.length) findings.push(finding('evidence-artifact-unplanned', `${testCase.id} evidence bindings are not exhaustive and exact`, file));
+      const requiredEvidenceIds = new Set(requiredEvidence.map((requirement) => requirement.id));
+      for (const requirementId of evidenceBindings.keys()) if (!requiredEvidenceIds.has(requirementId)) findings.push(finding('evidence-artifact-unplanned', `${testCase.id} binds unplanned requirement ${requirementId}`, file));
+      if (asArray(testCase?.evidence_bindings).length !== requiredEvidence.length) findings.push(finding('evidence-artifact-unplanned', `${testCase.id} evidence bindings are not exhaustive and exact`, file));
     }
+    if (new Set(asArray(testCase?.evidence_ids)).size !== asArray(testCase?.evidence_ids).length) findings.push(finding('evidence-artifact-reused', `${testCase.id} evidence_ids contains duplicates`, file));
     for (const id of asArray(testCase?.evidence_ids)) if (!artifacts.has(id)) findings.push(finding('evidence-artifact-missing', `${testCase.id} references missing artifact ${id}`, file));
   }
 
@@ -632,13 +710,20 @@ export function validateEvidence(manifest, plan = null, {
   for (const duplicate of duplicateIds(manifest?.mutations)) findings.push(finding('acceptance-mutation-duplicate', `duplicate evidence mutation ${duplicate}`, file));
   for (const id of plannedMutations.keys()) if (!actualMutations.has(id)) findings.push(finding('acceptance-mutation-missing', `${id} has no execution result`, file));
   for (const mutation of asArray(manifest?.mutations)) {
+    ensureRequired(mutation, ['id', 'outcome', 'cleanup'], `evidence.mutations.${mutation?.id || '?'}`, findings, file);
     if (plan && !plannedMutations.has(mutation?.id)) findings.push(finding('acceptance-mutation-unplanned', `${mutation?.id} was not planned`, file));
     if (!MUTATION_OUTCOMES.has(mutation?.outcome)) findings.push(finding('acceptance-mutation-outcome-invalid', `${mutation?.id} has invalid outcome ${mutation?.outcome}`, file));
     if (mutation?.outcome === 'failed') findings.push(finding('acceptance-mutation-failed', `${mutation.id} failed`, file));
     if (!CLEANUP_OUTCOMES.has(mutation?.cleanup)) findings.push(finding('acceptance-cleanup-invalid', `${mutation?.id} has invalid cleanup ${mutation?.cleanup}`, file));
     if (mutation?.cleanup === 'failed' || mutation?.cleanup === 'pending') findings.push(finding('acceptance-cleanup-pending', `${mutation.id} cleanup is ${mutation.cleanup}`, file));
+    const planned = plannedMutations.get(mutation?.id);
+    if (planned?.cleanup_required === true && mutation?.cleanup !== 'passed' && !hasValidWaiver(planned?.waiver)) findings.push(finding('acceptance-cleanup-pending', `${mutation.id} requires a passed cleanup result`, file));
+    const usedByApprovedCase = asArray(plan?.cases).some((plannedCase) => asArray(plannedCase?.mutations).includes(mutation?.id)
+      && ['passed', 'waived'].includes(actualCases.get(plannedCase.id)?.outcome));
+    if (usedByApprovedCase && mutation?.outcome !== 'applied') findings.push(finding('acceptance-mutation-not-applied', `${mutation.id} was required by an approved case but was not applied`, file));
   }
   for (const artifact of artifacts.values()) {
+    ensureRequired(artifact, ['id', 'path', 'media_type', 'sha256', 'bytes'], `evidence.artifacts.${artifact?.id || '?'}`, findings, file);
     if (!artifact?.path || path.isAbsolute(artifact.path) || artifact.path.split(/[\\/]/).includes('..')) findings.push(finding('evidence-artifact-path-invalid', `${artifact?.id} has unsafe path ${artifact?.path}`, file));
     if (!/^sha256:[0-9a-f]{64}$/i.test(artifact?.sha256 || '')) findings.push(finding('evidence-artifact-hash-invalid', `${artifact?.id} has no valid sha256`, file));
     if (!Number.isInteger(artifact?.bytes) || artifact.bytes < 0) findings.push(finding('evidence-artifact-size-invalid', `${artifact?.id} has invalid byte size`, file));
@@ -647,6 +732,7 @@ export function validateEvidence(manifest, plan = null, {
         const resolved = resolveContainedRegularFile(artifactsRoot, path.resolve(artifactsRoot, artifact.path));
         if (sha256File(resolved.absolute) !== artifact.sha256) findings.push(finding('evidence-artifact-hash-mismatch', `${artifact.id} content does not match its recorded hash`, file));
         if (fs.statSync(resolved.absolute).size !== artifact.bytes) findings.push(finding('evidence-artifact-size-mismatch', `${artifact.id} size does not match its recorded byte count`, file));
+        for (const issue of scanEvidenceFile(resolved.absolute, resolved.relative)) findings.push(finding(issue.code, issue.message, file));
       } catch (error) {
         findings.push(finding(error.message.includes('symbolic') ? 'evidence-artifact-symlink' : 'evidence-artifact-path-invalid', `${artifact.id}: ${error.message}`, file));
       }
@@ -675,9 +761,15 @@ export function validatePrDraft(contract, ci = null, { file = 'pr-draft.yaml', a
   if (contract?.version !== 1) findings.push(finding('pr-version-unsupported', 'pr_draft.version must be 1', file));
   if (contract?.provider !== 'github') findings.push(finding('pr-provider-unsupported', 'only the github draft provider is supported', file));
   if (contract?.draft !== true) findings.push(finding('pr-not-draft', 'factory PR creation is draft-only', file));
-  if (contract?.permissions?.contents !== 'read' || contract?.permissions?.pull_requests !== 'write') findings.push(finding('pr-permissions-invalid', 'draft PR permissions must be contents:read and pull_requests:write', file));
+  const permissionKeys = Object.keys(requiredObject(contract?.permissions) ? contract.permissions : {}).sort();
+  if (contract?.permissions?.contents !== 'read' || contract?.permissions?.pull_requests !== 'write' || sha256Object(permissionKeys) !== sha256Object(['contents', 'pull_requests'])) findings.push(finding('pr-permissions-invalid', 'draft PR permissions must be exactly contents:read and pull_requests:write', file));
   for (const action of FORBIDDEN_PR_ACTIONS) if (!asArray(contract?.forbidden_actions).includes(action)) findings.push(finding('pr-authority-too-broad', `${action} must remain forbidden`, file));
   if (contract?.authorization?.required !== true || contract?.authorization?.provider !== 'external_receipt' || !contract?.authorization?.gate_id) findings.push(finding('pr-authorization-missing', 'draft creation requires an external authorization receipt gate', file));
+  if (!SAFE_REFERENCE_PATTERN.test(contract?.authorization?.gate_id || '') || isPlaceholder(contract?.authorization?.gate_id)) findings.push(finding('pr-authorization-missing', 'authorization.gate_id must be a concrete logical gate reference', file));
+  if (typeof contract?.title !== 'string' || !contract.title.trim() || /[\r\n]/.test(contract.title) || (!allowPlaceholders && isPlaceholder(contract.title))) findings.push(finding('pr-title-invalid', 'title must be one concrete single-line value', file));
+  const baseRefPlaceholder = allowPlaceholders && isPlaceholder(contract?.base_ref);
+  if (!baseRefPlaceholder && (!/^[A-Za-z0-9][A-Za-z0-9._/-]{0,199}$/.test(contract?.base_ref || '') || String(contract?.base_ref).includes('..') || isPlaceholder(contract?.base_ref))) findings.push(finding('pr-base-ref-invalid', 'base_ref must be a concrete safe Git ref', file));
+  if (!ENV_REFERENCE_PATTERN.test(contract?.head_ref_from || '')) findings.push(finding('pr-head-ref-source-invalid', 'head_ref_from must name one environment variable', file));
   if (!validReferencePath(contract?.body_path)) findings.push(finding('pr-body-path-invalid', 'body_path must be a safe repository-relative path', file));
   for (const key of ['body_path', 'spec_ref', 'technical_plan_ref', 'acceptance_matrix_ref']) {
     if (!validReferencePath(contract?.[key])) findings.push(finding('pr-reference-path-invalid', `${key} must be repository-relative`, file));
@@ -685,9 +777,11 @@ export function validatePrDraft(contract, ci = null, { file = 'pr-draft.yaml', a
   }
   if (typeof contract?.replay_command !== 'string' || !contract.replay_command.trim() || /[\r\n]/.test(contract.replay_command) || (!allowPlaceholders && isPlaceholder(contract.replay_command))) findings.push(finding('pr-replay-command-invalid', 'replay_command must be one concrete single-line command', file));
   if (!Array.isArray(contract?.required_checks) || contract.required_checks.length === 0) findings.push(finding('pr-required-check-missing', 'required_checks must not be empty', file));
+  if (new Set(asArray(contract?.required_checks)).size !== asArray(contract?.required_checks).length) findings.push(finding('pr-required-check-duplicate', 'required_checks must not contain duplicates', file));
   if (ci) {
     const checks = new Set(asArray(ci.checks).filter((check) => check.required === true).map((check) => check.id));
     for (const id of checks) if (!asArray(contract?.required_checks).includes(id)) findings.push(finding('pr-required-check-missing', `${id} is required by CI but absent from the PR contract`, file));
+    for (const id of asArray(contract?.required_checks)) if (!checks.has(id)) findings.push(finding('pr-required-check-unplanned', `${id} is not a required CI check`, file));
   }
   return findings;
 }
