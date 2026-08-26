@@ -9,7 +9,7 @@ import { SHA_PATTERN, asArray, isWithin, parseArgs, printResult, sha256File } fr
 import { readData } from '../../lib/factory-delivery/files.mjs';
 import { currentHead, verifyFileAtRevision } from '../../lib/factory-delivery/provenance.mjs';
 import { validatePlaywrightSource } from './policy.mjs';
-import { validateAcceptancePlan, validateAcceptanceResults, validateEnvironmentObservation } from '../../lib/factory-delivery/validation.mjs';
+import { validateAcceptancePlan, validateAcceptanceResults, validateEnvironment, validateEnvironmentObservation, validateFactoryCi } from '../../lib/factory-delivery/validation.mjs';
 
 const args = parseArgs(process.argv.slice(2));
 const root = path.resolve(args.root || process.cwd());
@@ -29,27 +29,37 @@ function resolvePlaywrightCli() {
 }
 
 try {
-  for (const required of ['plan', 'environment', 'observation', 'config', 'subject-sha', 'run-id']) if (!args[required]) throw new Error(`--${required} is required`);
+  for (const required of ['plan', 'environment', 'ci', 'observation', 'config', 'subject-sha', 'run-id']) if (!args[required]) throw new Error(`--${required} is required`);
   if (!SHA_PATTERN.test(args['subject-sha'])) throw new Error('--subject-sha must be a full 40-hex SHA');
   const planFile = path.resolve(root, args.plan);
   const environmentFile = path.resolve(root, args.environment);
+  const ciFile = path.resolve(root, args.ci);
   const observationFile = path.resolve(root, args.observation);
   const configFile = path.resolve(root, args.config);
   const plan = readData(planFile);
   const environment = readData(environmentFile);
+  const ci = readData(ciFile);
   const observation = readData(observationFile);
   const profile = asArray(environment?.profiles).find((candidate) => candidate?.id === plan?.environment_profile);
   const planDigest = sha256File(planFile);
   const environmentDigest = sha256File(environmentFile);
-  const findings = validateAcceptancePlan(plan, { file: args.plan, root, checkFiles: true });
-  findings.push(...validateEnvironmentObservation(observation, { provenanceWaiver: plan?.subject?.provenance_waiver || null, environment }));
+  const ciDigest = sha256File(ciFile);
+  const findings = [
+    ...validateFactoryCi(ci, { file: args.ci, root, checkPipelineFile: true }),
+    ...validateEnvironment(environment, ci, { file: args.environment }),
+    ...validateAcceptancePlan(plan, { file: args.plan, root, checkFiles: true }),
+  ];
+  findings.push(...validateEnvironmentObservation(observation, { provenanceWaiver: plan?.subject?.provenance_waiver || null, environment, ci }));
   if (observation?.run_id !== args['run-id']) findings.push({ severity: 'P0', code: 'playwright-observation-run-mismatch', message: 'observation run_id differs from --run-id' });
   if (observation?.subject_sha?.toLowerCase() !== args['subject-sha'].toLowerCase()) findings.push({ severity: 'P0', code: 'playwright-observation-sha-mismatch', message: 'observation subject differs from --subject-sha' });
   if (observation?.environment_contract_digest !== environmentDigest) findings.push({ severity: 'P0', code: 'playwright-environment-digest-mismatch', message: 'observation environment digest differs from the supplied contract' });
+  if (observation?.ci_contract_digest !== ciDigest) findings.push({ severity: 'P0', code: 'playwright-ci-digest-mismatch', message: 'observation CI digest differs from the supplied contract' });
   if (currentHead(root) !== args['subject-sha'].toLowerCase()) findings.push({ severity: 'P0', code: 'playwright-working-revision-mismatch', message: 'repository HEAD differs from the frozen subject SHA' });
   if (plan?.campaign?.adapter !== 'playwright') findings.push({ severity: 'P0', code: 'playwright-adapter-not-selected', message: 'acceptance plan does not select the Playwright adapter' });
   if (!profile) findings.push({ severity: 'P0', code: 'playwright-environment-profile-missing', message: 'planned environment profile is absent from the environment contract' });
   if (profile?.endpoint?.not_applicable === true) findings.push({ severity: 'P0', code: 'playwright-endpoint-missing', message: 'Playwright requires a concrete preflighted endpoint' });
+  if (profile?.endpoint?.base_url_from && !process.env[profile.endpoint.base_url_from]) findings.push({ severity: 'P0', code: 'playwright-base-url-missing', message: `runtime environment is missing ${profile.endpoint.base_url_from}` });
+  for (const ref of asArray(profile?.auth?.secret_refs)) if (!process.env[ref]) findings.push({ severity: 'P0', code: 'playwright-secret-reference-missing', message: `runtime environment is missing declared secret reference ${ref}` });
   const ephemeralStorageState = process.env.FACTORY_EPHEMERAL_STORAGE_STATE;
   if (ephemeralStorageState) {
     const storagePath = path.resolve(ephemeralStorageState);
@@ -63,7 +73,7 @@ try {
     }
   }
   if (!fs.existsSync(configFile)) findings.push({ severity: 'P0', code: 'playwright-config-missing', message: `config does not exist: ${args.config}` });
-  for (const file of [planFile, environmentFile, configFile, ...asArray(plan.cases).map((testCase) => path.resolve(root, testCase.test_ref.path))]) {
+  for (const file of [planFile, environmentFile, ciFile, configFile, ...asArray(plan.cases).map((testCase) => path.resolve(root, testCase.test_ref.path))]) {
     if (!fs.existsSync(file)) continue;
     try {
       const revision = verifyFileAtRevision(root, file, args['subject-sha']);
@@ -97,6 +107,10 @@ try {
   const env = {
     ...Object.fromEntries([...allowedEnvironmentNames].filter((key) => Object.hasOwn(process.env, key)).map((key) => [key, process.env[key]])),
     FACTORY_BASE_URL: process.env[profile.endpoint.base_url_from],
+    ...(profile?.data?.not_applicable === true ? {} : {
+      [profile.data.dataset_id_from]: observation.dataset_id,
+      [profile.data.dataset_version_from]: observation.dataset_version,
+    }),
     FACTORY_ACCEPTANCE_PLAN: planFile,
     FACTORY_EVIDENCE_ROOT: evidenceRoot,
     FACTORY_RESULTS_PATH: resultsPath,

@@ -12,7 +12,7 @@
   "dataset_version": "fixture-dataset-v1",
   "auth_actor_type": "service_identity",
   "environment_contract_digest": "sha256:18dfdb68dbc2483f619e8fe5e00f8eb355b6441585dda158653c52d740c2c081",
-  "ci_contract_digest": "sha256:4ee9cfcaee70d2e0bc3465e0d8d285a34e359535c2cc1a5ed066437221485507",
+  "ci_contract_digest": "sha256:f4933e19ad898a4d16f49df55b07bb38b9ae4041eee0487470bd5398a4ef3407",
   "checks": [
     { "id": "fixture-health", "kind": "health", "required": true, "outcome": "pass" },
     { "id": "fixture-revision", "kind": "revision", "required": true, "outcome": "pass" },

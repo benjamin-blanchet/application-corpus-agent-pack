@@ -52,7 +52,7 @@ operations:
     privilege: unprivileged
     side_effect: none
   acceptance-playwright:
-    argv: [node, scripts/adapters/playwright/run.mjs, --plan, <acceptance-plan>, --environment, <environment-contract>, --observation, <environment-observation>, --config, <playwright-config>, --subject-sha, <candidate-sha>, --run-id, <run-id>]
+    argv: [node, scripts/adapters/playwright/run.mjs, --plan, <acceptance-plan>, --environment, <environment-contract>, --ci, doc/project/cicd/FACTORY_CI.yaml, --observation, <environment-observation>, --config, <playwright-config>, --subject-sha, <candidate-sha>, --run-id, <run-id>]
     cwd: .
     timeout_seconds: 1800
     privilege: protected_environment

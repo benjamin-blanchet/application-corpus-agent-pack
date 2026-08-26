@@ -74,7 +74,7 @@ operations:
     privilege: unprivileged
     side_effect: cleanup
   fixture-acceptance:
-    argv: [node, scripts/adapters/playwright/run.mjs]
+    argv: [node, scripts/adapters/playwright/run.mjs, --plan, scripts/fixtures/factory-delivery/acceptance-plan.yaml, --environment, scripts/fixtures/factory-delivery/environment.yaml, --ci, scripts/fixtures/factory-delivery/ci.yaml, --observation, scripts/fixtures/factory-delivery/observation.json, --config, .github/templates/software-factory/acceptance/playwright.config.mjs, --subject-sha, aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, --run-id, fixture-run-001]
     cwd: .
     timeout_seconds: 1800
     privilege: protected_environment

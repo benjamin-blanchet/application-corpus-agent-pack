@@ -46,6 +46,7 @@ try {
   const { manifest, findings } = assembleEvidence({
     plan: readData(planFile),
     environment: readData(environmentFile),
+    ci,
     observation,
     results: readData(resultsFile),
     artifactsRoot,

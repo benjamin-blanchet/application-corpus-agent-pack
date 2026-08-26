@@ -61,7 +61,7 @@ try {
     }),
   ];
 
-  if (args.observation) findings.push(...validateEnvironmentObservation(readData(path.resolve(root, args.observation)), { file: args.observation, environment }));
+  if (args.observation) findings.push(...validateEnvironmentObservation(readData(path.resolve(root, args.observation)), { file: args.observation, environment, ci }));
   if (args.evidence) {
     const evidenceFile = path.resolve(root, args.evidence);
     const manifest = readData(evidenceFile);

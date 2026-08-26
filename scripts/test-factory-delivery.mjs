@@ -8,7 +8,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 import FactoryEvidenceReporter from './adapters/playwright/reporter.mjs';
-import { OUTCOMES, canonicalizeCaseOutcome, sha256Object } from './lib/factory-delivery/core.mjs';
+import { OUTCOMES, canonicalizeCaseOutcome, sha256File, sha256Object } from './lib/factory-delivery/core.mjs';
 import { assembleEvidence } from './lib/factory-delivery/evidence.mjs';
 import { readData } from './lib/factory-delivery/files.mjs';
 import { sourceTreeDigest, verifyEvidenceOnlyCommit } from './lib/factory-delivery/provenance.mjs';
@@ -81,6 +81,7 @@ function buildEvidence({ plan = fixture('acceptance-plan.yaml'), observation = f
   const assembled = assembleEvidence({
     plan,
     environment: fixture('environment.yaml'),
+    ci: fixture('ci.yaml'),
     observation,
     results,
     artifactsRoot,
@@ -375,6 +376,8 @@ test('evidence, report and draft-PR CLIs compose without push or merge capabilit
   const exactObservation = fixture('observation.json');
   exactObservation.subject_sha = exactHead;
   exactObservation.deployed_revision = exactHead;
+  exactObservation.environment_contract_digest = sha256File(path.join(fixtureRoot, 'environment.yaml'));
+  exactObservation.ci_contract_digest = sha256File(path.join(fixtureRoot, 'ci.yaml'));
   const revisionOperation = exactObservation.operations.find((operation) => operation.id === 'fixture-revision');
   revisionOperation.stdout = `${exactHead}\n`;
   const observationFile = path.join(output, 'observation.json');

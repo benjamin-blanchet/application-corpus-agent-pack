@@ -49,7 +49,7 @@ try {
     environmentContractDigest: sha256File(environmentFile),
     ciContractDigest: sha256File(ciFile),
   });
-  const findings = validateEnvironmentObservation(observation, { environment });
+  const findings = validateEnvironmentObservation(observation, { environment, ci });
   if (args.out) writeData(path.resolve(root, args.out), observation);
   const result = {
     title: 'Factory environment preflight',

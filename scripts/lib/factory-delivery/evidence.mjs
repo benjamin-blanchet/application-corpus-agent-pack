@@ -48,6 +48,7 @@ function artifactInput(value, caseId, index) {
 export function assembleEvidence({
   plan,
   environment,
+  ci = null,
   observation,
   results,
   artifactsRoot,
@@ -70,7 +71,7 @@ export function assembleEvidence({
   const planDigest = acceptancePlanPath && fs.existsSync(acceptancePlanPath)
     ? sha256File(acceptancePlanPath)
     : sha256Object(plan);
-  generationFindings.push(...validateEnvironmentObservation(observation, { provenanceWaiver, environment }));
+  generationFindings.push(...validateEnvironmentObservation(observation, { provenanceWaiver, environment, ci }));
   generationFindings.push(...validateAcceptanceResults(results, {
     subjectSha,
     observationRunId: observation?.run_id,

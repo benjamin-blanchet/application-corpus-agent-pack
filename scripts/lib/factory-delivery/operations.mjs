@@ -26,14 +26,14 @@ export function executeOperation(ci, id, {
   const plan = {
     id,
     argv,
-    cwd: operationDirectory.absolute,
+    cwd: operationDirectory.relative || '.',
     timeout_seconds: operation.timeout_seconds,
     side_effect: operation.side_effect,
   };
   if (dryRun) return { ...plan, outcome: 'planned', exit_code: null, stdout: '', stderr: '' };
   const startedAt = new Date().toISOString();
   const result = spawnSync(argv[0], argv.slice(1), {
-    cwd: plan.cwd,
+    cwd: operationDirectory.absolute,
     env,
     encoding: 'utf8',
     timeout: Number(operation.timeout_seconds) * 1000,

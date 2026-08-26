@@ -480,6 +480,7 @@ export function validateEnvironmentObservation(observation, {
   file = 'environment-observation.json',
   provenanceWaiver = null,
   environment = null,
+  ci = null,
 } = {}) {
   const findings = [];
   ensureRequired(observation, ['schema_version', 'run_id', 'observed_at', 'profile', 'subject_sha', 'deployed_revision', 'instance_id', 'build_or_image', 'schema_version_value', 'dataset_id', 'dataset_version', 'auth_actor_type', 'environment_contract_digest', 'ci_contract_digest', 'checks', 'operations', 'status'], 'environment_observation', findings, file);
@@ -534,6 +535,10 @@ export function validateEnvironmentObservation(observation, {
       else {
         if (check.kind !== expected.kind || check.required !== expected.required) findings.push(finding('environment-probe-contract-mismatch', `${id} observation metadata differs from the environment contract`, file));
         if (check.outcome !== operation.outcome) findings.push(finding('environment-probe-contract-mismatch', `${id} check outcome differs from its operation outcome`, file));
+        const declared = ci?.operations?.[id];
+        if (ci && (!declared || sha256Object({ argv: operation.argv, cwd: operation.cwd, timeout_seconds: operation.timeout_seconds, side_effect: operation.side_effect }) !== sha256Object({ argv: declared?.argv, cwd: declared?.cwd || '.', timeout_seconds: declared?.timeout_seconds, side_effect: declared?.side_effect }))) {
+          findings.push(finding('environment-probe-contract-mismatch', `${id} executed operation differs from the frozen CI contract`, file));
+        }
       }
     }
     for (const id of checksById.keys()) if (!expectedChecks.has(id)) findings.push(finding('environment-unplanned-probe', `${id} was not declared by the environment profile`, file));
