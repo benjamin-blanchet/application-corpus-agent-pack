@@ -1,0 +1,74 @@
+version: 1
+default: deny
+capabilities:
+  factory-controller:
+    read: [factory-plan, factory-events, factory-state, work-results, gate-evidence]
+    write: [factory-events, derived-factory-state, controller-lock]
+    execute: [factory-control, deterministic-validation]
+    network: deny
+    git_commit: deny
+    git_push: deny
+    open_pr: deny
+    data_mutation: deny
+  planner:
+    read: [approved-specification, corpus, repository]
+    write: [technical-plan]
+    execute: [read-only-discovery, plan-validation]
+    network: declared-sources-read-only
+    git_commit: deny
+    git_push: deny
+    open_pr: deny
+    data_mutation: deny
+  implementer:
+    read: [work-package-read-paths]
+    write: [work-package-write-claims]
+    execute: [work-package-verification]
+    network: deny-unless-declared
+    git_commit: deny
+    git_push: deny
+    open_pr: deny
+    data_mutation: deny
+  reviewer:
+    read: [approved-contract, exact-diff, verification-evidence]
+    write: [review-result-only]
+    execute: [read-only-review-checks]
+    network: deny
+    git_commit: deny
+    git_push: deny
+    open_pr: deny
+    data_mutation: deny
+  corpus:
+    read: [repository, corpus, verified-change-results]
+    write: [corpus-owned-paths]
+    execute: [corpus-validation]
+    network: declared-sources-read-only
+    git_commit: deny
+    git_push: deny
+    open_pr: deny
+    data_mutation: deny
+  acceptance:
+    read: [candidate, acceptance-plan, environment-contract]
+    write: [acceptance-results, evidence-root]
+    execute: [declared-acceptance-operations]
+    network: environment-allowlist
+    git_commit: deny
+    git_push: deny
+    open_pr: deny
+    data_mutation: approved-test-data-only
+  delivery:
+    read: [release-package, existing-remote-branch]
+    write: [draft-pr-metadata, delivery-result]
+    execute: [factory-pr]
+    network: source-control-provider-only
+    git_commit: deny
+    git_push: deny
+    open_pr: draft-only
+    data_mutation: deny
+forbidden_for_all_agents:
+  - approve_pr
+  - mark_pr_ready
+  - merge_pr
+  - force_push
+  - deploy
+  - change_branch_protection
+  - write_secrets

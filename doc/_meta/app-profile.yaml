@@ -1,3 +1,7 @@
+# This profile declares application identity, consent and durable mappings.
+# Source contracts live in information-sources.yaml; historical evidence lives
+# in source-coverage.yaml; current runtime capability is probed per run and is
+# never stored here.
 application:
   name: unknown
   description: unknown
@@ -66,8 +70,8 @@ notes:
 - `access` (default `auto`) selects how a peer is reached:
   `auto | workspace | github-mcp | clone`. Actual access is performed by skill
   `sources/peer-corpus-access`; reading peers via the GitHub MCP requires the
-  `read_external_corpus` consent flag above and GitHub MCP readiness
-  (`doc/_meta/mcp-readiness.md`). Never store tokens/credentials here.
+  `read_external_corpus` consent flag above and a successful point-in-time
+  `sources/runtime-source-probe`. Never store tokens/credentials here.
 source_control:
   provider: unknown
   default_branch: unknown

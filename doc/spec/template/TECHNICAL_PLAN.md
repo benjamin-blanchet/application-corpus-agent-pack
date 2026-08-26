@@ -10,11 +10,12 @@ last_validated:
 
 <!--
 Created only AFTER explicit human approval of the complete specification, and
-before any implementation change. Three coherent artifacts in this package:
+before any implementation change. Four coherent artifacts in this package:
 
-  TECHNICAL_PLAN.md   this file — rationale, lots, decisions, DAG, review plan
-  technical-plan.yaml machine-readable lots, ownership, contracts, verification
-  factory-state.yaml  current gate, allocation, lot, review and tested-SHA state
+  TECHNICAL_PLAN.md          this file — rationale, lots, decisions, DAG, review plan
+  factory/plan.v3.json       approved machine plan and bounded work packages
+  factory/events.v3.jsonl    canonical append-only event history
+  factory/state.v3.json      deterministic projection rebuilt by the controller
 
 Partition by observable technical outcome, not by repository layer. A lot that
 cannot be verified on its own is not a lot.
@@ -27,7 +28,7 @@ cannot be verified on its own is not a lot.
 
 | ID | Criterion | Covered by |
 |---|---|---|
-| `AC1` | `<...>` | `LOT-n` |
+| `AC-001` | `<...>` | `LOT-n` |
 
 ## Lots
 
@@ -35,17 +36,29 @@ cannot be verified on its own is not a lot.
 
 | Field | Value |
 |---|---|
-| Covers | `AC1, AC3` |
+| Covers | `AC-001, AC-003` |
+| Read paths | `<minimum repository/corpus paths needed>` |
 | Owned paths | `<paths this lot may write, exclusively, for its wave>` |
 | Forbidden paths | `<paths it must not touch>` |
 | Depends on | `<lot ids, or —>` |
 | Risk | `low | medium | high` |
 | Complexity | `bounded | reasoning` |
-| Model role | `advanced | bounded_implementation` |
+| Agent role | `implementer | migration` |
+| Model role | `economy | standard | expert` |
+| Capabilities | `read, write, execute` plus the minimum explicitly justified additions |
 | Verification | `<what proves this lot done>` |
 | Max attempts | `2` |
+| Stop rules | `<contradiction, out-of-claim path, missing input, rising risk, failed attempt>` |
 
 **Contract.** Inputs `<...>` · Outputs `<...>` · Invariants `<...>` · Non-goals `<...>`
+
+**Digest-bound handoff.** Name every input artefact with its path and current
+SHA-256, and every expected output with its owned path. Never include private
+reasoning or a conversation transcript.
+
+If the observed implementation conventions make the outcome unsafe or
+impossible, stop the lot and request the smallest evidenced refactor from the
+operator. Do not broaden the claim or redesign the repository silently.
 
 ## Execution DAG
 
@@ -79,6 +92,9 @@ graph LR
 | Lot review | after each lot verifies, before its result is integrated or consumed | not the implementing worker |
 | Consolidated review | after integration verification, before corpus closeout | fresh context; receives spec, TIP, contracts, diff and test results — not the author's reasoning |
 | Release readiness | after corpus closeout and acceptance | binds every artifact to the frozen tested SHA |
+
+Review and acceptance are typed events owned by fresh-context roles. They are
+not implementation lots and never receive write claims.
 
 ## Verification budget
 

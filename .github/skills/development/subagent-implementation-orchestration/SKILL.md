@@ -22,7 +22,7 @@ shown to work.
 
 ## Preconditions
 
-Before any worker touches code, confirm: the specification has explicit human
+Before any worker touches code, the Controller mechanically confirms: the specification has explicit human
 approval · plan, machine plan and state exist · the operator approved the plan
 and the allocation · the lot is ready in the DAG and owns its paths
 exclusively for this wave · the role is permitted by `development/model-routing`
@@ -33,10 +33,11 @@ If one is missing, do not delegate.
 ## Waves
 
 1. Validate the DAG has no cycle.
-2. A lot is ready only when its dependencies completed and its outputs are
-   available.
+2. A lot is ready only when its dependencies are integrated **and independently
+   reviewed as passed**, and their outputs are available.
 3. Group ready lots into a wave only when their owned path sets are disjoint.
-4. Reserve the owned paths for the whole wave before launching anything.
+4. Append a typed reservation event for the whole wave before launching
+   anything; a prompt is not a lock.
 5. Sequential by default. Parallelism is permitted, never assumed.
 6. Complete the lot review before releasing dependent lots that consume the
    reviewed output.
@@ -46,7 +47,7 @@ an amendment — never by workers agreeing between themselves.
 
 ## Worker contract
 
-Every worker receives a complete, bounded prompt:
+Every worker receives a validated work package and capability contract:
 
 ```markdown
 You own LOT <id> only.
@@ -64,13 +65,14 @@ Expected change and non-goals: <bounded statement>
 Verification to run: <commands or evidence>
 Budget: <attempt and diff limits>
 
-Do not modify the specification, the plan, the state, the journal, or any
+Do not modify the specification, the plan, factory events/state, or any
 unowned path. Do not commit, push, widen scope, choose another model, or
 resolve an ambiguity silently. Stop and escalate with evidence when a trigger
 is met.
 
-Return: changed paths, diff summary, verification results, unresolved issues,
-and the runtime model metadata actually used.
+Return a structured result: base revision, changed paths, diff digest,
+contract outputs, verification ids/evidence, blockers and the runtime model
+metadata actually used. The Controller rejects any unreserved changed path.
 ```
 
 ## Escalation triggers
@@ -102,4 +104,5 @@ verified integration enters consolidated review.
 - One path, one owner, per wave.
 - Workers cannot commit or push.
 - The orchestrator keeps responsibility.
-- Pull request and merge remain human actions, outside this workflow.
+- Draft-PR delivery is a later, separate capability; workers never commit,
+  push, open, approve or merge a pull request.

@@ -105,7 +105,7 @@ Each index should point to canonical files rather than duplicating their content
 
 ## Generic information sources
 
-The pack supports more than predefined tools. Register SQL log databases, APIs, file exports, dashboards, CI/CD data, manual evidence and internal tools in `doc/_meta/information-sources.yaml`. Use `/sources/information-source-onboarding` before using a new source for durable corpus claims.
+The pack supports more than predefined tools. Durable contracts live in `doc/_meta/information-sources.yaml`, historical evidence in `doc/_meta/source-coverage.yaml`, and runtime capability is observed per run.
 
 ## Peer corpora (local workspace and remote git)
 

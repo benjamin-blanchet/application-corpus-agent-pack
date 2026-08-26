@@ -19,9 +19,9 @@
 * [Corpus Generation Plan](generation-plan.md)
 * [Kickstart Progress](kickstart-progress.md) — Use this file as the live operator cockpit during corpus initialization.
 * [Kickstart Report](kickstart-report.md) — This file is filled by the `Corpus` agent during the first kickstart pass.
-* [MCP Readiness](mcp-readiness.md) — Use this file to track whether MCP-backed sources are available to the current IDE agent session.
 * [MCP Source Wizard](mcp-source-wizard.md) — Use this file early in corpus kickstart to inventory standard and custom MCP sources.
 * [Open Questions](open-questions.md)
+* [Source Coverage](source-coverage.yaml) — Historical evidence coverage and freshness by declared source.
 * [Source Inventory](source-inventory.md) — Record the sources used to build or enrich the corpus.
 * [Update Candidates](update-candidates.md) — Two uses for this file:
 * [Corpus Validation Checklist](validation-checklist.md)

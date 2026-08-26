@@ -63,7 +63,7 @@ This shape mirrors the INC-0001 incident pattern: hypothesis-refute-confirm-docu
 
 1. `doc/prod/README.md`
 2. `doc/prod/INDEX.md`
-3. `doc/mcp/INDEX.md` and `doc/_meta/mcp-readiness.md` — verify observability tools are attached before assuming.
+3. `doc/mcp/INDEX.md`, `doc/_meta/information-sources.yaml` and `doc/_meta/source-coverage.yaml` — read durable policy and historical evidence before probing this runtime.
 4. `doc/_meta/app-profile.yaml`
 5. Related feature `OPERATIONS.md` files when available.
 6. `doc/prod/known-bugs/` and `doc/prod/structural-risks/` — do not re-investigate something already captured.
@@ -108,6 +108,6 @@ Use `governance/safe-operation-guardrails` before any high-risk command, broad f
 
 ## Main skills
 
-`exploration/repo-explain` when repository orientation is needed, `exploration/dynatrace-exploration`, `exploration/production-discovery`, `exploration/dynatrace-runtime-architecture`, `exploration/production-temporal-correlation`, `authoring/incident-investigation`, `authoring/analyze-incident`, `sources/mcp-data-reading`, `sources/mcp-readiness-check`, `sources/information-source-onboarding`.
+`exploration/repo-explain` when repository orientation is needed, `exploration/dynatrace-exploration`, `exploration/production-discovery`, `exploration/dynatrace-runtime-architecture`, `exploration/production-temporal-correlation`, `authoring/incident-investigation`, `authoring/analyze-incident`, `sources/mcp-data-reading`, `sources/runtime-source-probe`, `sources/information-source-onboarding`.
 
 Safety skill: `governance/safe-operation-guardrails`.

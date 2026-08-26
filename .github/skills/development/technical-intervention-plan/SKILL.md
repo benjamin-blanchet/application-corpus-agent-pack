@@ -1,7 +1,7 @@
 ---
 name: technical-intervention-plan
 category: development
-description: "Turn an approved specification into TECHNICAL_PLAN.md, technical-plan.yaml and factory-state.yaml: lots partitioned by observable outcome, a DAG, exclusive path ownership, contracts and a review plan. Only after human approval."
+description: "Turn an approved specification into a human TIP and deterministic V3 plan: observable lots, exact/prefix path claims, contracts, model profiles, evidence mappings, DAG and review budget. Only after human approval."
 ---
 
 # Technical Intervention Plan
@@ -9,16 +9,18 @@ description: "Turn an approved specification into TECHNICAL_PLAN.md, technical-p
 ## Purpose
 
 Turn an approved specification into an executable, reviewable contract without
-replacing the human decision-maker. Three coherent artefacts in the same
-package:
+replacing the human decision-maker. V3 separates approved input, canonical
+events and derived state:
 
 | File | Carries |
 |---|---|
 | `TECHNICAL_PLAN.md` | rationale, lots, decisions, DAG, review plan |
-| `technical-plan.yaml` | machine-readable lots, ownership, contracts, verification |
-| `factory-state.yaml` | current gate, allocation, lot and review state, tested SHA |
+| `factory/plan.v3.json` | approved machine-readable criteria, lots, exact/prefix claims, capabilities and verification |
+| `factory/events.v3.jsonl` | append-only typed execution history; created after plan approval |
+| `factory/state.v3.json` | reproducible projection; never edited to advance a gate |
 
-Start from `doc/spec/template/`.
+Legacy `technical-plan.yaml` and `factory-state.yaml` are migration inputs, not
+parallel V3 truth. Start from `doc/spec/template/`.
 
 ## When
 
@@ -58,8 +60,8 @@ verified apart, which is four lots that are really one.
 
 ### 3. Declare each lot
 
-Id and observable objective · criteria covered · technical scopes · allowed and
-forbidden paths · exclusive ownership · dependencies and expected
+Id and observable objective · criteria covered · technical scopes · `exact` or
+`prefix` write claims and forbidden paths · exclusive ownership · dependencies and expected
 inputs/outputs/invariants · **verification** (below) · risk, complexity and
 model profile · execution budget including maximum attempts.
 
@@ -85,9 +87,10 @@ under time pressure, at the gate, alone.
 
 ### 6. DAG and waves
 
-Express dependencies as a DAG. A lot is ready only when its dependencies
-completed and its preconditions hold. Waves group ready, dependency-independent
-and **path-disjoint** lots.
+Express dependencies as a DAG. A lot is ready only when its dependencies were
+integrated and independently reviewed, and its preconditions hold. Waves group
+ready, dependency-independent and **path-disjoint** lots. V3 forbids arbitrary
+globs: repo-relative POSIX `exact` and `prefix` claims make overlap decidable.
 
 ### 7. Record
 
@@ -143,24 +146,25 @@ go-ahead is explicit.
 The operator may change the allocation or the plan. Update state and journal
 rather than silently substituting a model or a scope.
 
-## State transitions
+## Derived phases
 
 ```text
-specification_pending_approval -> specification_approved
--> technical_plan_awaiting_approval
--> implementation_in_progress -> implementation_completed
--> consolidated_review_completed
--> corpus_closed -> acceptance_ready -> acceptance_completed
--> release_ready -> human_merge_pending
+draft -> spec_approved -> plan_approved -> executing -> integrated
+-> consolidated_reviewed -> corpus_closed -> candidate_frozen
+-> acceptance_complete -> evidence_recorded -> release_ready
 ```
 
-An escalation moves the affected lot to `blocked` without advancing the phase.
+These are reducer outputs, never `state_changed` events. Typed events carry
+their input digests; if an input changes, the reducer returns to the latest
+still-valid phase. An escalation moves the affected lot to `blocked` without
+advancing the phase.
 A failed review returns only the necessary work to a bounded lot; it never
 erases journal history.
 
 ## Proportionality
 
-Every package keeps the three artefacts, so tooling stays uniform. A trivial or
+Every package keeps the human TIP, plan and controller artefacts, so tooling
+stays uniform. A trivial or
 small change may use one sequential lot, one wave and a minimal contract. It
 may **not** omit approval, ownership, verification, model traceability or the
-final tested-SHA gate — those are what make the record worth having.
+final candidate/tested-SHA gate — those are what make the record worth having.

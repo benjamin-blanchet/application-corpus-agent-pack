@@ -1,0 +1,44 @@
+# DEMO DATA — historical observations only.
+schema_version: 1
+coverage:
+  - source_id: repository
+    status: covered
+    freshness: fresh
+    last_successful_observation_at: 2026-05-30T10:00:00Z
+    last_successful_run: demo-2026-05-30
+    evidence_refs: [doc/_meta/repository-map.yaml]
+    limitations: []
+    blockers: []
+    targets:
+      - id: tree-inventory
+        status: covered
+        evidence_refs: [doc/_meta/repository-map.yaml]
+
+  - source_id: jira
+    status: covered
+    freshness: stale
+    last_successful_observation_at: 2026-05-30T10:15:00Z
+    last_successful_run: demo-2026-05-30
+    evidence_refs: [doc/project/activity/PROJECT_TRAJECTORY.md]
+    limitations: [Demo evidence]
+    blockers: []
+    targets:
+      - id: recent-and-active-issues
+        status: covered
+        evidence_refs: [doc/project/activity/PROJECT_TRAJECTORY.md]
+
+  - source_id: dynatrace
+    status: partial
+    freshness: stale
+    last_successful_observation_at: 2026-05-30T10:30:00Z
+    last_successful_run: demo-2026-05-30
+    evidence_refs: [doc/prod/RUNTIME_ARCHITECTURE.md]
+    limitations: [Fictional bounded demo sample]
+    blockers: []
+    targets:
+      - id: runtime-entity-mapping
+        status: covered
+        evidence_refs: [doc/prod/RUNTIME_ARCHITECTURE.md]
+      - id: signals-and-dependencies
+        status: partial
+        evidence_refs: [doc/prod/RUNTIME_ARCHITECTURE.md]

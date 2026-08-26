@@ -48,7 +48,8 @@ stated plainly; the debugging that produced them is not.
 |---|---|
 | Project | `<name>` |
 | Version | `<application version>` |
-| Tested SHA | `<full tested_code_sha>` |
+| Candidate / tested SHA | `<full candidate_sha> / <full tested_sha>` |
+| Evidence manifest | `<run id, ref and digest>` |
 | Environment | `<non-production environment id>` |
 | Build / image | `<identity, or justified n/a>` |
 | Schema / dataset | `<identity>` |
@@ -71,11 +72,16 @@ error. An artefact that needs explaining is not evidence.
 
 ## Failing cases
 
-A failing case is reported as failing, with its id and its expected result.
+Every case reports one normalized result: `passed`, `failed`, `blocked`,
+`skipped` or `waived`. A waiver names its reason, approver and date. A failing
+case is reported as failing, with its id and its expected result.
 Nothing more. **The report says a case failed; the journal says why, and what
 was done about it.**
 
-Removing a failing case to keep the report clean is falsification, not tidiness.
+A user-visible error is never passed, even when an earlier mutation succeeded.
+Removing or aggregating away a failing/blocked/skipped/flaky case to keep the
+report clean is falsification, not tidiness. Totals are generated from results,
+not typed by the report author.
 
 ## Automation
 

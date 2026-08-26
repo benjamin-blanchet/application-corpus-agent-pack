@@ -1,0 +1,20 @@
+version: 1
+provider: github
+draft: true
+title: <ticket> - <observable outcome>
+base_ref: <approved-base-branch>
+head_ref_from: FACTORY_HEAD_REF
+body_path: doc/spec/<version>/<ticket>/PR_DESCRIPTION.md
+spec_ref: doc/spec/<version>/<ticket>/SPECIFICATION.md
+technical_plan_ref: doc/spec/<version>/<ticket>/technical-plan.yaml
+acceptance_matrix_ref: doc/spec/<version>/<ticket>/acceptance-plan.yaml
+replay_command: "node scripts/adapters/playwright/run.mjs --plan doc/spec/<version>/<ticket>/acceptance-plan.yaml --environment doc/project/runtime/ENVIRONMENTS.yaml --observation <run-observation> --config doc/spec/<version>/<ticket>/acceptance/playwright.config.mjs --subject-sha <candidate-sha> --run-id <run-id>"
+required_checks: [factory-policy, factory-acceptance]
+authorization:
+  required: true
+  provider: external_receipt
+  gate_id: draft-pr
+permissions:
+  contents: read
+  pull_requests: write
+forbidden_actions: [push, approve, mark_ready, merge, force_push]

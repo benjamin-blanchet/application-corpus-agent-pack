@@ -22,15 +22,18 @@ need
   -> complete specification
   -> briefing in chat
   -> ⛔ specification approval          human
-  -> plan + machine plan + state
+  -> plan + machine plan
   -> ⛔ plan and allocation go-ahead    human
-  -> bounded lots + lot reviews
+  -> controller event log + derived state
+  -> reserved bounded lots + lot reviews
   -> integration + deterministic verification
   -> consolidated review in fresh context
   -> corpus closeout (delta merged)
-  -> acceptance on a frozen SHA
+  -> freeze candidate SHA
+  -> acceptance + evidence on that candidate
   -> ⛔ release readiness
-  -> ⛔ pull request and merge          human
+  -> authorised draft PR               delivery
+  -> ⛔ review and merge                 human
 ```
 
 Each arrow is a gate: the upstream role produces an artefact, the downstream
@@ -53,31 +56,35 @@ remains · the routing preflight is recorded.
 ## Gate 2 — implementation authorisation
 
 Before any worker touches code: specification approval is recorded · plan,
-machine plan and state exist · every criterion maps to a bounded lot **and** to
+machine plan exists · every criterion maps to a bounded lot **and** to
 what will prove it · the DAG, exclusive paths, contracts, budgets and
 escalation triggers validate · the allocation is operator-confirmed and
-journaled · the review budget fits the remaining capacity, or the operator
+journaled · the capability contract is deny-by-default · the Controller
+initialized the event log and derived state · the review budget fits the
+remaining capacity, or the operator
 accepted the queue explicitly.
 
 ## Gate 3 — developer → acceptance
 
 Upstream delivers: all lots integrated and deterministically verified · all lot
 reviews and the consolidated review clean · corpus closeout complete with the
-delta merged · the exact full `tested_code_sha` frozen and recorded ·
+delta merged · the exact full `candidate_sha` frozen and recorded ·
 `SPECIFICATION.md` reflecting the integrated behaviour · `TESTS.md` enumerating
 the acceptance cases · a target non-production environment, explicitly named · environment, build, schema, dataset and script
-identities · declared expected mutations and side effects.
+identities · declared expected mutations and side effects · current environment
+and CI contracts · capability-limited acceptance work package.
 
-Downstream checks: the full SHA exists and matches what is deployed · the
+Downstream checks: the full candidate SHA exists and matches what is deployed · the
 application is reachable on the target · the case list is loaded.
 
 **A missing, abbreviated or mismatched SHA blocks the handoff.** Never infer it
 from a branch, a date or a pull request.
 
-## Gate 4 — release readiness → human
+## Gate 4 — release readiness → Delivery → human
 
-Evidence complete for one exact revision. The verdict authorises a person to
-act; it never performs the action.
+Evidence complete for one exact revision. Delivery may create/update only the
+declared draft PR after explicit authority; a person still reviews, marks ready
+and merges. Neither verdict nor draft creation authorises merge/deploy.
 
 ## Rules
 

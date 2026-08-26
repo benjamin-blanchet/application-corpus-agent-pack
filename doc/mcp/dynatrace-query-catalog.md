@@ -18,7 +18,7 @@ The exact syntax depends on the Dynatrace MCP tools exposed to the IDE session. 
 
 | Input | Required | How to obtain |
 |---|---|---|
-| Environment / tenant | yes | MCP readiness smoke test or operator |
+| Environment / tenant | yes | Runtime source probe or operator evidence |
 | Application/service search names | yes | repo name, app profile, operator |
 | Entity ids | preferred | entity discovery query |
 | Tags / management zones | preferred | entity discovery query |

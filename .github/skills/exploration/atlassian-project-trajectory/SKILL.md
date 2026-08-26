@@ -24,12 +24,12 @@ Use this skill when:
 - Confluence may contain architecture, incident, roadmap or dependency pages outside the declared space;
 - a critical/high brick is not actionable because intent, ownership, dependency context or active roadmap is unclear.
 
-If Jira/Confluence is expected but tools are not attached to the current IDE agent/session, run `sources/mcp-readiness-check`, ask a blocking question and do not silently continue with repository-only evidence.
+If Jira/Confluence is required but the declared transport is unusable in this runtime, run `sources/runtime-source-probe`, ask a blocking question and do not silently continue with repository-only evidence.
 
 ## Mandatory reads
 
 1. `doc/_meta/app-profile.yaml`
-2. `doc/_meta/mcp-readiness.md`
+2. `doc/_meta/information-sources.yaml` and `doc/_meta/source-coverage.yaml`
 3. `doc/_meta/discovery-coverage.md`
 4. `doc/_meta/brick-inventory.yaml`
 5. `doc/mcp/atlassian.md`
@@ -41,7 +41,7 @@ If Jira/Confluence is expected but tools are not attached to the current IDE age
 ## Required behavior
 
 1. Announce an Atlassian MCP checkpoint before querying.
-2. Verify Jira and/or Confluence tools are attached to the current IDE agent/session.
+2. Run `sources/runtime-source-probe` and verify the required Jira and/or Confluence capabilities in this runtime.
 3. Build a search dictionary from evidence-backed names:
    - repository name;
    - product/application names;

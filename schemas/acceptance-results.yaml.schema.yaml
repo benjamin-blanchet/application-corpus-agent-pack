@@ -1,0 +1,16 @@
+# Schema for adapter-produced acceptance results. Results are generated, never
+# authored as assertions of success.
+file_pattern: doc/spec/*/*/acceptance/runs/*/results.json
+written_by_skill: development/factory-acceptance
+description: |
+  Binds one complete adapter campaign to the candidate, plan, environment
+  observation, exact test cases, evidence checkpoints, mutations and toolchain.
+must_not_be_markdown: true
+root:
+  required_keys: [schema_version, run_id, candidate_sha, plan_digest, environment_digest, observation_run_id, overall_status, toolchain, cases, mutations]
+enums:
+  overall_status: [passed, failed, blocked]
+case:
+  required_keys: [id, title, outcome, attempts, oracle_results, evidence]
+mutation:
+  required_keys: [id, outcome, cleanup]

@@ -19,6 +19,7 @@ Record the sources used to build or enrich the corpus.
 
 ## Registry
 
-Detailed source profiles, allowed uses and safety constraints are maintained in `doc/_meta/information-sources.yaml`.
+Durable source profiles, transports, allowed uses and safety constraints are maintained in `doc/_meta/information-sources.yaml`. Historical evidence and freshness are maintained separately in `doc/_meta/source-coverage.yaml`.
 
 A source must be registered there before agents rely on it for durable corpus claims.
+Current runtime visibility is deliberately absent from both files; probe it immediately before use.

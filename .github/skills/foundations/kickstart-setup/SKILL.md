@@ -52,4 +52,4 @@ Prefer small canonical files and indexes over large monolithic documents.
 
 ## Optional connected-source discovery during setup
 
-When Jira/work tracking, Git/source-control, PR or CI sources are available, prepare `exploration/project-activity-discovery` and record source availability. When unavailable, mark the discovery as unavailable and list missing access or mappings. Do not invent project activity state.
+When Jira/work tracking, Git/source-control, PR or CI sources are declared, initialize historical coverage and prepare `exploration/project-activity-discovery`. Probe the required transport immediately before use; when unusable in this run, record the current-run impact and missing access or mappings without changing the durable source contract. Do not invent project activity state.

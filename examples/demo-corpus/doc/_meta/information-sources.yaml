@@ -1,143 +1,80 @@
-# Register every non-repository information source that agents may use.
-# The goal is to make source consumption explicit, safe, repeatable and auditable.
-# A source can be an MCP connector, SQL database, log database, API, file export,
-# object storage bucket, dashboard, wiki, ticketing tool or manual evidence package.
-
-information_sources:
+# DEMO DATA — durable source contracts, never current runtime availability.
+schema_version: 2
+sources:
   - id: repository
-    name: Local repository files
+    name: Demo repository files
     category: code
-    status: available
-    consumption:
-      method: local-filesystem
-      entrypoint: local workspace
-      access_mode: read-only
-    allowed_uses:
-      - stack-discovery
-      - code-navigation
-      - impact-analysis
-      - implementation-context
-    restrictions:
-      - Do not modify source code during corpus kickstart.
-    evidence_rules:
-      record_queries: false
-      record_time_window: false
-      record_limitations: true
-    owner: unknown
-    notes: Fill during kickstart.
+    lifecycle: declared
+    requirement: required
+    mapping_state: known
+    mapping_refs: [local-workspace]
+    transport_semantics: alternative
+    transports:
+      - id: local-filesystem
+        method: local-filesystem
+        access_mode: read-only
+        required_tools: []
+        safe_probe: list-repository-root
+        safe_limit: 200
+        priority: 1
+        fallback: false
+        consent: not_required
+    allowed_uses: [stack-discovery, code-navigation, impact-analysis]
+    restrictions: [Read-only during discovery]
+    evidence_rules: [record-paths, record-limitations]
+    freshness_max_days: 0
+    operational_doc: doc/_meta/source-inventory.md
+    owner: demo-team
+    notes: Fictional demo contract.
 
-  - id: jira_mcp
-    name: Jira via Atlassian MCP
+  - id: jira
+    name: Demo Jira
     category: project-activity
-    status: unknown
-    consumption:
-      method: mcp
-      server: atlassian
-      tools_attached_to_agent: unknown
-      access_mode: read-only
-    allowed_uses:
-      - project-activity-discovery
-      - ticket-context
-      - impact-analysis
-    restrictions:
-      - Read-only only during kickstart.
-      - Do not transition, assign, comment on or bulk edit tickets.
-      - Do not use contributor activity for individual performance scoring.
-    readiness:
-      file: doc/_meta/mcp-readiness.md
-      required_status_for_durable_claims: available
-    evidence_rules:
-      record_queries: true
-      record_time_window: true
-      record_filters: true
-      record_limitations: true
-    owner: unknown
-    notes: Verify MCP server, tool attachment and project key mapping before use.
+    lifecycle: declared
+    requirement: optional
+    mapping_state: known
+    mapping_refs: [DEMO]
+    transport_semantics: alternative
+    transports:
+      - id: atlassian-mcp
+        method: mcp
+        access_mode: read-only
+        required_tools: [jira]
+        safe_probe: list-accessible-projects
+        safe_limit: 10
+        priority: 1
+        fallback: false
+        consent: not_required
+    allowed_uses: [project-activity-discovery, ticket-context]
+    restrictions: [No ticket mutation]
+    evidence_rules: [record-query, record-time-window, record-limitations]
+    freshness_max_days: 30
+    operational_doc: doc/mcp/atlassian.md
+    owner: demo-team
+    notes: Fictional demo contract; runtime access is intentionally absent.
 
-  - id: confluence_mcp
-    name: Confluence via Atlassian MCP
-    category: documentation
-    status: unknown
-    consumption:
-      method: mcp
-      server: atlassian
-      tools_attached_to_agent: unknown
-      access_mode: read-only
-    allowed_uses:
-      - documentation-discovery
-      - business-rule-evidence
-      - architecture-context
-    restrictions:
-      - Read-only only during kickstart.
-      - Do not publish, edit or bulk update pages.
-      - Do not treat outdated pages as confirmed truth without reconciliation.
-    readiness:
-      file: doc/_meta/mcp-readiness.md
-      required_status_for_durable_claims: available
-    evidence_rules:
-      record_queries: true
-      record_time_window: false
-      record_filters: true
-      record_limitations: true
-    owner: unknown
-    notes: Verify MCP server, tool attachment and space/app mapping before use.
-
-  - id: dynatrace_mcp
-    name: Dynatrace via MCP
+  - id: dynatrace
+    name: Demo Dynatrace
     category: metrics
-    status: unknown
-    consumption:
-      method: mcp
-      server: dynatrace
-      tools_attached_to_agent: unknown
-      access_mode: read-only
-    allowed_uses:
-      - production-discovery
-      - incident-investigation
-      - reliability-baseline
-    restrictions:
-      - Read-only only during kickstart.
-      - Do not change dashboards, tags, settings, monitors, alerts or runtime state.
-      - Do not infer production health if Dynatrace is unavailable.
-    readiness:
-      file: doc/_meta/mcp-readiness.md
-      required_status_for_durable_claims: available
-    evidence_rules:
-      record_queries: true
-      record_time_window: true
-      record_filters: true
-      record_limitations: true
-    owner: unknown
-    notes: Verify MCP server, tool attachment and entity/environment mapping before use.
-
-  - id: mariadb_logs_example
-    name: MariaDB log database example
-    category: production-logs
-    status: template
-    consumption:
-      method: sql
-      engine: mariadb
-      connection: unknown
-      access_mode: read-only
-    allowed_uses:
-      - production-discovery
-      - incident-investigation
-      - known-bug-detection
-      - structural-risk-detection
-    restrictions:
-      - SELECT-only queries.
-      - No INSERT, UPDATE, DELETE, DROP, TRUNCATE, ALTER or stored procedure execution.
-      - No full-table scans without explicit row limit and time window.
-      - No personal-data extraction unless explicitly required and approved by the team.
-    safety:
-      require_limit: true
-      require_time_window: true
-      max_rows_default: 500
-      destructive_actions_allowed: false
-    evidence_rules:
-      record_queries: true
-      record_time_window: true
-      record_filters: true
-      record_limitations: true
-    owner: unknown
-    notes: Replace this template entry with the team's real log database profile when applicable.
+    lifecycle: declared
+    requirement: optional
+    mapping_state: known
+    mapping_refs: [demo-production]
+    transport_semantics: alternative
+    transports:
+      - id: dynatrace-mcp
+        method: mcp
+        access_mode: read-only
+        required_tools: [dynatrace]
+        safe_probe: list-accessible-environments
+        safe_limit: 10
+        priority: 1
+        fallback: false
+        consent: not_required
+    allowed_uses: [production-discovery, incident-investigation]
+    restrictions: [No runtime or dashboard mutation]
+    evidence_rules: [record-query, record-time-window, record-limitations]
+    freshness_max_days: 7
+    operational_doc: doc/mcp/dynatrace.md
+    owner: demo-team
+    notes: Fictional demo contract; runtime access is intentionally absent.

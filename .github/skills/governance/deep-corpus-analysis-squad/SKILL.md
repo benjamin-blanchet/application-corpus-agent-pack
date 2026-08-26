@@ -30,15 +30,15 @@ Use this skill:
 
 - on every primary application repository kickstart;
 - after pack structure is verified;
-- after MCP/source wizard and readiness checks;
+- after source inventory, durable registration and required runtime probes;
 - before declaring the initial corpus ready for broad adoption.
 
 ## Mandatory first reads
 
 1. `doc/_meta/discovery-coverage.md`
-2. `doc/_meta/blocking-questions.md`
-3. `doc/_meta/mcp-source-wizard.md`
-4. `doc/_meta/mcp-readiness.md`
+2. `doc/_meta/source-coverage.yaml`
+3. `doc/_meta/blocking-questions.md`
+4. `doc/_meta/mcp-source-wizard.md`
 5. `doc/_meta/information-sources.yaml`
 6. `doc/_meta/deep-analysis-plan.md`
 7. `doc/_meta/kickstart-progress.md`

@@ -1,0 +1,130 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://application-corpus.dev/schemas/factory/v3/event.schema.json",
+  "title": "Software Factory V3 event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["v", "run_id", "seq", "event_id", "type", "at", "controller_id", "expected_previous_seq", "previous_event_sha256", "actor", "subject", "basis", "data"],
+  "properties": {
+    "v": { "const": 3 },
+    "run_id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$" },
+    "seq": { "type": "integer", "minimum": 1 },
+    "event_id": { "type": "string", "pattern": "^EVT-[0-9]{6,}$" },
+    "type": {
+      "enum": [
+        "package_initialized", "legacy_v1_imported",
+        "spec_proposed", "spec_approved", "plan_proposed", "plan_approved", "execution_policy_resolved",
+        "wave_reserved", "lot_started", "lot_result_reported", "lot_reviewed", "lot_integrated", "lot_blocked", "reservation_released",
+        "integration_verified", "consolidated_reviewed", "corpus_closed", "candidate_frozen",
+        "acceptance_started", "acceptance_completed", "acceptance_waived", "evidence_committed", "release_reviewed",
+        "draft_pr_planned", "draft_pr_created", "artifact_change_observed", "controller_recovery_approved"
+      ]
+    },
+    "at": { "type": "string", "format": "date-time" },
+    "controller_id": { "type": "string", "minLength": 1 },
+    "expected_previous_seq": { "type": "integer", "minimum": 0 },
+    "previous_event_sha256": { "oneOf": [{ "const": "GENESIS" }, { "type": "string", "pattern": "^[0-9a-f]{64}$" }] },
+    "actor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "execution_id", "model", "capabilities"],
+      "properties": {
+        "role": { "enum": ["controller", "implementer", "reviewer", "acceptance", "delivery", "migration"] },
+        "execution_id": { "type": "string", "minLength": 1 },
+        "capabilities": {
+          "type": "array",
+          "items": { "enum": ["read", "write", "execute", "network", "open_pr", "data_mutation"] },
+          "uniqueItems": true
+        },
+        "model": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["planned", "requested", "used"],
+          "properties": {
+            "planned": { "type": ["string", "null"] },
+            "requested": { "type": ["string", "null"] },
+            "used": { "type": ["string", "null"] }
+          }
+        }
+      }
+    },
+    "subject": { "type": "object", "additionalProperties": false, "required": ["package", "lot_id"], "properties": { "package": { "type": "string", "minLength": 1 }, "lot_id": { "type": ["string", "null"] } } },
+    "basis": { "type": "object", "additionalProperties": false, "properties": { "spec_sha256": { "type": ["string", "null"], "pattern": "^[0-9a-f]{64}$" }, "plan_sha256": { "type": ["string", "null"], "pattern": "^[0-9a-f]{64}$" }, "candidate_sha": { "type": ["string", "null"], "pattern": "^([0-9a-f]{40}|[0-9a-f]{64})$" }, "diff_sha256": { "type": ["string", "null"], "pattern": "^[0-9a-f]{64}$" } } },
+    "data": { "type": "object" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "type": { "const": "draft_pr_planned" } }, "required": ["type"] },
+      "then": { "properties": { "data": { "$ref": "#/$defs/draftPrPlan" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "draft_pr_created" } }, "required": ["type"] },
+      "then": { "properties": { "data": { "$ref": "#/$defs/draftPrResult" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "evidence_committed" } }, "required": ["type"] },
+      "then": { "properties": { "data": { "$ref": "#/$defs/evidencePublication" } } }
+    }
+  ],
+  "$defs": {
+    "draftActions": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "enum": ["open_draft_pr", "update_draft_pr"] }
+    },
+    "draftPrPlan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["draft", "actions", "candidate_sha", "payload_sha256"],
+      "properties": {
+        "draft": { "const": true },
+        "actions": { "$ref": "#/$defs/draftActions" },
+        "candidate_sha": { "type": "string", "pattern": "^([0-9a-f]{40}|[0-9a-f]{64})$" },
+        "payload_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      }
+    },
+    "draftPrResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["draft", "actions", "candidate_sha", "pr_url"],
+      "properties": {
+        "draft": { "const": true },
+        "actions": { "$ref": "#/$defs/draftActions" },
+        "candidate_sha": { "type": "string", "pattern": "^([0-9a-f]{40}|[0-9a-f]{64})$" },
+        "pr_url": { "type": "string", "pattern": "^https://" }
+      }
+    },
+    "evidencePublication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evidence_manifest_path", "evidence_manifest_sha256", "publication"],
+      "properties": {
+        "evidence_manifest_path": { "type": "string", "minLength": 1 },
+        "evidence_manifest_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "evidence_sha": { "type": "string", "pattern": "^([0-9a-f]{40}|[0-9a-f]{64})$" },
+        "publication": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode"],
+          "properties": {
+            "mode": { "enum": ["ci_artifact", "evidence_only_commit"] },
+            "artifact_locator": { "type": "string", "minLength": 1 },
+            "artifact_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+            "media_type": { "type": "string", "minLength": 1 }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "publication": { "properties": { "mode": { "const": "ci_artifact" } }, "required": ["mode"] } } },
+          "then": {
+            "not": { "required": ["evidence_sha"] },
+            "properties": { "publication": { "required": ["mode", "artifact_locator", "artifact_digest", "media_type"] } }
+          },
+          "else": { "required": ["evidence_sha"] }
+        }
+      ]
+    }
+  }
+}

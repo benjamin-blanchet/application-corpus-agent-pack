@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "observed_at": "2026-08-26T12:00:00+02:00",
+  "surface": "fixture-required-source",
+  "run_id": "fixture-required-source",
+  "observations": [
+    {
+      "source_id": "repository",
+      "transport_id": "local-filesystem",
+      "state": "not_visible",
+      "observed_tools": [],
+      "probe": {
+        "operation": "list-repository-root",
+        "outcome": "not_run",
+        "limitation": "workspace not mounted",
+        "limit": null,
+        "observed_count": null
+      }
+    }
+  ]
+}

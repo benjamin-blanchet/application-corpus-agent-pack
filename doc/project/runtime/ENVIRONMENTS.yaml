@@ -1,0 +1,46 @@
+version: 1
+profiles:
+  - id: local-pack
+    kind: local
+    runtime_type: cli
+    automated: true
+    operations:
+      build: pack-build
+      start:
+        not_applicable: true
+        reason: "This repository ships a CLI/documentation pack, not a long-running local server."
+      health:
+        not_applicable: true
+        reason: "Pack health is established by declared validation commands instead of an HTTP probe."
+      stop:
+        not_applicable: true
+        reason: "No persistent process is started by the pack validation workflow."
+      reset:
+        not_applicable: true
+        reason: "Validation uses temporary directories and does not require persistent environment reset."
+      revision_probe: pack-revision
+    endpoint:
+      base_url_from: FACTORY_BASE_URL
+      tls: local_self_signed
+    revision:
+      must_equal_subject_sha: true
+      source: build_manifest
+    dependencies: []
+    auth:
+      mode: service_identity
+      actor_ref: github-actions
+      automated_compatible: true
+      secret_refs: []
+    data:
+      isolation: per_run
+      dataset_id_from: FACTORY_DATASET_ID
+      dataset_version_from: FACTORY_DATASET_VERSION
+      seed_operation: null
+      cleanup_operation: null
+      cleanup_required: false
+    mutation_policy:
+      allowed: []
+      requires_human_approval: false
+    network:
+      policy: deny_by_default
+      destinations_ref: null

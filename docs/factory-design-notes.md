@@ -10,6 +10,30 @@ reader can argue with a decision instead of guessing at it.
 Every measured figure below comes from a published source. Where a claim is a
 design judgement rather than a measurement, it says so.
 
+## V3: instructions became a control plane
+
+The first factory version established the right protocol but still trusted an
+agent to keep its place in that protocol. V3 makes four design judgements from
+the real PGS pilot and keeps them repository-native:
+
+1. **Typed events are truth; state is a projection.** A JSONL hash chain and a
+   pure reducer replace manually edited state booleans. Every approval/review
+   is tied to the digests it actually examined, so later changes make it stale.
+2. **Scheduling is code.** The pure scheduler checks reviewed dependencies,
+   blockers, attempt budgets and exact/prefix path reservations before a worker
+   is spawned. The pilot's dependent lots cannot be launched together again.
+3. **Authority is a capability, not prose.** Controller, implementer, reviewer,
+   corpus, acceptance and delivery have deny-by-default action surfaces. In
+   particular, only Delivery can open a draft PR; no agent can approve/merge.
+4. **Evidence proves one candidate.** Environment, CI and acceptance contracts
+   bind cases, oracles and checksummed artefacts to `candidate_sha`, deployed
+   revision, dataset and build. User-visible errors cannot aggregate to PASS.
+
+The same separation fixes the former persisted MCP availability model: the corpus declares a logical source
+and its transport-neutral requirements; a run probes whichever adapter is
+available locally; historical coverage records what was actually consulted.
+Current workstation availability is never durable application knowledge.
+
 ---
 
 ## What the field agreed on independently
@@ -31,10 +55,11 @@ principles are non-negotiable, and no line of its code parses or enforces
 them. Its own issue tracker carries the predictable consequence: the agent
 loses the constitution from context mid-execution and resumes guessing.
 
-The pack's answer is not a better-worded rule. It is
-`scripts/validate-factory.mjs` — invalid states, code before approval, cyclic
-plans, colliding path ownership, uncovered criteria and inconsistent tested
-SHAs are rejected mechanically, whether or not anyone is reading.
+The pack's answer is not a better-worded rule. It is the factory controller and
+validators — invalid event chains, stale approvals, premature lots, colliding
+path claims, capability violations, uncovered criteria and inconsistent
+candidate/evidence provenance are rejected mechanically, whether or not anyone
+is reading.
 
 **Rules files do not improve correctness.** A controlled study across multiple
 agents and models found that repository context files do not generally improve

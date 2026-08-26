@@ -62,12 +62,18 @@ Confluence-only or Jira-only claims must use `confidence: probable` at most.
 |---|---|---|
 | `corpus` | continuous corpus enrichment, kickstart, adoption material | [.github/agents/corpus.agent.md](.github/agents/corpus.agent.md) |
 | `functional-analyst` | specs, impact analyses, acceptance criteria | [.github/agents/functional-analyst.agent.md](.github/agents/functional-analyst.agent.md) |
+| `planner` | approved technical plans, DAGs and bounded work packages | [.github/agents/planner.agent.md](.github/agents/planner.agent.md) |
 | `developer` | implementation from validated specs | [.github/agents/developer.agent.md](.github/agents/developer.agent.md) |
 | `reliability-analyst` | incident analysis, production knowledge | [.github/agents/reliability-analyst.agent.md](.github/agents/reliability-analyst.agent.md) |
 | `acceptance` | end-to-end validation on a frozen SHA, validation report | [.github/agents/acceptance.agent.md](.github/agents/acceptance.agent.md) |
+| `factory-controller` | event-derived state, scheduling, reservations and role handoffs | [.github/agents/factory-controller.agent.md](.github/agents/factory-controller.agent.md) |
+| `code-reviewer` | fresh-context structured lot and consolidated reviews | [.github/agents/code-reviewer.agent.md](.github/agents/code-reviewer.agent.md) |
+| `delivery` | create/update a draft PR after release readiness | [.github/agents/delivery.agent.md](.github/agents/delivery.agent.md) |
 
 Internal subagents (`corpus-brick-*`) parallelize broad read-only brick
-coverage on behalf of `corpus`. They never own state transitions.
+coverage on behalf of `corpus`. They never own state transitions. Factory
+workers are likewise bounded by a work package and capability contract; only
+`factory-controller` may append factory events and derive factory state.
 
 Roles are selected explicitly on every current surface — the VS Code picker,
 the agents tab on github.com, `/agent` in the GitHub Copilot app, the Copilot
@@ -116,7 +122,8 @@ bounded action. The full kickstart procedure is owned by
 `modes/kickstart` (or the persona's "Operating modes § Kickstart"
 section if the modes/ skills are not yet extracted).
 
-For pack installation, expected outputs, dashboard, MCP readiness,
+For pack installation, expected outputs, dashboard, declared source contracts,
+runtime source probes,
 adoption-rollout playbook → [doc/_agents/operator-onboarding.md](doc/_agents/operator-onboarding.md).
 
 ## Technology neutrality

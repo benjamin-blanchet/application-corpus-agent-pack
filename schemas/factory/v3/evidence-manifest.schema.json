@@ -1,0 +1,223 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://application-corpus.dev/schemas/factory/v3/evidence-manifest.schema.json",
+  "title": "Software Factory V3 projection of the Delivery evidence envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "run_id", "generated_at", "spec_package", "subject", "environment", "toolchain", "acceptance", "publication", "criteria_waivers", "cases", "mutations", "artifacts", "summary", "verdict", "generation_findings"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "run_id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$" },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "spec_package": { "type": "string", "minLength": 1 },
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["head_sha", "tested_sha", "source_tree_digest"],
+      "properties": {
+        "head_sha": { "$ref": "#/$defs/gitSha" },
+        "base_sha": { "$ref": "#/$defs/gitSha" },
+        "tested_sha": { "oneOf": [{ "$ref": "#/$defs/gitSha" }, { "type": "null" }] },
+        "source_tree_digest": { "$ref": "#/$defs/typedSha256" },
+        "evidence_commit_sha": { "$ref": "#/$defs/gitSha" }
+      }
+    },
+    "waiver": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reason", "approved_by", "approved_at"],
+      "properties": {
+        "reason": { "type": "string", "minLength": 1 },
+        "approved_by": { "type": "string", "minLength": 1 },
+        "approved_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "provenance_waiver": { "$ref": "#/$defs/deliveryWaiver" },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile", "contract_digest", "instance_id", "deployed_revision", "build_or_image", "schema_version", "dataset_id", "dataset_version", "auth_actor_type"],
+      "properties": {
+        "profile": { "type": "string", "minLength": 1 },
+        "contract_digest": { "$ref": "#/$defs/typedSha256" },
+        "instance_id": { "type": "string", "minLength": 1 },
+        "deployed_revision": { "oneOf": [{ "$ref": "#/$defs/gitSha" }, { "type": "null" }] },
+        "build_or_image": { "type": "string", "minLength": 1 },
+        "schema_version": { "type": "string", "minLength": 1 },
+        "dataset_id": { "type": "string", "minLength": 1 },
+        "dataset_version": { "type": "string", "minLength": 1 },
+        "auth_actor_type": { "type": "string", "minLength": 1 }
+      }
+    },
+    "toolchain": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["adapter", "adapter_version", "browser", "browser_version"],
+      "properties": {
+        "adapter": { "type": "string", "minLength": 1 },
+        "adapter_version": { "type": "string", "minLength": 1 },
+        "browser": { "type": "string", "minLength": 1 },
+        "browser_version": { "type": "string", "minLength": 1 }
+      }
+    },
+    "acceptance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["plan_path", "plan_digest"],
+      "properties": {
+        "plan_path": { "type": "string", "minLength": 1 },
+        "plan_digest": { "$ref": "#/$defs/typedSha256" }
+      }
+    },
+    "publication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode"],
+      "properties": {
+        "mode": { "enum": ["ci_artifact", "evidence_only_commit"] },
+        "ci_run_id": { "type": "string", "minLength": 1 },
+        "artifact_id": { "type": "string", "minLength": 1 },
+        "artifact_url": { "type": "string", "pattern": "^https://" },
+        "retention_days": { "type": "integer", "minimum": 1 },
+        "bundle_digest": { "$ref": "#/$defs/typedSha256" }
+      }
+    },
+    "criteria_waivers": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/criterionWaiver" }
+    },
+    "cases": { "type": "array", "items": { "$ref": "#/$defs/case" } },
+    "mutations": { "type": "array", "items": { "$ref": "#/$defs/mutation" } },
+    "artifacts": { "type": "array", "items": { "$ref": "#/$defs/artifact" } },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["passed", "failed", "blocked", "skipped", "waived"],
+      "properties": {
+        "passed": { "type": "integer", "minimum": 0 },
+        "failed": { "type": "integer", "minimum": 0 },
+        "blocked": { "type": "integer", "minimum": 0 },
+        "skipped": { "type": "integer", "minimum": 0 },
+        "waived": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "verdict": { "enum": ["ready", "blocked", "waived"] },
+    "generation_findings": { "type": "array", "maxItems": 0 }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "subject": { "properties": { "tested_sha": { "type": "null" } }, "required": ["tested_sha"] } } },
+      "then": { "required": ["waiver"], "properties": { "verdict": { "const": "waived" } } },
+      "else": { "not": { "required": ["waiver"] } }
+    },
+    {
+      "if": { "properties": { "publication": { "properties": { "mode": { "const": "evidence_only_commit" } }, "required": ["mode"] } } },
+      "then": {
+        "properties": {
+          "subject": { "required": ["head_sha", "tested_sha", "source_tree_digest", "evidence_commit_sha"] },
+          "publication": {
+            "not": {
+              "anyOf": [
+                { "required": ["ci_run_id"] },
+                { "required": ["artifact_id"] },
+                { "required": ["artifact_url"] },
+                { "required": ["retention_days"] },
+                { "required": ["bundle_digest"] }
+              ]
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "subject": { "not": { "required": ["evidence_commit_sha"] } },
+          "publication": { "required": ["mode", "ci_run_id", "artifact_id", "artifact_url", "retention_days", "bundle_digest"] }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "gitSha": { "type": "string", "pattern": "^([0-9a-f]{40}|[0-9a-f]{64})$" },
+    "typedSha256": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "outcome": { "enum": ["passed", "failed", "blocked", "skipped", "waived"] },
+    "oracle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "outcome"],
+      "properties": { "id": { "type": "string", "minLength": 1 }, "outcome": { "$ref": "#/$defs/outcome" } }
+    },
+    "case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "criteria", "outcome", "attempts", "oracle_results", "evidence_ids", "evidence_bindings"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "criteria": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1, "uniqueItems": true },
+        "outcome": { "$ref": "#/$defs/outcome" },
+        "attempts": { "type": "integer", "minimum": 1 },
+        "oracle_results": { "type": "array", "items": { "$ref": "#/$defs/oracle" } },
+        "evidence_ids": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "evidence_bindings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["requirement_id", "artifact_id", "type", "checkpoint"],
+            "properties": {
+              "requirement_id": { "type": "string", "minLength": 1 },
+              "artifact_id": { "type": "string", "minLength": 1 },
+              "type": { "type": "string", "minLength": 1 },
+              "checkpoint": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "waiver": { "$ref": "#/$defs/deliveryWaiver" },
+        "reason": { "type": "string", "minLength": 1 },
+        "user_visible_error": { "type": "boolean" }
+      }
+    },
+    "mutation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "outcome", "cleanup"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "outcome": { "enum": ["applied", "not_applied", "failed"] },
+        "cleanup": { "enum": ["passed", "failed", "pending", "not_required"] }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "path", "media_type", "sha256", "bytes"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "path": { "type": "string", "minLength": 1 },
+        "media_type": { "type": "string", "minLength": 1 },
+        "sha256": { "$ref": "#/$defs/typedSha256" },
+        "bytes": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "deliveryWaiver": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reason", "approver_ref", "approved_at"],
+      "properties": {
+        "reason": { "type": "string", "minLength": 1 },
+        "approver_ref": { "type": "string", "minLength": 1 },
+        "approved_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "criterionWaiver": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["criterion_id", "reason", "approver_ref", "approved_at"],
+      "properties": {
+        "criterion_id": { "type": "string", "minLength": 1 },
+        "reason": { "type": "string", "minLength": 1 },
+        "approver_ref": { "type": "string", "minLength": 1 },
+        "approved_at": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}

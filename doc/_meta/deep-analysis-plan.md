@@ -83,7 +83,7 @@ The goal is to make the corpus comparable to the output of a multi-disciplinary 
 
 | Target | Status | Evidence |
 |---|---|---|
-| Dynatrace MCP attached/readiness checked | not_started | |
+| Dynatrace contract registered and runtime probe completed for this run | not_started | |
 | App/service visibility | not_started | |
 | Runtime topology | not_started | |
 | Last 24h health | not_started | |

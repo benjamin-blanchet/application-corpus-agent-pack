@@ -67,9 +67,10 @@ decision.
 ## Gate handling
 
 - Record the briefing and the operator's response in `JOURNAL.md`.
-- `factory-state.yaml` stays before `specification_approved` until an explicit
-  human approval exists. **Silence is not approval, and approving a plan is not
-  approving a specification.**
+- The controller has no `spec_approved` event until explicit approval is
+  captured against the current spec digest. **Silence is not approval, and
+  approving a plan is not approving a specification.** A later spec change
+  makes the attestation stale.
 - On requested changes: revise the specification, re-check it, brief again.
 
 ## Rules

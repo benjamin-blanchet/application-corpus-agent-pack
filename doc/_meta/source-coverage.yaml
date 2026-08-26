@@ -1,0 +1,96 @@
+# Historical source coverage. Entries describe evidence already collected;
+# they never assert that a transport is usable in the current runtime.
+# Reconcile the human-readable view in doc/_meta/discovery-coverage.md after
+# every change; this YAML remains the machine-readable authority.
+
+schema_version: 1
+coverage:
+  - source_id: repository
+    status: not_started
+    freshness: unknown
+    last_successful_observation_at: null
+    last_successful_run: null
+    evidence_refs: []
+    limitations: [Repository analysis has not started]
+    blockers: []
+    targets:
+      - id: tree-inventory
+        status: not_started
+        evidence_refs: []
+      - id: manifests-and-entrypoints
+        status: not_started
+        evidence_refs: []
+
+  - source_id: jira
+    status: not_started
+    freshness: unknown
+    last_successful_observation_at: null
+    last_successful_run: null
+    evidence_refs: []
+    limitations: [No Jira evidence collected]
+    blockers: []
+    targets:
+      - id: recent-and-active-issues
+        status: not_started
+        evidence_refs: []
+      - id: dependencies-and-roadmap
+        status: not_started
+        evidence_refs: []
+
+  - source_id: confluence
+    status: not_started
+    freshness: unknown
+    last_successful_observation_at: null
+    last_successful_run: null
+    evidence_refs: []
+    limitations: [No Confluence evidence collected]
+    blockers: []
+    targets:
+      - id: application-and-repository-search
+        status: not_started
+        evidence_refs: []
+      - id: architecture-and-history
+        status: not_started
+        evidence_refs: []
+
+  - source_id: dynatrace
+    status: not_started
+    freshness: unknown
+    last_successful_observation_at: null
+    last_successful_run: null
+    evidence_refs: []
+    limitations: [No production observation collected]
+    blockers: []
+    targets:
+      - id: runtime-entity-mapping
+        status: not_started
+        evidence_refs: []
+      - id: signals-and-dependencies
+        status: not_started
+        evidence_refs: []
+
+  - source_id: github-peer-corpora
+    status: not_started
+    freshness: unknown
+    last_successful_observation_at: null
+    last_successful_run: null
+    evidence_refs: []
+    limitations: [No peer corpus evidence collected]
+    blockers: []
+    targets:
+      - id: declared-peer-access
+        status: not_started
+        evidence_refs: []
+      - id: ecosystem-boundary-discovery
+        status: not_started
+        evidence_refs: []
+
+  - source_id: mariadb-logs-example
+    status: not_applicable
+    freshness: unknown
+    last_successful_observation_at: null
+    last_successful_run: null
+    evidence_refs: []
+    limitations: [Template candidate only]
+    blockers: []
+    targets: []

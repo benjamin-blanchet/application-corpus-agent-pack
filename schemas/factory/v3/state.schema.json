@@ -1,0 +1,189 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://application-corpus.dev/schemas/factory/v3/state.schema.json",
+  "title": "Software Factory V3 derived state",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["v", "run_id", "derived_from", "phase", "digests", "execution_policy", "lots", "reservations", "gates", "provenance", "ready_lots", "blockers", "delivery", "acceptance_run", "legacy"],
+  "properties": {
+    "v": { "const": 3 },
+    "run_id": { "type": ["string", "null"] },
+    "derived_from": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["last_seq", "events_sha256", "current_inputs_sha256"],
+      "properties": {
+        "last_seq": { "type": "integer", "minimum": 0 },
+        "events_sha256": { "$ref": "#/$defs/sha256" },
+        "current_inputs_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "phase": { "enum": ["draft", "spec_approved", "plan_approved", "executing", "integrated", "consolidated_reviewed", "corpus_closed", "candidate_frozen", "acceptance_complete", "evidence_recorded", "release_ready"] },
+    "digests": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["spec_sha256", "plan_sha256", "test_bundle_sha256", "corpus_manifest_sha256", "evidence_manifest_sha256"],
+      "properties": {
+        "spec_sha256": { "$ref": "#/$defs/nullableSha256" },
+        "plan_sha256": { "$ref": "#/$defs/sha256" },
+        "test_bundle_sha256": { "$ref": "#/$defs/nullableSha256" },
+        "corpus_manifest_sha256": { "$ref": "#/$defs/nullableSha256" },
+        "evidence_manifest_sha256": { "$ref": "#/$defs/nullableSha256" }
+      }
+    },
+    "execution_policy": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "required": ["mode", "observed_at", "models"],
+          "properties": {
+            "mode": { "enum": ["balanced", "maximum_quality", "economical", "manual"] },
+            "observed_at": { "type": "string", "format": "date-time" },
+            "models": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["economy", "standard", "expert", "reviewer"],
+              "properties": {
+                "economy": { "type": "string", "minLength": 1 },
+                "standard": { "type": "string", "minLength": 1 },
+                "expert": { "type": "string", "minLength": 1 },
+                "reviewer": { "type": "string", "minLength": 1 }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "lots": { "type": "object", "additionalProperties": { "$ref": "#/$defs/lotState" } },
+    "reservations": { "type": "object", "additionalProperties": { "$ref": "#/$defs/reservation" } },
+    "gates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["specification", "technical_plan", "lot_reviews", "integration", "consolidated_review", "corpus_closeout", "candidate", "acceptance", "evidence", "release"],
+      "properties": {
+        "specification": { "$ref": "#/$defs/gate" },
+        "technical_plan": { "$ref": "#/$defs/gate" },
+        "lot_reviews": { "$ref": "#/$defs/gate" },
+        "integration": { "$ref": "#/$defs/gate" },
+        "consolidated_review": { "$ref": "#/$defs/gate" },
+        "corpus_closeout": { "$ref": "#/$defs/gate" },
+        "candidate": { "$ref": "#/$defs/gate" },
+        "acceptance": { "$ref": "#/$defs/gate" },
+        "evidence": { "$ref": "#/$defs/gate" },
+        "release": { "$ref": "#/$defs/gate" }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidate_sha", "tested_sha", "evidence_sha", "publication"],
+      "properties": {
+        "candidate_sha": { "$ref": "#/$defs/nullableGitSha" },
+        "tested_sha": { "$ref": "#/$defs/nullableGitSha" },
+        "evidence_sha": { "$ref": "#/$defs/nullableGitSha" },
+        "publication": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["mode", "manifest_path"],
+              "properties": {
+                "mode": { "enum": ["ci_artifact", "evidence_only_commit"] },
+                "manifest_path": { "type": "string", "minLength": 1 },
+                "artifact_locator": { "type": "string", "minLength": 1 },
+                "artifact_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+                "media_type": { "type": "string", "minLength": 1 }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "ready_lots": { "type": "array", "items": { "type": "string" } },
+    "blockers": { "type": "array", "items": { "$ref": "#/$defs/blocker" } },
+    "delivery": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "object", "required": ["status", "event_id", "candidate_sha"], "properties": { "status": { "enum": ["planned", "draft_created", "stale"] }, "event_id": { "type": "string" }, "candidate_sha": { "$ref": "#/$defs/gitSha" }, "payload_sha256": { "$ref": "#/$defs/nullableSha256" }, "pr_url": { "type": "string" }, "stale_reason": { "type": "string" } } }
+      ]
+    },
+    "acceptance_run": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "object", "required": ["status", "candidate_sha"], "properties": { "status": { "enum": ["running", "passed", "failed", "blocked", "waived"] }, "candidate_sha": { "$ref": "#/$defs/gitSha" }, "event_id": { "type": "string" }, "completed_event": { "type": "string" } } }
+      ]
+    },
+    "legacy": { "type": ["object", "null"] }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "nullableSha256": { "type": ["string", "null"], "pattern": "^[0-9a-f]{64}$" },
+    "gitSha": { "type": "string", "pattern": "^([0-9a-f]{40}|[0-9a-f]{64})$" },
+    "nullableGitSha": { "type": ["string", "null"], "pattern": "^([0-9a-f]{40}|[0-9a-f]{64})$" },
+    "claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "path"],
+      "properties": { "kind": { "enum": ["exact", "prefix"] }, "path": { "type": "string", "minLength": 1 } }
+    },
+    "gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "basis_event"],
+      "properties": {
+        "status": { "enum": ["pending", "valid", "stale", "failed", "blocked", "waived", "legacy_attested"] },
+        "basis_event": { "type": ["string", "null"] },
+        "reason": { "type": ["string", "null"] },
+        "stale_reason": { "type": "string" }
+      }
+    },
+    "lotState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "attempts", "reservation_id", "diff_sha256", "review"],
+      "properties": {
+        "status": { "enum": ["pending", "reserved", "running", "completed_pending_review", "needs_correction", "reviewed", "integrated", "blocked", "stale", "legacy_completed_unreviewed"] },
+        "attempts": { "type": "integer", "minimum": 0 },
+        "reservation_id": { "type": ["string", "null"] },
+        "diff_sha256": { "$ref": "#/$defs/nullableSha256" },
+        "changed_paths": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "review": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "object", "required": ["status", "verdict", "event_id", "findings"], "properties": { "status": { "enum": ["passed", "failed", "stale"] }, "verdict": { "enum": ["passed", "failed"] }, "event_id": { "type": "string" }, "findings": { "type": "array" } } }
+          ]
+        },
+        "author": { "type": "object" },
+        "legacy_model_used": { "type": ["string", "null"] }
+      }
+    },
+    "reservation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reservation_id", "lot_id", "claims", "controller_id", "status", "basis_event"],
+      "properties": {
+        "reservation_id": { "type": "string", "minLength": 1 },
+        "lot_id": { "type": "string", "minLength": 1 },
+        "claims": { "type": "array", "items": { "$ref": "#/$defs/claim" }, "minItems": 1 },
+        "controller_id": { "type": "string", "minLength": 1 },
+        "status": { "enum": ["active", "released", "stale"] },
+        "basis_event": { "type": "string" }
+      }
+    },
+    "blocker": {
+      "type": "object",
+      "required": ["id", "status", "reason"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "status": { "enum": ["open", "resolved", "superseded"] },
+        "reason": { "type": "string", "minLength": 1 },
+        "lot_id": { "type": "string" },
+        "kind": { "type": "string" },
+        "integration_basis": { "type": "string" },
+        "resolved_by_event": { "type": "string" }
+      }
+    }
+  }
+}

@@ -43,10 +43,16 @@ code, the agent declines and reroutes to `developer`.
 |---|---|
 | `developer` | application source code (after Step 7 gate), spec package, feature files for verified claims |
 | `functional-analyst` | spec packages (`doc/spec/...`), impact analyses |
+| `planner` | `TECHNICAL_PLAN.md` and `factory/plan.v3.json` inside one approved spec package |
 | `reliability-analyst` | `doc/prod/known-bugs/`, `doc/prod/structural-risks/`, `doc/prod/root-cause-playbooks/`, `doc/prod/watchlist/`, reliability analyses |
-| `acceptance` | spec-package `TESTS.md`, `tests/`, evidence, report, `JOURNAL.md`, acceptance fields of `factory-state.yaml` |
+| `acceptance` | spec-package acceptance plan/scripts/results/evidence manifest and factual report; never factory plan/events/state |
+| `factory-controller` | typed factory event log, derived state and controller lock/recovery records only |
+| `code-reviewer` | structured review result only; no repository content changes |
+| `delivery` | draft PR metadata through the declared provider operation; no repository file changes |
 
-Cross-boundary writes are declined and rerouted via update-candidates.
+Cross-boundary writes are declined and rerouted via update-candidates or a
+validated factory handoff. Neither a prompt nor a worker can widen its own
+write surface.
 
 ## Corpus ownership
 

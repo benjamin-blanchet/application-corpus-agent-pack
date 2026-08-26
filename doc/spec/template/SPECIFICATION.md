@@ -69,9 +69,9 @@ without a measurable definition.
 Map each criterion to at least one entry in TESTS.md.
 -->
 
-- [ ] AC1: `<testable statement>`
-- [ ] AC2: `<testable statement>`
-- [ ] AC3: `<testable statement>`
+- [ ] **AC-001** — `<testable statement>`
+- [ ] **AC-002** — `<testable statement>`
+- [ ] **AC-003** — `<testable statement>`
 
 ## Constraints
 

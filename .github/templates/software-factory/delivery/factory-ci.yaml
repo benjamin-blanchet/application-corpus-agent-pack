@@ -1,0 +1,89 @@
+version: 1
+subject_revision: pull_request_head
+
+pipeline:
+  active_config_ref: <active-workflow-path>
+  candidate_build_operation: app-build
+  preview_mode: local
+  preview_operation: app-start
+  build_identity_operation: app-revision
+
+operations:
+  validate-delivery:
+    argv: [node, scripts/validate-delivery.mjs]
+    cwd: .
+    timeout_seconds: 120
+    privilege: unprivileged
+    side_effect: none
+  app-health:
+    argv: [<repository-health-command>]
+    cwd: .
+    timeout_seconds: 30
+    privilege: unprivileged
+    side_effect: none
+  app-build:
+    argv: [<repository-build-command>]
+    cwd: .
+    timeout_seconds: 900
+    privilege: unprivileged
+    side_effect: build
+  app-start:
+    argv: [<repository-start-command>]
+    cwd: .
+    timeout_seconds: 120
+    privilege: unprivileged
+    side_effect: start
+  app-stop:
+    argv: [<repository-stop-command>]
+    cwd: .
+    timeout_seconds: 120
+    privilege: unprivileged
+    side_effect: stop
+  app-reset:
+    argv: [<repository-reset-command>]
+    cwd: .
+    timeout_seconds: 120
+    privilege: protected_environment
+    side_effect: reset
+  app-revision:
+    argv: [<repository-revision-command>]
+    cwd: .
+    timeout_seconds: 30
+    privilege: unprivileged
+    side_effect: none
+  acceptance-playwright:
+    argv: [node, scripts/adapters/playwright/run.mjs, --plan, <acceptance-plan>, --environment, <environment-contract>, --observation, <environment-observation>, --config, <playwright-config>, --subject-sha, <candidate-sha>, --run-id, <run-id>]
+    cwd: .
+    timeout_seconds: 1800
+    privilege: protected_environment
+    side_effect: none
+
+checks:
+  - id: factory-policy
+    provider_name: Factory policy / validate
+    operation: validate-delivery
+    required: true
+    secret_access: none
+  - id: factory-acceptance
+    provider_name: Factory acceptance / run
+    operation: acceptance-playwright
+    required: true
+    environment_profile: local-acceptance
+    secret_access: protected_environment
+
+artifacts:
+  retention_days: 30
+  required: [evidence-manifest, results-json, junit, html-report]
+  conditional: [screenshots, traces]
+
+flake_policy:
+  retry_count: 1
+  retry_pass_outcome: failed
+  retry_reason: flaky_retry
+  flaky_blocks_readiness: true
+
+security:
+  default_permissions: read
+  protected_job_requires_environment_approval: true
+  no_pull_request_target_checkout: true
+  actions_pinned_to_full_sha: true

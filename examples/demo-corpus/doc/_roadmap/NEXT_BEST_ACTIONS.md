@@ -16,7 +16,7 @@ Use this file to guide the next useful corpus runs. It is advisory: the operator
 
 | Rank | Run | Roadmap node | Interest | Why now | Expected corpus updates |
 |---:|---|---|---:|---|---|
-| 1 | Generate initial roadmap from repository and source availability | root | 10 | The corpus needs a persistent work map before long-running enrichment. | `_roadmap`, `_graph`, `_runs` |
+| 1 | Generate initial roadmap from repository, source contracts and coverage | root | 10 | The corpus needs a persistent work map before long-running enrichment. | `_roadmap`, `_graph`, `_runs` |
 
 ## Recently Declined Or Parked Suggestions
 

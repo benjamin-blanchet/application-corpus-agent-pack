@@ -1,0 +1,29 @@
+# Schema for doc/_meta/factory-learning.yaml.
+# A promoted rule is valid only when its origin, generalisation decision and
+# executable fixtures remain traceable. This prevents project-specific folklore
+# from entering the pack and prevents a later rewrite from silently dropping
+# the regression that justified the rule.
+
+file: doc/_meta/factory-learning.yaml
+schema_version: 1
+required_top_level: [schema_version, promotions]
+promotion:
+  required:
+    - id
+    - observed_at
+    - source
+    - observed_failure
+    - generalized_rule
+    - decision
+    - acceptance_criteria
+    - positive_fixtures
+    - negative_fixtures
+    - introduced_in
+  enums:
+    source.type: [code, runtime, experiment, human, mixed]
+    decision.status: [proposed, adopted, rejected, superseded]
+  invariants:
+    - adopted promotions have at least one positive and one negative executable fixture
+    - every fixture id resolves in an executable factory test catalogue
+    - a fixture removal requires the promotion to be superseded or explicitly amended
+    - secrets, personal data and workstation-specific absolute paths are forbidden

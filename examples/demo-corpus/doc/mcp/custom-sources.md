@@ -46,23 +46,29 @@ The registry must define:
 |---|---|
 | `id` | Stable source id used in reports and indexes. |
 | `category` | `production-logs`, `project-activity`, `documentation`, `business-data`, etc. |
-| `status` | `available`, `partial`, `unavailable`, `template`, `deprecated`. |
-| `consumption.method` | `sql`, `api`, `mcp`, `file-export`, `cli`, `manual`, etc. |
-| `consumption.access_mode` | Usually `read-only`. |
+| `lifecycle` | Durable declaration state: `candidate`, `declared`, `retired` or `not_applicable`. |
+| `requirement` | Whether absence blocks requested corpus work. |
+| `mapping_state` / `mapping_refs` | Durable target mapping, never workstation availability. |
+| `transport_semantics` | `alternative` or `complementary`. |
+| `transports[].method` | `sql`, `api`, `mcp`, `file-export`, `cli`, `manual`, etc. |
+| `transports[].access_mode` | Usually `read-only`. |
+| `transports[].priority/fallback/consent` | Explicit selection, fallback and operator-consent policy. |
 | `allowed_uses` | What agents may use the source for. |
 | `restrictions` | Safety, privacy, query and operational limits. |
 | `evidence_rules` | What must be recorded for every finding. |
 
 ## Consumption discipline
 
-Agents must not treat a source as available because it is mentioned. Availability requires one of:
+Agents must not treat a source as usable because it is mentioned. Current use requires a point-in-time runtime observation backed by one of:
 
 1. a working connector/tool;
 2. a local export in the repo/workspace;
 3. explicit human-provided evidence;
 4. a verified connection profile that allows read-only access.
 
-If availability is unclear, record the source as `partial` or `unavailable` and add a question in `doc/_meta/open-questions.md`.
+If runtime usability is unclear, keep the durable source contract unchanged and
+emit the appropriate point-in-time state for this run. Never write that result
+to the source registry, coverage file or global corpus state.
 
 ## SQL source rules
 
@@ -103,7 +109,7 @@ Every SQL query used as evidence must record:
 
 ## MariaDB log database example
 
-When a team pushes logs into MariaDB, create a real source profile based on `mariadb_logs_example` in `doc/_meta/information-sources.yaml`.
+When a team pushes logs into MariaDB, create a real source profile based on `mariadb-logs-example` in `doc/_meta/information-sources.yaml`.
 
 Minimum details to clarify with the team:
 

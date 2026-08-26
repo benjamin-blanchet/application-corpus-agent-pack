@@ -1,0 +1,35 @@
+# Schema for repository-level delivery operations and checks.
+file: doc/project/cicd/FACTORY_CI.yaml
+template: .github/templates/software-factory/delivery/factory-ci.yaml
+written_by_skill: development/factory-ci
+description: |
+  Stack-neutral operation registry, required checks, artifact retention, flaky
+  policy, and security invariants for software-factory execution.
+must_not_be_markdown: true
+root:
+  required_keys: [version, subject_revision, pipeline, operations, checks, artifacts, flake_policy, security]
+item:
+  inside_block: checks
+  required_keys: [id, provider_name, operation, required, secret_access]
+  optional_keys: [environment_profile]
+  enums:
+    required: [true, false]
+    secret_access: [none, protected_environment]
+operation:
+  required_keys: [argv, cwd, timeout_seconds, privilege, side_effect]
+  enums:
+    privilege: [unprivileged, protected_environment]
+    side_effect: [none, build, start, stop, seed, reset, cleanup]
+pipeline:
+  required_keys: [active_config_ref, candidate_build_operation, preview_mode, preview_operation, build_identity_operation]
+artifact_required_keys: [retention_days, required, conditional]
+required_artifacts: [evidence-manifest, results-json, junit, html-report]
+security_required:
+  default_permissions: read
+  protected_job_requires_environment_approval: true
+  no_pull_request_target_checkout: true
+  actions_pinned_to_full_sha: true
+flake_policy_required:
+  retry_pass_outcome: failed
+  retry_reason: flaky_retry
+  flaky_blocks_readiness: true

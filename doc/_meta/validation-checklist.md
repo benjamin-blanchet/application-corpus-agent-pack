@@ -26,9 +26,10 @@ title: "Corpus Validation Checklist"
 - [ ] No secrets, tokens or credentials are present in corpus files.
 - [ ] `doc/_meta/kickstart-progress.md` reflects the latest kickstart phase.
 - [ ] Significant kickstart sessions have synthetic notes under `doc/_meta/interaction-history/`.
-- [ ] `doc/_meta/mcp-readiness.md` reflects Jira, Confluence and Dynatrace availability.
+- [ ] `doc/_meta/information-sources.yaml` contains only durable source contracts and no session availability.
+- [ ] `doc/_meta/source-coverage.yaml` records historical source evidence and freshness.
 - [ ] `doc/_meta/mcp-source-wizard.md` has been reviewed early in kickstart.
-- [ ] Expected MCP tools are confirmed attached to the current IDE agent/session before MCP-backed discovery.
+- [ ] A point-in-time runtime source probe is performed before connected-source discovery, without persisting global availability.
 - [ ] `Corpus` kickstart responses end with a status footer showing completeness by sector.
 - [ ] `doc/_meta/discovery-coverage.md` records repo/Jira/Confluence/Dynatrace/custom source coverage.
 - [ ] `doc/project/cicd/PIPELINES.md` distinguishes active, likely active, stale, legacy and unknown pipeline definitions.

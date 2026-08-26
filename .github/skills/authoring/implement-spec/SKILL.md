@@ -70,10 +70,18 @@ If the business need is unclear, do not invent rules. Record open questions and 
 
 ### 3. Implement from repository evidence
 
+Apply `development/existing-code-integration` and include observed neighbouring
+examples/conventions in the work package before editing.
+
 - Detect the actual stack from files, build tools, conventions and tests.
 - Follow existing naming, layering, routing, error handling, dependency and test conventions.
 - Keep the change proportional to the spec.
 - Record deviations from the spec in the spec package.
+- Do not introduce opportunistic refactors, replacement libraries or a parallel
+  architecture in the name of generic best practice.
+- If the existing structure demonstrably blocks a safe implementation, stop
+  with locations, impact, options and the smallest required refactor. Only an
+  operator-approved plan amendment may widen the change.
 
 ### 4. Test or explain test gap
 

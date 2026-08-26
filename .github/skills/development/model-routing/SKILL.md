@@ -27,30 +27,34 @@ lots.
    availability from repository files, templates or a previous task.
 2. Ask the operator for one execution mode:
    - `balanced` — fewest roles that still keep review independent;
-   - `maximum_quality` — favour advanced reasoning and independent review;
-   - `economical` — a light worker only for eligible bounded lots;
+   - `maximum_quality` — favour expert reasoning and independent review;
+   - `economical` — an economy worker only for eligible bounded lots;
    - `manual` — the operator allocates each role, or declines delegation.
-3. Present the role needs the mode produces:
-   - `advanced` — specification interpretation, plan, integration,
-     architecture, security, migration, consolidated review;
-   - `light` — bounded implementation, only when eligible;
-   - `reviewer` — independent lot or consolidated review.
-4. Record the identities, requested effort and context tier in
-   `factory-state.yaml`; append planned/requested/used to `JOURNAL.md` for
+3. Present the profiles the mode produces:
+   - `economy` — mechanical, low-risk, fully specified work only;
+   - `standard` — default bounded implementation and documentation work;
+   - `expert` — ambiguity, architecture, security, data, migration,
+     cross-cutting integration and control-plane-critical work;
+   - `reviewer` — independent lot, consolidated or release review, with
+     capability at least matching the reviewed risk.
+4. Record the identities, requested effort and context tier in the typed
+   execution event; render planned/requested/used to `JOURNAL.md` for
    every task, lot, review, acceptance execution, replacement and escalation.
 5. If a requested identity is absent, **stop and ask for a replacement**. Never
    fall back silently.
 
 ## Reviewer independence
 
-The reviewer must not come from the same model family as the author. Models
+Prefer a reviewer outside the author's model family. Models
 recognise their own output and prefer it, measurably — the effect is
 mechanistic, not a matter of prompting. A same-family review is a second
-opinion from the same opinion.
+opinion from the same opinion. When the runtime cannot provide a different
+family, record the limitation and require a fresh context; never invent an
+identity or silently skip review.
 
-## Light-worker eligibility
+## Economy-profile eligibility
 
-A light worker is eligible only when **every** condition holds:
+An economy worker is eligible only when **every** condition holds:
 
 - the lot has one observable, bounded outcome;
 - allowed paths and exclusive ownership are unambiguous;
@@ -60,9 +64,17 @@ A light worker is eligible only when **every** condition holds:
 - risk is within the approved budget;
 - maximum attempts are set and the orchestrator can review the diff.
 
-Otherwise route to `advanced`, or split the lot until it qualifies. A model's
+In addition, `economy` is forbidden for control-plane validators/schedulers,
+security/auth, data mutation, migrations, release provenance and changes whose
+blast radius is high even when the diff is tiny.
+
+Otherwise route to `standard`/`expert`, or split the lot until it qualifies. A model's
 general capability does not override these rules — eligibility is a property of
 the *task*, not of the model.
+
+Do not route expert models to a bounded task “just in case”. A stronger model
+does not widen scope: the same non-goals, diff budget and stop conditions apply,
+and unexplained abstractions or opportunistic findings are review defects.
 
 ## Audit schema
 

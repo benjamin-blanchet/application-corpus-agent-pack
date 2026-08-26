@@ -1,0 +1,104 @@
+{
+  "acceptance_criteria": [
+    {
+      "id": "AC-001",
+      "proved_by": [
+        "CASE-001"
+      ]
+    },
+    {
+      "id": "AC-002",
+      "proved_by": [
+        "CASE-002"
+      ]
+    },
+    {
+      "id": "AC-003",
+      "proved_by": [
+        "CASE-003"
+      ]
+    }
+  ],
+  "environment_contract": null,
+  "lots": [
+    {
+      "acceptance_criteria": [
+        "AC-001",
+        "AC-002",
+        "AC-003"
+      ],
+      "agent_role": "implementer",
+      "capabilities": [
+        "read",
+        "write",
+        "execute"
+      ],
+      "complexity": "bounded",
+      "contracts": {
+        "inputs": [
+          "approved-specification",
+          "relevant-corpus-slice"
+        ],
+        "invariants": [
+          "preserve-observed-repository-conventions"
+        ],
+        "non_goals": [
+          "opportunistic-refactor"
+        ],
+        "outputs": [
+          "observable-change"
+        ]
+      },
+      "control_plane_critical": false,
+      "decision_domains": [],
+      "dependencies": [],
+      "forbidden_paths": [
+        "REPLACE-WITH-FORBIDDEN-PATH"
+      ],
+      "handoff": {
+        "include_private_reasoning": false,
+        "inputs": [
+          {
+            "id": "approved-specification",
+            "path": "SPECIFICATION.md",
+            "sha256": "1b6b97ac47bae578dc9e70bdba7354c78e3a0c8e4905d84e711174c536077203"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "observable-change",
+            "path": "REPLACE-WITH-OWNED-PATH"
+          }
+        ]
+      },
+      "id": "LOT-1",
+      "kind": "implementation",
+      "max_attempts": 2,
+      "model_role": "standard",
+      "objective": "REPLACE WITH ONE OBSERVABLE TECHNICAL OUTCOME",
+      "read_claims": [
+        {
+          "kind": "exact",
+          "path": "SPECIFICATION.md"
+        }
+      ],
+      "risk": "medium",
+      "stop_rules": [
+        "stop if repository evidence contradicts the approved specification",
+        "stop before touching an unclaimed or forbidden path",
+        "stop when an input, decision or safe verification is missing"
+      ],
+      "verification": [
+        "REPLACE-WITH-REPOSITORY-VERIFICATION-COMMAND"
+      ],
+      "write_claims": [
+        {
+          "kind": "prefix",
+          "path": "REPLACE-WITH-OWNED-PATH"
+        }
+      ]
+    }
+  ],
+  "spec_path": "SPECIFICATION.md",
+  "v": 3
+}

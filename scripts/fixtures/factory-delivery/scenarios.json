@@ -1,0 +1,43 @@
+{
+  "schema_drift": {
+    "expected_code": "environment-schema-mismatch",
+    "check_kind": "schema"
+  },
+  "expired_credential_post_commit": {
+    "expected_code": "environment-credential-expired",
+    "check_kind": "credential"
+  },
+  "external_dataset_changed": {
+    "expected_code": "environment-dataset-mismatch",
+    "check_kind": "dataset"
+  },
+  "interactive_auth": {
+    "expected_code": "acceptance-not-unattended"
+  },
+  "shared_data_not_cleaned": {
+    "expected_code": "acceptance-cleanup-pending"
+  },
+  "stale_subject_sha": {
+    "expected_code": "evidence-subject-stale",
+    "other_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  },
+  "missing_evidence": {
+    "expected_code": "evidence-artifact-missing"
+  },
+  "flaky_retry_pass": {
+    "expected_code": "evidence-case-not-pass",
+    "attempts": 2
+  },
+  "partial_case_coverage": {
+    "expected_code": "evidence-case-missing"
+  },
+  "review_scope_incomplete": {
+    "expected_code": "evidence-commit-touches-source"
+  },
+  "unauthorized_pr_operation": {
+    "expected_code": "pr-authority-too-broad"
+  },
+  "bom_crlf_unicode": {
+    "expected_title": "Résumé naïf — 東京"
+  }
+}

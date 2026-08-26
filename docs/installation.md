@@ -17,7 +17,7 @@ npx github:benjamin-blanchet/application-corpus-agent-pack sync --apply
 `npx` fetches the pack and copies it into the current repository — no zip, no manual paste. The **same command installs and upgrades**: on an already-equipped repo it behaves as an in-place upgrade. Pin a version once releases are tagged:
 
 ```bash
-npx github:benjamin-blanchet/application-corpus-agent-pack#v1.1.0 sync --apply
+npx github:benjamin-blanchet/application-corpus-agent-pack#v1.2.0 sync --apply
 ```
 
 ## Upgrade safety
@@ -45,7 +45,7 @@ Once the pack is in place, the consumer repo can self-upgrade later without `npx
 
 ```bash
 node scripts/update-pack.mjs --from-github --apply          # latest
-node scripts/update-pack.mjs --from-github=v1.1.0 --apply   # pinned
+node scripts/update-pack.mjs --from-github=v1.2.0 --apply   # pinned
 ```
 
 <details>

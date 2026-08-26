@@ -242,7 +242,7 @@ breaks.
 | Anthropic, Building Effective Agents — 5 patterns | The mapping table above; pack composes patterns rather than reinventing |
 | Agent Skills open standard | This very file. The pack's 70+ skills follow the `SKILL.md` format with progressive disclosure. |
 | Context engineering (selection / compression / ordering / isolation / format) | The "Context engineering discipline" section above; built into the pack's structure (indexes, graph, roadmap, status footer) |
-| MCP (Model Context Protocol) | `sources/mcp-source-wizard`, `sources/mcp-readiness-check`, `doc/mcp/`, MCP query catalogs |
+| Connected sources (including MCP) | `sources/mcp-source-wizard`, `sources/runtime-source-probe`, `doc/mcp/`, source contracts and query catalogs |
 | Code-first principle (pack-original) | Rule 5 above + `foundations/core-rules` § Code-first principle. **This is the pack's primary differentiator** — no external reference imposes a code-first interpretive contract on prod/Jira/Confluence work. |
 
 ## When this skill is invoked

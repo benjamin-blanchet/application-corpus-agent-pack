@@ -1,19 +1,28 @@
 ---
 name: corpus-closeout-delegation
 category: development
-description: "At the **end of implementation and verification, before the PR is opened**, close the corpus loop. The developer applies the writes it owns, files structured update-candidates for everything else, then auto-invokes the `Corpus` agent in the same run to apply those candidates wit…"
+description: "After verified integration and consolidated review, reconcile every affected corpus claim before candidate freeze. Direct verified writes and Corpus-owned candidates must be consumed or explicitly parked; append-only closeout is invalid."
 ---
 # Corpus Closeout Delegation
 
 ## Purpose
 
-At the **end of implementation and verification, before the PR is opened**, close the corpus loop. The developer applies the writes it owns, files structured update-candidates for everything else, then auto-invokes the `Corpus` agent in the same run to apply those candidates within `Corpus`'s ownership.
+After verified integration and consolidated review, and **before candidate
+freeze/acceptance**, close the corpus loop. The developer applies the writes it
+owns, files structured update-candidates for everything else, then auto-invokes
+the `Corpus` agent in the same run to apply those candidates within `Corpus`'s
+ownership.
 
-Corpus writes are **batched at closeout**, not dripped during implementation. The corpus is left consistent before the task ends.
+Corpus writes are **batched at closeout**, not dripped during implementation.
+Reconcile affected summaries, indexes and contradictions; an appended note or
+pending candidate alone does not close the gate. The corpus is consistent
+before the candidate SHA is frozen.
 
 ## When to use
 
-In **Step 10** of the developer lifecycle. Step 8 (implement) and Step 9 (verify) must be complete. Step 10 must complete before Step 11 (PR readiness).
+In **Step 11** of the V3 lifecycle. Implementation, integration verification
+and consolidated review must be complete. Closeout must complete before
+candidate freeze, acceptance and draft-PR delivery.
 
 ## Critical timing rule
 

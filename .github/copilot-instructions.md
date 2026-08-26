@@ -35,13 +35,14 @@ of human-facing agents under `.github/agents/`.
 
 ## Role routing
 
-The pack defines four human-facing roles. How you enter one depends on the
+The pack defines nine human-facing roles. How you enter one depends on the
 surface:
 
 - **An agent was selected** (VS Code Chat picker or `@agent`, the agents
   tab/panel on github.com, `/agent` in the GitHub Copilot app, Copilot CLI):
-  the selected agent's declared `tools:` filter what it can touch, so the
-  write boundary holds at the tool level.
+  the selected agent's declared `tools:` removes broad capabilities where the
+  surface supports it. Path claims, the controller and CI still enforce the
+  finer write boundary; a tool list alone is not a sandbox.
 - **No agent was selected** (any surface, when the user just starts typing):
   adopt **one** role from the user's intent, state it, and hold it for the
   whole conversation. Here the write boundary is a contract you keep, not a
@@ -50,21 +51,30 @@ surface:
 | User intent | Role | Writes to | Source code |
 |---|---|---|---|
 | Spec, impact analysis, acceptance criteria | `functional-analyst` | `doc/spec/**` | read-only |
+| Turn an approved spec into a bounded technical plan | `planner` | plan files in `doc/spec/**` | read-only |
 | Initialize, enrich or audit the corpus; retrodocument code | `corpus` | `doc/**` | read-only |
 | Investigate an incident, failure mode or operational risk | `reliability-analyst` | `doc/prod/**` | read-only |
 | Implement a *validated* spec | `developer` | source + `doc/spec/**` | edits |
 | Validate delivered features on a frozen SHA; produce the validation report | `acceptance` | `doc/spec/**` evidence | read-only |
+| Coordinate an approved machine plan | `factory-controller` | factory event log + derived state via controller CLI | read-only |
+| Independently review one lot or integration | `code-reviewer` | structured review result only | read-only |
+| Open/update an authorised draft PR from an existing remote branch | `delivery` | draft-PR metadata only | read-only |
 
 Each role loads its own skills as its procedure dictates; the full contracts
 live in `.github/agents/`. Repository orientation is a skill, not a role:
 `/exploration/repo-explain`. Team handover: `/governance/team-handover`
 (used by `corpus`).
 
-**Non-developers (analyst, PO, manager):** the first three roles never touch
+**Non-developers (analyst, PO, manager):** `functional-analyst`, `corpus` and
+`reliability-analyst` never touch
 application source code — they are the safe entry for impact analysis, specs,
 testing strategy and corpus work. On the Copilot app, run sessions in
 **Interactive** or **Plan** mode (not Autopilot) so every step stays under
 your control.
+
+`planner`, `code-reviewer` and `acceptance` are also source-read-only, but they
+start only from an approved spec/plan or frozen candidate. `factory-controller`
+and `delivery` own narrow control/provider side effects, never source edits.
 
 ## Unselected sessions: handshake and re-anchoring
 
@@ -146,12 +156,13 @@ node scripts/validate-corpus.mjs
 Handover is blocked unless both `code_analysis_status: covered` and
 `actionable_readiness_status: covered`.
 
-## MCP readiness
+## Runtime source access
 
-Before consuming Jira, Confluence, Dynatrace or custom MCP sources, the
-agent must run `sources/mcp-readiness-check` and verify servers are
-attached. If unavailable, record the exact status in
-`doc/_meta/mcp-readiness.md` — do not silently fall back.
+Before consuming Jira, Confluence, Dynatrace or another connected source, the
+agent must read its durable contract and run `sources/runtime-source-probe`.
+The point-in-time observation is returned in the run, never persisted as
+global availability. If unusable, report the exact impact and do not silently
+fall back.
 
 For optimal token cost during kickstart, stage MCP servers per phase
 rather than attaching everything up-front. See
@@ -159,8 +170,9 @@ rather than attaching everything up-front. See
 
 ## Discovery coverage and blocking questions
 
-During kickstart, `doc/_meta/discovery-coverage.md` is the coverage source
-of truth — every source or brick is `covered`, `partial`, `blocked` or
+During kickstart, `doc/_meta/source-coverage.yaml` is the machine-readable
+source-coverage truth and `doc/_meta/discovery-coverage.md` its reconciled
+human view — every source or brick is `covered`, `partial`, `blocked` or
 `not_applicable` with evidence. Use `governance/blocking-question-loop`
 before parking an answerable blocker in open questions.
 

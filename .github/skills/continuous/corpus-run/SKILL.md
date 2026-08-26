@@ -72,9 +72,9 @@ Use this skill when the operator says:
    - Read the corpus files already linked to the node.
    - State what is already known before querying tools.
 
-4. **Source readiness**
-   - Use `sources/mcp-readiness-check` before Jira, Confluence, Dynatrace or custom MCP.
-   - Read-only external access is allowed by default when tools are available.
+4. **Runtime source access**
+   - Read the durable source contract and use `sources/runtime-source-probe` before Jira, Confluence, Dynatrace or another connected source.
+   - Read-only external access is allowed by default when the selected transport is declared and the runtime probe succeeds.
    - Mutating external systems requires explicit operator request.
 
 5. **Evidence gathering**
@@ -253,7 +253,7 @@ and list a few active/recommended nodes from `ROADMAP_STATE.md` and `NEXT_BEST_A
 
 - Treat a run as a path toward adoption material instead of durable corpus improvement.
 - Produce text without updating corpus, roadmap, graph or run ledger.
-- Use broad external queries without MCP readiness and bounds.
+- Use broad external queries without a runtime source probe and declared bounds.
 - Keep talking when a high-value human question should be asked.
 - Lose the user's guidance when context compacts; resume from persisted state.
 - Frame `Recommended next` (or the recap) as an implementation task, a

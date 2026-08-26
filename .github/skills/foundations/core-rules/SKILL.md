@@ -30,7 +30,7 @@ Shared rules for every agent: do not invent facts, detect actual stack, use conf
 7. Record unresolved questions in `doc/_meta/open-questions.md`.
 8. Reconcile affected files instead of appending contradictions.
 9. Use `governance/safe-operation-guardrails` before high-risk, destructive, broad or external side-effect actions.
-10. Register non-standard sources in `doc/_meta/information-sources.yaml` before using them for durable claims.
+10. Register durable, transport-neutral source contracts in `doc/_meta/information-sources.yaml`, probe runtime capability per run, and record historical evidence in `doc/_meta/source-coverage.yaml`. Never persist current availability globally.
 11. Apply the source priority rule (below) on every disagreement between sources.
 
 ## Source priority (truth ranking)
@@ -116,7 +116,7 @@ runtime.
 
 ## Source consumption
 
-Do not rely only on predefined tools. Teams may expose logs, metrics, tickets, exports or business data through SQL, APIs, files or manual evidence. Register each source in `doc/_meta/information-sources.yaml`, document usage in `doc/mcp/custom-sources.md`, and route findings through the corpus with evidence and confidence.
+Do not rely only on predefined tools. Teams may expose logs, metrics, tickets, exports or business data through SQL, APIs, files or manual evidence. Register each durable source and transport policy in `doc/_meta/information-sources.yaml`, probe the selected transport with `sources/runtime-source-probe`, record historical evidence in `doc/_meta/source-coverage.yaml`, document usage in `doc/mcp/custom-sources.md`, and route findings through the corpus with evidence and confidence.
 
 ## Corpus output format (OKF v0.1)
 

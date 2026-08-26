@@ -40,12 +40,13 @@ as tasks (corpus scope discipline).
 
 1. `doc/_meta/ecosystem-map.yaml` (the registry; ships as a skeleton).
 2. `doc/architecture/boundary.yaml` (this app's own contract — the seed).
-3. `doc/mcp/github.md` + `doc/_meta/mcp-readiness.md` (GitHub MCP status, org).
-4. `doc/_meta/app-profile.yaml` (already-declared peers; org/owner hints).
+3. `doc/mcp/github.md` + `doc/_meta/information-sources.yaml` (GitHub transport contract and org conventions).
+4. `doc/_meta/source-coverage.yaml` (historical GitHub source evidence).
+5. `doc/_meta/app-profile.yaml` (already-declared peers; org/owner hints).
 
 ## Prerequisites & scope boundary
 
-- **GitHub MCP must be `available`** with a token whose read scope covers the
+- A point-in-time `sources/runtime-source-probe` must report the GitHub transport `usable` with a token whose read scope covers the
   org. The token scope *is* the discovery boundary — repos it cannot read are
   invisible; say so, do not guess their existence.
 - Value scales with adoption: discovery only finds apps that have this pack +
@@ -159,7 +160,7 @@ and consent.
 - `doc/_graph/ecosystem.yaml` + `doc/architecture/ECOSYSTEM.md` — regenerated.
 - `doc/mcp/github.md` — verified org, `search_code` limits/quirks (per
   `sources/mcp-data-reading § Post-session capitalization`).
-- `doc/_meta/mcp-readiness.md` — GitHub row status.
+- `doc/_meta/source-coverage.yaml` — historical evidence and freshness for the GitHub-backed scan.
 - `doc/_meta/blocking-questions.md` — token scope gaps, unreadable repos.
 
 ## Anti-patterns

@@ -18,7 +18,7 @@ description: "What the current project activity appears to show, in plain langua
 
 What the current project activity appears to show, in plain language.
 
-## Source availability
+## Source contract, runtime observation and historical coverage
 
 | Source | Available | Scope/window | Limits | Confidence |
 |---|---:|---|---|---|

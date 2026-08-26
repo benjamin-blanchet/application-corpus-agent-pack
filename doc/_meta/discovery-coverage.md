@@ -5,14 +5,18 @@ confidence: unknown
 source: pack
 last_validated:
 title: "Discovery Coverage"
-description: "This file tracks what the `Corpus` agent has actually covered during kickstart."
+description: "Human-readable view of the historical source coverage contract."
 ---
 
 # Discovery Coverage
 
-This file tracks what the `Corpus` agent has actually covered during kickstart.
+This file is the human-readable view of historical coverage. The canonical
+machine-readable source record is `doc/_meta/source-coverage.yaml`; reconcile
+both whenever source evidence changes.
 
-The goal is to make corpus initialization auditable: what was scanned, queried, read, skipped, blocked and still unknown.
+The goal is to make corpus initialization auditable: what was scanned, queried,
+read, skipped, blocked and still unknown. A missing capability in one runtime
+does not erase evidence collected by an earlier run.
 
 ## Coverage Status Scale
 

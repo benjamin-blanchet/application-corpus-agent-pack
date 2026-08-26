@@ -1,0 +1,11 @@
+# Schema for one ephemeral environment preflight observation.
+file_pattern: doc/spec/*/*/acceptance/runs/*/environment-observation.json
+written_by_skill: development/factory-environment
+description: |
+  Immutable run-scoped observation of the exact candidate revision and its
+  build, schema, dataset, dependencies and contract digests.
+must_not_be_markdown: true
+root:
+  required_keys: [schema_version, run_id, observed_at, profile, subject_sha, deployed_revision, instance_id, build_or_image, schema_version_value, dataset_id, dataset_version, auth_actor_type, environment_contract_digest, ci_contract_digest, checks, status]
+enums:
+  status: [ready, blocked]

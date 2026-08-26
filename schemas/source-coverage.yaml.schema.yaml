@@ -1,0 +1,32 @@
+# Contract for doc/_meta/source-coverage.yaml.
+
+file: doc/_meta/source-coverage.yaml
+schema_version: 1
+written_by_skill: governance/discovery-coverage-contract
+description: Historical source coverage and durable evidence references independent from current runtime access.
+
+root:
+  required_keys: [schema_version, coverage]
+
+item:
+  inside_block: coverage
+  required_fields: [source_id, status, freshness, last_successful_observation_at, last_successful_run, evidence_refs, limitations, blockers, targets]
+  enums:
+    status: [not_started, inventory_only, started, partial, covered, deep, blocked, not_applicable]
+    freshness: [unknown, fresh, stale, not_applicable]
+  additional_fields: forbidden
+
+target_item:
+  inside_block: targets
+  required_fields: [id, status, evidence_refs]
+  enums:
+    status: [not_started, inventory_only, started, partial, covered, deep, blocked, not_applicable]
+  additional_fields: forbidden
+
+rules:
+  - Every source_id resolves to doc/_meta/information-sources.yaml.
+  - Successful timestamps and runs describe past observations only.
+  - Inventory-only started partial covered and deep entries and targets require resolvable evidence.
+  - Successful run references resolve to a dated run record or an id present in doc/_runs/RUN_LEDGER.md.
+  - A failed current attempt does not erase previously collected evidence.
+  - Evidence references resolve to durable corpus evidence or a dated run record.

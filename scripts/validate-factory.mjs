@@ -21,6 +21,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { validateFactoryPackageV3 } from './lib/factory-v3/package-io.mjs';
 
 const argv = process.argv.slice(2);
 const jsonMode = argv.includes('--json');
@@ -157,6 +158,14 @@ function mappingUnder(text, name) {
 function validatePackage(rootDir, dirRel, findings) {
   const add = (severity, code, message, file) => findings.push({ severity, code, message, file });
   const dirAbs = path.join(rootDir, dirRel);
+  const hasV3 = fs.existsSync(path.join(dirAbs, 'factory', 'plan.v3.json'));
+  if (hasV3) {
+    for (const finding of validateFactoryPackageV3(dirAbs)) {
+      add(finding.severity || 'P0', finding.code, finding.message, finding.file || `${dirRel}/factory`);
+    }
+    validateV3SpecCoverage(rootDir, dirRel, add);
+    return;
+  }
   const hasState = fs.existsSync(path.join(dirAbs, 'factory-state.yaml'));
   const hasPlan = fs.existsSync(path.join(dirAbs, 'technical-plan.yaml'));
   if (!hasState && !hasPlan) return;
@@ -295,6 +304,32 @@ function validatePackage(rootDir, dirRel, findings) {
   }
 }
 
+function validateV3SpecCoverage(rootDir, dirRel, add) {
+  const dirAbs = path.join(rootDir, dirRel);
+  const planRel = `${dirRel}/factory/plan.v3.json`;
+  const specRel = `${dirRel}/SPECIFICATION.md`;
+  let plan;
+  try {
+    plan = JSON.parse(readText(path.join(dirAbs, 'factory', 'plan.v3.json')));
+  } catch (error) {
+    add('P0', 'factory-plan-v3-json', `plan.v3.json is not valid JSON: ${error.message}`, planRel);
+    return;
+  }
+  const specAbs = path.join(dirAbs, plan.spec_path || 'SPECIFICATION.md');
+  if (!fs.existsSync(specAbs)) {
+    add('P0', 'factory-spec-v3-missing', `plan spec_path does not resolve: ${plan.spec_path || '<missing>'}`, planRel);
+    return;
+  }
+  const specIds = new Set([...readText(specAbs).matchAll(/\bAC-[A-Z0-9][A-Z0-9-]*\b/g)].map((match) => match[0]));
+  const planIds = new Set((plan.acceptance_criteria || []).map((criterion) => criterion?.id).filter(Boolean));
+  for (const id of specIds) {
+    if (!planIds.has(id)) add('P0', 'factory-spec-criterion-unplanned', `${id} appears in the specification but not plan.v3.json`, specRel);
+  }
+  for (const id of planIds) {
+    if (!specIds.has(id)) add('P1', 'factory-plan-criterion-not-in-spec', `${id} appears in plan.v3.json but not the specification`, planRel);
+  }
+}
+
 function waves(lots, byId) {
   const out = [];
   const done = new Set();
@@ -320,7 +355,8 @@ function packagesUnder(rootDir, rel) {
       // The shipped template is a shape, not a package: its placeholders are
       // deliberately empty and validating them reports the template as broken.
       if (entry.name === 'template') continue;
-      if (fs.existsSync(path.join(rootDir, child, 'factory-state.yaml'))) out.push(child);
+      if (fs.existsSync(path.join(rootDir, child, 'factory', 'plan.v3.json'))) out.push(child);
+      else if (fs.existsSync(path.join(rootDir, child, 'factory-state.yaml'))) out.push(child);
       else walk(child);
     }
   };

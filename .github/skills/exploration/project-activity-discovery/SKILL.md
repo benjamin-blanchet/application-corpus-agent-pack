@@ -32,7 +32,7 @@ doc/_meta/discovery-coverage.md
 
 If source access is unavailable or mapping is unclear, do not invent activity state. Record the status as unavailable or partial.
 
-Before using Jira or Confluence evidence, run `sources/mcp-readiness-check`. Do not mark Jira or Confluence unavailable until the IDE MCP server/tool attachment status has been checked.
+Before using Jira or Confluence evidence, read their durable contracts and run `sources/runtime-source-probe`. Do not call either source unavailable based solely on one runtime observation.
 
 When Jira or Confluence is available, use `doc/mcp/atlassian-query-catalog.md` as the bounded query checklist. Record which catalog steps were executed, skipped or unsupported in `doc/_meta/discovery-coverage.md`.
 
@@ -51,7 +51,7 @@ Use only available and verified sources:
 - Human confirmation from the AI champion or team when needed.
 - Registered custom sources in `doc/_meta/information-sources.yaml`, such as delivery dashboards, internal planning exports, SQL views or CI/CD databases.
 
-If Jira is expected but not attached to the current agent/session, stop Jira-backed discovery, update `doc/_meta/mcp-readiness.md`, and ask for the IDE MCP tools to be attached or explicitly accept a partial Git-only discovery.
+If Jira is required but `not_visible` in this runtime, stop Jira-backed discovery, report the point-in-time observation, and ask for the capability or explicit acceptance of a partial Git-only discovery. Preserve any valid historical Jira coverage.
 
 ## Default discovery windows
 
@@ -172,7 +172,7 @@ Use `doc/project/activity/PROJECT_ACTIVITY_DISCOVERY_TEMPLATE.md` as the base st
 Required sections:
 
 1. Executive summary
-2. Source availability
+2. Durable source contract, point-in-time runtime observation and prior coverage
 3. Current work themes
 4. Jira / work tracking signals
 5. Cross-project / cross-space trajectory

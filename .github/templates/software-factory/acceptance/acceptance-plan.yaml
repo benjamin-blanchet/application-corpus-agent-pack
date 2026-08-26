@@ -1,0 +1,37 @@
+version: 1
+spec_ref: doc/spec/<version>/<ticket>/SPECIFICATION.md
+environment_profile: local-acceptance
+
+subject:
+  freeze_at_execution: true
+
+campaign:
+  adapter: playwright
+  unattended_required: true
+  continue_after_failure: true
+  flaky_blocks: true
+  results_contract_version: 1
+
+criteria:
+  - id: AC-001
+    cases: [CASE-001]
+
+cases:
+  - id: CASE-001
+    criteria: [AC-001]
+    test_ref:
+      path: doc/spec/<version>/<ticket>/acceptance/tests/feature.spec.mjs
+      title: CASE-001 observable behaviour
+    preconditions: [environment-ready]
+    oracle:
+      - id: visible-final-state
+        type: ui
+        assertion: executable
+    evidence:
+      required:
+        - id: stable-final-state
+          type: screenshot
+          checkpoint: stable-final-state
+    mutations: []
+
+mutations: []

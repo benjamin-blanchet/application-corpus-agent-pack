@@ -31,9 +31,9 @@ Use this table to power the status footer at the end of every `Corpus` kickstart
 | Sector | Completeness | Evidence | Blockers |
 |---|---|---|---|
 | Project knowledge | empty | Skeleton only. | Repository not explored yet. |
-| Production knowledge | empty | Skeleton only. | Production source readiness unknown. |
+| Production knowledge | partial | Historical demo evidence exists. | Refresh according to the source contract. |
 | Specs/change support | started | Spec template exists. | No real spec package yet. |
-| MCP/source readiness | empty | MCP readiness template exists. | Jira/Confluence/Dynatrace tools not checked. |
+| Source contracts and coverage | strong | Durable contracts and historical demo coverage exist. | Runtime capability is checked per run. |
 | Indexes/navigation | started | Corpus map and index skeleton exist. | Indexes not populated from app evidence yet. |
 | Roadmap/graph/runs | started | Roadmap, graph and run ledger skeletons exist. | Not expanded from app evidence yet. |
 | Adoption guide | empty | Adoption guide templates exist. | Operator has not requested adoption material. |
@@ -58,7 +58,7 @@ Coverage source of truth: `doc/_meta/discovery-coverage.md`.
 | Deep analysis plan updated | not started | `doc/_meta/deep-analysis-plan.md` |
 | Information sources registered | not started | `doc/_meta/information-sources.yaml` |
 | MCP source wizard completed | not started | `doc/_meta/mcp-source-wizard.md` |
-| MCP readiness checked | not started | `doc/_meta/mcp-readiness.md` |
+| Historical source coverage updated | covered | `doc/_meta/source-coverage.yaml` |
 | Indexes initialized | not started | `doc/_indexes/` |
 | Project activity discovery assessed | not started | `doc/project/activity/` or open question |
 | Production discovery assessed | not started | `doc/prod/snapshots/` or open question |
@@ -81,7 +81,7 @@ Coverage source of truth: `doc/_meta/discovery-coverage.md`.
 | `doc/_meta/deep-analysis-plan.md` | template | Coordinate multi-disciplinary deep analysis lanes. |
 | `doc/_meta/information-sources.yaml` | template | Register available sources. |
 | `doc/_meta/mcp-source-wizard.md` | template | Inventory standard MCP, custom MCP and non-MCP source candidates. |
-| `doc/_meta/mcp-readiness.md` | template | Verify Jira/Confluence/Dynatrace server and tool attachment. |
+| `doc/_meta/source-coverage.yaml` | active | Historical source evidence only. |
 | `doc/_meta/kickstart-report.md` | template | Produce after first useful pass. |
 | `doc/_roadmap/CORPUS_ROADMAP.yaml` | skeleton | Expand during early discovery. |
 | `doc/_roadmap/NEXT_BEST_ACTIONS.md` | skeleton | Keep recommended next runs current. |
@@ -109,7 +109,7 @@ Coverage source of truth: `doc/_meta/discovery-coverage.md`.
 5. Apply the discovery coverage contract.
 6. Use the deep analysis plan for serious/full kickstarts.
 7. Ask blocking questions that could unlock better coverage.
-8. Run MCP readiness checks for Jira, Confluence, Dynatrace and custom MCP sources if expected.
+8. Run point-in-time source probes before consuming connected sources; never persist global availability.
 9. Initialize indexes with verified entries.
 10. Initialize roadmap, graph and run ledger.
 11. Record missing source access as open questions only when unresolved or deferred.
@@ -125,7 +125,7 @@ Coverage source of truth: `doc/_meta/discovery-coverage.md`.
 - The repository role.
 - The actual stack.
 - Available project activity and production sources.
-- Whether Jira/Confluence/Dynatrace MCP tools are attached to the current IDE agent session.
+- Which Jira/Confluence/Dynatrace capabilities this runtime exposes when needed.
 - Whether custom MCP servers or non-MCP evidence sources exist.
 - Answers to active blocking questions in `doc/_meta/blocking-questions.md`.
 
@@ -148,7 +148,7 @@ Corpus status
 - Project knowledge:
 - Production knowledge:
 - Specs/change support:
-- MCP/source readiness:
+- Source contracts / historical coverage:
 - Indexes/navigation:
 - Adoption guide:
 - Generated/updated this step:

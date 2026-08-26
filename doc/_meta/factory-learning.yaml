@@ -1,0 +1,86 @@
+schema_version: 1
+promotions:
+  - id: FACTORY-LEARN-001
+    observed_at: 2026-08-26
+    source:
+      type: experiment
+      ref: operator-supplied-pgs-software-factory-pilot
+    observed_failure: A dependent lot was launched in the same wave as its prerequisite.
+    generalized_rule: Scheduling is a pure function; a dependency becomes ready only after integration and independent review.
+    decision:
+      status: adopted
+      rationale: Prompt-level dependency instructions did not prevent the invalid wave.
+    acceptance_criteria: [AC-003]
+    positive_fixtures: [scheduler-independent-lots]
+    negative_fixtures: [scheduler-dependent-lots-same-wave]
+    introduced_in: 1.2.0
+  - id: FACTORY-LEARN-002
+    observed_at: 2026-08-26
+    source:
+      type: experiment
+      ref: operator-supplied-pgs-software-factory-pilot
+    observed_failure: Release readiness remained green after a blocking review correction changed its inputs.
+    generalized_rule: Every gate is an attestation over digests and is invalidated transitively when an input changes.
+    decision:
+      status: adopted
+      rationale: Mutable status fields cannot express whether their evidence is current.
+    acceptance_criteria: [AC-005]
+    positive_fixtures: [release-current-basis]
+    negative_fixtures: [release-code-changed-after-ready]
+    introduced_in: 1.2.0
+  - id: FACTORY-LEARN-003
+    observed_at: 2026-08-26
+    source:
+      type: experiment
+      ref: operator-supplied-pgs-software-factory-pilot
+    observed_failure: An acceptance role pushed despite a textual prohibition.
+    generalized_rule: Side effects are deny-by-default capabilities enforced before execution; prompts cannot grant them.
+    decision:
+      status: adopted
+      rationale: Role intent without technical enforcement is not an authority boundary.
+    acceptance_criteria: [AC-008]
+    positive_fixtures: [delivery-draft-only]
+    negative_fixtures: [acceptance-git-push-denied]
+    introduced_in: 1.2.0
+  - id: FACTORY-LEARN-004
+    observed_at: 2026-08-26
+    source:
+      type: experiment
+      ref: operator-supplied-pgs-software-factory-pilot
+    observed_failure: A user-visible technical error after a successful mutation was reported inside an all-PASS campaign.
+    generalized_rule: User-visible error, blocked dependency, incomplete cleanup or retry-only success can never aggregate to passed.
+    decision:
+      status: adopted
+      rationale: Acceptance reports must be generated from closed case outcomes.
+    acceptance_criteria: [AC-025]
+    positive_fixtures: [acceptance-all-cases-passed]
+    negative_fixtures: [acceptance-error-after-mutation]
+    introduced_in: 1.2.0
+  - id: FACTORY-LEARN-005
+    observed_at: 2026-08-26
+    source:
+      type: experiment
+      ref: operator-supplied-pgs-software-factory-pilot
+    observed_failure: An ad-hoc Playwright script used a persistent human profile, fixed sleeps, shared mutable data and could not prove all claimed criteria.
+    generalized_rule: Web acceptance uses a parameterized @playwright/test adapter with deterministic waits, isolated data, machine reports and exact criterion mapping.
+    decision:
+      status: adopted
+      rationale: A script that only ran once is not a replayable acceptance asset.
+    acceptance_criteria: [AC-024, AC-028]
+    positive_fixtures: [playwright-contract-replayable]
+    negative_fixtures: [playwright-fixed-wait-and-shared-profile]
+    introduced_in: 1.2.0
+  - id: FACTORY-LEARN-006
+    observed_at: 2026-08-26
+    source:
+      type: human
+      ref: operator-decision-2026-08-26
+    observed_failure: MCP availability was persisted as if it were application knowledge although it varies by workstation and session.
+    generalized_rule: Persist source requirements and historical coverage; probe adapter availability ephemerally per run.
+    decision:
+      status: adopted
+      rationale: MCP is a transport, not a durable source or global readiness state.
+    acceptance_criteria: [AC-015, AC-016, AC-017, AC-019]
+    positive_fixtures: [source-available-through-non-mcp-transport]
+    negative_fixtures: [persistent-current-mcp-status]
+    introduced_in: 1.2.0

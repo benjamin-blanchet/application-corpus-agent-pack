@@ -35,8 +35,8 @@ It does **not** receive the author's reasoning transcript. Evidence, contracts
 and outcomes — not the story of how the author got there, which is precisely
 what makes a second reader agree too easily.
 
-The reviewer comes from a different model family than the author
-(`development/model-routing`).
+A different model family is preferred; fresh context is mandatory. Any
+same-family exception and its reason are explicit (`development/model-routing`).
 
 ## Mechanical hygiene pre-scan
 
@@ -94,11 +94,19 @@ incomplete, and the fix belongs in the plan rather than in another attempt.
 | P2 | advisory maintainability or clarity | no |
 | P3 | out of scope | no — route to `SUGGESTIONS.md` |
 
+Every finding is structured: id · severity · violated criterion/rule · tight
+location · reproduction/evidence · impact · state/disposition. A vague concern
+cannot block a gate.
+
 For each finding: acknowledge it · fix P0/P1 inside an authorised bounded lot ·
 rerun the applicable verification · re-review the changed scope independently ·
 record a false-positive rationale or advisory disposition · stop for the
 operator only when resolution needs a business decision, a material amendment,
 new risk authorisation or a model replacement.
+
+At most two automatic correction/re-review cycles apply to one finding. A
+third failure, recurrent disagreement or exhausted lot budget escalates to the
+operator; it never becomes another silent attempt.
 
 **No corpus closeout starts while a P0 or P1 finding remains.**
 

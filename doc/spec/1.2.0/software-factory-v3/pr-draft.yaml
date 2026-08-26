@@ -1,0 +1,20 @@
+version: 1
+provider: github
+draft: true
+title: Software Factory V3
+base_ref: main
+head_ref_from: FACTORY_HEAD_REF
+body_path: doc/spec/1.2.0/software-factory-v3/PR_DESCRIPTION.md
+spec_ref: doc/spec/1.2.0/software-factory-v3/SPECIFICATION.md
+technical_plan_ref: doc/spec/1.2.0/software-factory-v3/TECHNICAL_PLAN.md
+acceptance_matrix_ref: doc/spec/1.2.0/software-factory-v3/acceptance-plan.yaml
+replay_command: "node scripts/validate-delivery.mjs --package doc/spec/1.2.0/software-factory-v3 --environment doc/project/runtime/ENVIRONMENTS.yaml --ci doc/project/cicd/FACTORY_CI.yaml --evidence doc/spec/1.2.0/software-factory-v3/factory/evidence-manifest.v3.json --artifacts-root doc/spec/1.2.0/software-factory-v3/acceptance/runs/$FACTORY_RUN_ID --subject-sha $FACTORY_SUBJECT_SHA --json"
+required_checks: [factory-policy, factory-delivery-validation]
+authorization:
+  required: true
+  provider: external_receipt
+  gate_id: draft-pr
+permissions:
+  contents: read
+  pull_requests: write
+forbidden_actions: [push, approve, mark_ready, merge, force_push]

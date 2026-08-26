@@ -363,6 +363,14 @@ paths:
     gated: true
     surfaced: true
     scaffold: false
+  - path: doc/_meta/factory-learning.yaml
+    scope: meta-state
+    produced_by: development/factory-control-plane
+    requirement: required
+    delivery: llm-created
+    gated: true
+    surfaced: true
+    scaffold: false
   - path: doc/_meta/interaction-history/patterns/friction-points.md
     scope: meta-state
     produced_by: various
@@ -400,14 +408,6 @@ paths:
     produced_by: various
     requirement: required
     delivery: llm-created
-    gated: true
-    surfaced: true
-    scaffold: false
-  - path: doc/_meta/mcp-readiness.md
-    scope: meta-state
-    produced_by: various
-    requirement: required
-    delivery: skeleton
     gated: true
     surfaced: true
     scaffold: false
@@ -458,6 +458,14 @@ paths:
     delivery: skeleton
     gated: true
     surfaced: false
+    scaffold: false
+  - path: doc/_meta/source-coverage.yaml
+    scope: meta-state
+    produced_by: governance/discovery-coverage-contract
+    requirement: required
+    delivery: skeleton
+    gated: true
+    surfaced: true
     scaffold: false
   - path: doc/_meta/structural-issues.yaml
     scope: meta-state
@@ -533,14 +541,6 @@ paths:
     scaffold: false
   - path: doc/_runs/RUN_TEMPLATE.md
     scope: runs
-    produced_by: various
-    requirement: required
-    delivery: skeleton
-    gated: true
-    surfaced: false
-    scaffold: false
-  - path: doc/mcp/MCP_READINESS.md
-    scope: mcp
     produced_by: various
     requirement: required
     delivery: skeleton
@@ -787,6 +787,14 @@ paths:
     gated: true
     surfaced: true
     scaffold: false
+  - path: doc/project/cicd/FACTORY_CI.yaml
+    scope: cicd
+    produced_by: development/draft-pr-delivery
+    requirement: conditional
+    delivery: llm-created
+    gated: true
+    surfaced: true
+    scaffold: false
   - path: doc/project/cicd/RECENT_ACTIVITY.md
     scope: cicd
     produced_by: various
@@ -794,6 +802,30 @@ paths:
     delivery: skeleton
     gated: true
     surfaced: false
+    scaffold: false
+  - path: doc/project/runtime/README.md
+    scope: runtime
+    produced_by: development/environment-discovery
+    requirement: conditional
+    delivery: llm-created
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/project/runtime/ENVIRONMENTS.yaml
+    scope: runtime
+    produced_by: development/environment-discovery
+    requirement: conditional
+    delivery: llm-created
+    gated: true
+    surfaced: true
+    scaffold: false
+  - path: doc/project/runtime/LOCAL_STARTUP.md
+    scope: runtime
+    produced_by: development/environment-discovery
+    requirement: conditional
+    delivery: llm-created
+    gated: true
+    surfaced: true
     scaffold: false
   - path: doc/project/domain/ENTITIES.md
     scope: domain

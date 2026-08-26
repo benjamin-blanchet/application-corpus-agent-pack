@@ -59,7 +59,8 @@ Per-class file inclusion (see development/change-triage):
 - [ ] Update-candidates filed and consumed by `Corpus`
 - [ ] Multi-repo sibling sync recommendation produced (if applicable)
 - [ ] PR description produced (Step 11)
-- [ ] PR opened by operator
+- [ ] Candidate branch published through the repository's authorised path
+- [ ] Draft PR opened by `Delivery`; human approval/merge still pending
 
 ## Files in this package
 
@@ -77,7 +78,12 @@ JOURNAL.md         # chronological record of how it was actually built
 Added after the specification is approved, never before:
 
 ```text
-TECHNICAL_PLAN.md    # rationale, lots, DAG, decisions, review plan
-technical-plan.yaml  # machine-readable lots, ownership, contracts, verification
-factory-state.yaml   # current gate, allocation, lot, review, tested SHA, delivery
+TECHNICAL_PLAN.md          # rationale, lots, DAG, decisions, review plan
+factory/plan.v3.json       # approved lots, claims, capabilities and proofs
+factory/events.v3.jsonl    # canonical append-only event history
+factory/state.v3.json      # reproducible projection; never edit by hand
 ```
+
+Add `acceptance/acceptance-plan.yaml` and executable tests before candidate
+freeze. The controller generates `factory/evidence-manifest.v3.json` only after
+acceptance; do not create a hand-written placeholder.

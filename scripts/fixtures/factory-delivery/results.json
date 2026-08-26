@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "run_id": "fixture-run-001",
+  "candidate_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "plan_digest": "sha256:5e2bc0828e5f8b1962c9da6ed3d940badf19e3d2b077b100fffe0e34fb2cf6b1",
+  "environment_digest": "sha256:18dfdb68dbc2483f619e8fe5e00f8eb355b6441585dda158653c52d740c2c081",
+  "observation_run_id": "fixture-run-001",
+  "overall_status": "passed",
+  "toolchain": {
+    "adapter": "playwright",
+    "adapter_version": "fixture-1",
+    "browser": "chromium",
+    "browser_version": "fixture-browser-1"
+  },
+  "cases": [
+    {
+      "id": "CASE-001",
+      "title": "CASE-001 fixture behaviour",
+      "outcome": "pass",
+      "attempts": 1,
+      "oracle_results": [
+        { "id": "fixture-oracle", "outcome": "pass" }
+      ],
+      "evidence": [
+        { "id": "CASE-001-fixture-state", "requirement_id": "fixture-state", "type": "log", "checkpoint": "fixture-state", "path": "CASE-001.txt", "media_type": "text/plain" }
+      ]
+    }
+  ],
+  "mutations": [
+    { "id": "fixture-record", "outcome": "applied", "cleanup": "passed" }
+  ]
+}

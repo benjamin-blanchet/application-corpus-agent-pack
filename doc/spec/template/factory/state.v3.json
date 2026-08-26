@@ -1,0 +1,81 @@
+{
+  "acceptance_run": null,
+  "blockers": [],
+  "delivery": null,
+  "derived_from": {
+    "current_inputs_sha256": "4339449f3f5318ec12224e1017ccbc422be1858900fc38cb65c170dfc09cd084",
+    "events_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "last_seq": 0
+  },
+  "digests": {
+    "corpus_manifest_sha256": null,
+    "evidence_manifest_sha256": null,
+    "plan_sha256": "db5be5e29c5542e817a44548d10c04ea99b26b299bb9db7b2f44c3141e8c528e",
+    "spec_sha256": null,
+    "test_bundle_sha256": null
+  },
+  "execution_policy": null,
+  "gates": {
+    "acceptance": {
+      "basis_event": null,
+      "status": "pending"
+    },
+    "candidate": {
+      "basis_event": null,
+      "status": "pending"
+    },
+    "consolidated_review": {
+      "basis_event": null,
+      "status": "pending"
+    },
+    "corpus_closeout": {
+      "basis_event": null,
+      "status": "pending"
+    },
+    "evidence": {
+      "basis_event": null,
+      "status": "pending"
+    },
+    "integration": {
+      "basis_event": null,
+      "status": "pending"
+    },
+    "lot_reviews": {
+      "basis_event": null,
+      "status": "pending"
+    },
+    "release": {
+      "basis_event": null,
+      "status": "pending"
+    },
+    "specification": {
+      "basis_event": null,
+      "status": "pending"
+    },
+    "technical_plan": {
+      "basis_event": null,
+      "status": "pending"
+    }
+  },
+  "legacy": null,
+  "lots": {
+    "LOT-1": {
+      "attempts": 0,
+      "diff_sha256": null,
+      "reservation_id": null,
+      "review": null,
+      "status": "pending"
+    }
+  },
+  "phase": "draft",
+  "provenance": {
+    "candidate_sha": null,
+    "evidence_sha": null,
+    "publication": null,
+    "tested_sha": null
+  },
+  "ready_lots": [],
+  "reservations": {},
+  "run_id": null,
+  "v": 3
+}

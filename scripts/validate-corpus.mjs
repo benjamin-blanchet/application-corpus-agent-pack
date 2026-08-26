@@ -4,6 +4,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { parseBoundary, KINDS_INBOUND, KINDS_OUTBOUND, PROTOCOLS, CRITICALITY, CONFIDENCE, SOURCE, CONFIRMED_SOURCES } from './lib/boundary.mjs';
 import { normalizeText } from './lib/text.mjs';
+import {
+  findForbiddenDurableRuntimeFields,
+  hasGlobalRuntimeObservation,
+  parseSourceContracts,
+  parseSourceCoverage,
+  validateSourceContracts,
+  validateSourceCoverage,
+} from './check-runtime-sources.mjs';
 
 const root = process.cwd();
 const docRoot = path.join(root, 'doc');
@@ -112,13 +120,13 @@ function checkRequiredStructure() {
     'doc/_meta/update-candidates.md',
     'doc/_meta/validation-checklist.md',
     'doc/_meta/discovery-coverage.md',
+    'doc/_meta/source-coverage.yaml',
     'doc/_meta/blocking-questions.md',
     'doc/_meta/deep-analysis-plan.md',
     'doc/_meta/brick-inventory.yaml',
     'doc/_meta/actionable-readiness.md',
     'doc/_meta/kickstart-progress.md',
     'doc/_meta/mcp-source-wizard.md',
-    'doc/_meta/mcp-readiness.md',
     'doc/_meta/interaction-history/README.md',
     'doc/_meta/interaction-history/SESSION-template.md',
     'doc/_roadmap/README.md',
@@ -134,7 +142,6 @@ function checkRequiredStructure() {
     'doc/_runs/README.md',
     'doc/_runs/RUN_LEDGER.md',
     'doc/_runs/RUN_TEMPLATE.md',
-    'doc/mcp/MCP_READINESS.md',
     'doc/architecture/README.md',
     'doc/architecture/boundary.yaml',
     'doc/project/cicd/README.md',
@@ -148,6 +155,8 @@ function checkRequiredStructure() {
     'scripts/export-graph-json.mjs',
     'scripts/sync-peer-corpus.mjs',
     'scripts/recompose-ecosystem.mjs',
+    'scripts/check-runtime-sources.mjs',
+    'scripts/test-runtime-sources.mjs',
   ];
   const requiredDirs = [
     'doc/_meta',
@@ -1626,69 +1635,236 @@ function checkYamlHygiene() {
   }
 }
 
-// MCP knowledge staleness: when a tool is reported `connected` or `available`
-// in corpus-state but the corresponding `doc/mcp/<tool>.md` reference file is
-// still the pack draft template, what the operator/agent discovered while using
-// the MCP has not been captured back. The next agent that opens the corpus
-// will re-discover what was already known. Emitted at P2 (warn).
-//
-// See SKILL.md sources/mcp-data-reading § Post-session capitalization.
-function checkMcpKnowledgeStale() {
-  const stateRel = 'doc/_meta/corpus-state.yaml';
-  if (!exists(stateRel)) return;
-  const state = parseSimpleYamlMap(read(stateRel));
-  const corpus = state.corpus || {};
+// Source contracts, runtime observations and historical coverage are separate
+// planes. These helpers enforce that persistent files contain only the first
+// and third planes. Runtime observations are validated by
+// scripts/check-runtime-sources.mjs and never stored as global corpus state.
+function runLedgerIds(baseRel = '') {
+  const ids = new Set();
+  const ledgerRel = `${baseRel}doc/_runs/RUN_LEDGER.md`;
+  if (!exists(ledgerRel)) return ids;
+  for (const line of read(ledgerRel).split('\n')) {
+    if (!/^\s*\|/.test(line) || /^\s*\|\s*(?:Date|[-: ]+)\s*\|/i.test(line)) continue;
+    const cells = line.split('|').slice(1, -1).map((cell) => cell.trim());
+    const runId = cells[1];
+    if (runId) ids.add(runId.replace(/`/g, ''));
+  }
+  return ids;
+}
 
-  // Map state-field-name → mcp file. Several fields can target the same file
-  // (Jira and Confluence both land in atlassian.md).
-  const toolMap = {
-    dynatrace_mcp_status: 'doc/mcp/dynatrace.md',
-    jira_mcp_status: 'doc/mcp/atlassian.md',
-    confluence_mcp_status: 'doc/mcp/atlassian.md',
-    github_mcp_status: 'doc/mcp/github.md',
-    servicenow_mcp_status: 'doc/mcp/servicenow.md',
-  };
+function checkDemoSourceParity() {
+  const baseRel = 'examples/demo-corpus/';
+  const contractRel = `${baseRel}doc/_meta/information-sources.yaml`;
+  const coverageRel = `${baseRel}doc/_meta/source-coverage.yaml`;
+  if (!exists(contractRel) || !exists(coverageRel)) {
+    add('P0', 'demo-source-package-missing', 'Demo corpus must ship source contract and historical coverage fixtures', contractRel);
+    return;
+  }
+  const demoMeta = path.join(root, baseRel, 'doc/_meta');
+  for (const abs of walk(demoMeta)) {
+    const fileRel = rel(abs);
+    if (!/\.(?:yaml|yml|json)$/.test(fileRel)) continue;
+    const text = normalizeText(fs.readFileSync(abs, 'utf8'));
+    const forbiddenFields = findForbiddenDurableRuntimeFields(text);
+    if (forbiddenFields.length) add('P0', 'demo-durable-runtime-source-field', `Demo durable state contains forbidden point-in-time source field(s): ${forbiddenFields.join(', ')}`, fileRel);
+    if (hasGlobalRuntimeObservation(text)) add('P0', 'demo-global-runtime-source-observation', 'Demo corpus must not persist a global runtime source observation', fileRel);
+  }
 
-  const ACTIVE = /^(available|connected)$/;
-  const seenFile = new Set();
-
-  for (const [stateField, mcpRel] of Object.entries(toolMap)) {
-    const status = corpus[stateField];
-    if (!status || !ACTIVE.test(String(status))) continue;
-    if (seenFile.has(mcpRel)) continue;
-
-    if (!exists(mcpRel)) {
-      add(
-        'P2',
-        'mcp-knowledge-missing-file',
-        `${stateField}=${status} but ${mcpRel} is missing — pack template should exist for any active MCP`,
-        mcpRel,
-      );
-      seenFile.add(mcpRel);
-      continue;
+  const contract = parseSourceContracts(read(contractRel));
+  for (const message of validateSourceContracts(contract)) add('P0', 'demo-source-contract-invalid', message, contractRel);
+  const coverage = parseSourceCoverage(read(coverageRel));
+  for (const message of validateSourceCoverage(coverage, contract)) add('P0', 'demo-source-coverage-invalid', message, coverageRel);
+  const knownRuns = runLedgerIds(baseRel);
+  for (const entry of coverage.coverage || []) {
+    if (typeof entry.last_successful_run === 'string') {
+      const runRef = entry.last_successful_run;
+      const resolves = runRef.startsWith('doc/') ? exists(`${baseRel}${runRef}`) : knownRuns.has(runRef);
+      if (!resolves) add('P0', 'demo-source-run-unresolved', `${entry.source_id} successful run does not resolve: ${runRef}`, coverageRel);
     }
+    for (const evidenceRef of [...(entry.evidence_refs || []), ...(entry.targets || []).flatMap((target) => target.evidence_refs || [])]) {
+      const evidencePath = String(evidenceRef).replace(/:\d+(?:-\d+)?$/, '');
+      if (evidencePath.startsWith('doc/') && !exists(`${baseRel}${evidencePath}`)) add('P0', 'demo-source-evidence-unresolved', `${entry.source_id} evidence does not resolve: ${evidenceRef}`, coverageRel);
+    }
+  }
 
-    const fm = frontmatter(read(mcpRel));
-    // parseSimpleYamlMap returns `{}` for keys with empty values
-    // (e.g. `last_validated:` with nothing after the colon). Normalize to ''.
-    const normalize = (v) => (typeof v === 'string' ? v : '');
-    const fmStatus = normalize(fm.status);
-    const fmValidated = normalize(fm.last_validated);
-    const fmConfidence = normalize(fm.confidence);
-    const isTemplate =
-      fmStatus === 'draft'
-      || fmValidated === ''
-      || fmConfidence === 'unknown';
+  const viewRel = `${baseRel}doc/_meta/discovery-coverage.md`;
+  if (exists(viewRel)) {
+    const view = read(viewRel);
+    const expectedTargets = [
+      ['jira', 'recent-and-active-issues', /^\|\s*Open\/active issues\s*\|\s*([a-z_]+)\s*\|/mi],
+      ['dynatrace', 'runtime-entity-mapping', /^\|\s*Runtime entity\/service mapping\s*\|\s*([a-z_]+)\s*\|/mi],
+    ];
+    for (const [sourceId, targetId, pattern] of expectedTargets) {
+      const canonical = coverage.coverage?.find((entry) => entry.source_id === sourceId)?.targets?.find((target) => target.id === targetId)?.status;
+      const displayed = view.match(pattern)?.[1];
+      if (canonical && displayed && canonical !== displayed) add('P0', 'demo-source-target-view-drift', `${sourceId}/${targetId} is ${canonical} in source-coverage.yaml but ${displayed} in discovery-coverage.md`, viewRel);
+    }
+  }
+}
 
-    if (isTemplate) {
+function checkSourceContracts() {
+  const contractRel = 'doc/_meta/information-sources.yaml';
+  const coverageRel = 'doc/_meta/source-coverage.yaml';
+  const legacyNames = [
+    `doc/_meta/${['mcp', 'readiness'].join('-')}.md`,
+    `doc/mcp/${['MCP', 'READINESS'].join('_')}.md`,
+    `examples/demo-corpus/doc/_meta/${['mcp', 'readiness'].join('-')}.md`,
+    `examples/demo-corpus/doc/mcp/${['MCP', 'READINESS'].join('_')}.md`,
+  ];
+  for (const legacy of legacyNames) {
+    if (exists(legacy)) add('P0', 'legacy-runtime-state-file', `Legacy global runtime-state artifact must be removed: ${legacy}`, legacy);
+  }
+  if (!exists(contractRel) || !exists(coverageRel)) return;
+
+  const contractText = read(contractRel);
+  const stateRel = 'doc/_meta/corpus-state.yaml';
+  const metaDir = path.join(root, 'doc/_meta');
+  for (const abs of walk(metaDir)) {
+    const fileRel = rel(abs);
+    if (!/\.(?:yaml|yml|json)$/.test(fileRel)) continue;
+    const text = normalizeText(fs.readFileSync(abs, 'utf8'));
+    const forbiddenFields = findForbiddenDurableRuntimeFields(text);
+    if (forbiddenFields.length) {
+      add('P0', 'durable-runtime-source-field', `Durable corpus state contains forbidden point-in-time source field(s): ${forbiddenFields.join(', ')}`, fileRel);
+    }
+    if (hasGlobalRuntimeObservation(text)) {
+      add('P0', 'global-runtime-source-observation', 'Point-in-time runtime source observations may only be emitted or attached to a dated run, not stored under doc/_meta', fileRel);
+    }
+  }
+
+  const contract = parseSourceContracts(contractText);
+  for (const message of validateSourceContracts(contract)) {
+    add('P0', 'source-contract-invalid', message, contractRel);
+  }
+  const sourceById = new Map((contract.sources || []).map((source) => [source.id, source]));
+  for (const source of contract.sources || []) {
+    if (source.operational_doc && !exists(source.operational_doc)) {
+      add('P1', 'source-operational-doc-missing', `${source.id} references missing operational_doc ${source.operational_doc}`, contractRel, source.operational_doc);
+    }
+    if (source.lifecycle === 'declared' && source.requirement === 'required' && source.mapping_state === 'unknown') {
+      add('P1', 'required-source-mapping-unknown', `${source.id} is required and declared but its durable mapping is unknown`, contractRel);
+    }
+  }
+
+  const coverage = parseSourceCoverage(read(coverageRel));
+  for (const message of validateSourceCoverage(coverage, contract)) {
+    add('P0', 'source-coverage-invalid', message, coverageRel);
+  }
+  const coverageIds = new Set();
+  const knownRunIds = runLedgerIds();
+  for (const entry of coverage.coverage || []) {
+    if (!entry.source_id) continue;
+    coverageIds.add(entry.source_id);
+    if (typeof entry.last_successful_run === 'string') {
+      const runRef = entry.last_successful_run;
+      const runResolves = runRef.startsWith('doc/') ? exists(runRef) : knownRunIds.has(runRef);
+      if (!runResolves) add('P0', 'source-coverage-run-unresolved', `${entry.source_id} successful run does not resolve: ${runRef}`, coverageRel);
+    }
+    const evidenceRefs = [
+      ...(entry.evidence_refs || []),
+      ...(entry.targets || []).flatMap((target) => target.evidence_refs || []),
+    ];
+    for (const evidenceRef of evidenceRefs) {
+      const evidencePath = String(evidenceRef).replace(/:\d+(?:-\d+)?$/, '');
+      if (evidencePath.startsWith('doc/') && !exists(evidencePath)) add('P0', 'source-coverage-evidence-unresolved', `${entry.source_id} evidence does not resolve: ${evidenceRef}`, coverageRel);
+    }
+    const source = sourceById.get(entry.source_id);
+    if (source && entry.freshness === 'fresh' && source.freshness_max_days > 0 && entry.last_successful_observation_at) {
+      const observed = Date.parse(entry.last_successful_observation_at);
+      const ageDays = Number.isNaN(observed) ? null : Math.floor((Date.now() - observed) / 86400000);
+      if (ageDays != null && ageDays > source.freshness_max_days) add('P2', 'source-coverage-freshness-drift', `${entry.source_id} says fresh but its last evidence is ${ageDays} days old (policy ${source.freshness_max_days})`, coverageRel);
+    }
+  }
+  for (const source of contract.sources || []) {
+    if (source.lifecycle === 'declared' && source.requirement === 'required' && !coverageIds.has(source.id)) {
+      add('P0', 'required-source-coverage-missing', `Required source ${source.id} has no historical coverage entry`, coverageRel);
+    }
+  }
+
+  const coverageById = new Map((coverage.coverage || []).map((entry) => [entry.source_id, entry]));
+  const discoveryViewRel = 'doc/_meta/discovery-coverage.md';
+  if (exists(discoveryViewRel)) {
+    const view = read(discoveryViewRel);
+    const viewRows = {
+      repository: /^\|\s*Repository source\s*\|\s*([a-z_]+)\s*\|/mi,
+      jira: /^\|\s*Jira\s*\|\s*([a-z_]+)\s*\|/mi,
+      confluence: /^\|\s*Confluence\s*\|\s*([a-z_]+)\s*\|/mi,
+      dynatrace: /^\|\s*Dynatrace \/ production observability\s*\|\s*([a-z_]+)\s*\|/mi,
+    };
+    for (const [sourceId, pattern] of Object.entries(viewRows)) {
+      const viewStatus = view.match(pattern)?.[1];
+      const canonicalStatus = coverageById.get(sourceId)?.status;
+      if (viewStatus && canonicalStatus && viewStatus !== canonicalStatus) {
+        add('P1', 'source-coverage-view-drift', `${sourceId} is ${canonicalStatus} in source-coverage.yaml but ${viewStatus} in discovery-coverage.md`, discoveryViewRel);
+      }
+    }
+  }
+
+  if (exists(stateRel)) {
+    const corpusState = parseSimpleYamlMap(read(stateRel)).corpus || {};
+    const stateFields = {
+      repository: 'repository_coverage_status',
+      jira: 'jira_coverage_status',
+      confluence: 'confluence_coverage_status',
+      dynatrace: 'dynatrace_coverage_status',
+    };
+    for (const [sourceId, field] of Object.entries(stateFields)) {
+      const stateStatus = corpusState[field];
+      const canonicalStatus = coverageById.get(sourceId)?.status;
+      if (stateStatus && canonicalStatus && stateStatus !== canonicalStatus) {
+        add('P1', 'source-coverage-state-drift', `${field}=${stateStatus} but canonical source coverage for ${sourceId} is ${canonicalStatus}`, stateRel);
+      }
+    }
+  }
+
+  const activeRoots = ['AGENTS.md', 'README.md', 'docs', '.github', 'doc', 'examples/demo-corpus/doc'];
+  const forbiddenReference = /mcp[-_]readiness|MCP_READINESS|sources\/mcp-readiness-check|`consumption\.(?:method|access_mode)`|readiness\s+is\s+`available`|record\s+the\s+source\s+as\s+`partial`\s+or\s+`unavailable`|mariadb_logs_example/i;
+  for (const activeRoot of activeRoots) {
+    const abs = path.join(root, activeRoot);
+    const files = fs.existsSync(abs) && fs.statSync(abs).isDirectory() ? walk(abs) : fs.existsSync(abs) ? [abs] : [];
+    for (const file of files) {
+      const fileRel = rel(file);
+      if (fileRel.startsWith('doc/spec/') || fileRel.startsWith('doc/_site/')) continue;
+      if (!/\.(?:md|yaml|yml|json)$/.test(fileRel)) continue;
+      if (forbiddenReference.test(normalizeText(fs.readFileSync(file, 'utf8')))) {
+        add('P0', 'legacy-runtime-state-reference', 'Active corpus guidance still references the removed global runtime-state contract', fileRel);
+      }
+    }
+  }
+  checkDemoSourceParity();
+}
+
+// Successful historical evidence should leave reusable operational knowledge.
+// This check is evidence-driven; it never infers current capability.
+function checkSourceKnowledgeStale() {
+  const contractRel = 'doc/_meta/information-sources.yaml';
+  const coverageRel = 'doc/_meta/source-coverage.yaml';
+  if (!exists(contractRel) || !exists(coverageRel)) return;
+  const contract = parseSourceContracts(read(contractRel));
+  const coverage = parseSourceCoverage(read(coverageRel));
+  const sourceById = new Map(contract.sources.map((source) => [source.id, source]));
+  const successfulStatuses = new Set(['started', 'partial', 'covered', 'deep']);
+  const seenFile = new Set();
+  for (const entry of coverage.coverage) {
+    if (!successfulStatuses.has(entry.status) || !entry.evidence_refs?.length) continue;
+    const operationalDoc = sourceById.get(entry.source_id)?.operational_doc;
+    if (!operationalDoc || seenFile.has(operationalDoc)) continue;
+    seenFile.add(operationalDoc);
+    if (!exists(operationalDoc)) continue;
+    if (!operationalDoc.endsWith('.md')) continue;
+    const fm = frontmatter(read(operationalDoc));
+    const normalize = (value) => (typeof value === 'string' ? value : '');
+    const status = normalize(fm.status);
+    const validated = normalize(fm.last_validated);
+    const confidence = normalize(fm.confidence);
+    if (status === 'draft' || !validated || confidence === 'unknown') {
       add(
         'P2',
-        'mcp-knowledge-stale',
-        `${stateField}=${status} but ${mcpRel} is still pack template (status=${fmStatus || '∅'}, last_validated=${fmValidated || '∅'}, confidence=${fmConfidence || '∅'}) — capture what was discovered while using this MCP`,
-        mcpRel,
-        'See SKILL.md sources/mcp-data-reading § Post-session capitalization',
+        'source-operational-knowledge-stale',
+        `${entry.source_id} has successful historical evidence but ${operationalDoc} is still a draft/unvalidated template`,
+        operationalDoc,
+        'See sources/mcp-data-reading § Post-session capitalization',
       );
-      seenFile.add(mcpRel);
     }
   }
 }
@@ -2043,7 +2219,8 @@ checkUnknowns();
 checkCorpusScopeLeak();
 checkYamlHygiene();
 checkSchemaDrift();
-checkMcpKnowledgeStale();
+checkSourceContracts();
+checkSourceKnowledgeStale();
 checkIndexColumns();
 checkCrossFileExistence();
 checkTimestampFormat();

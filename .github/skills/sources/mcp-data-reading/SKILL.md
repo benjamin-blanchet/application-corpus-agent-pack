@@ -1,15 +1,18 @@
 ---
 name: mcp-data-reading
 category: sources
-description: "Before using connected tools or custom sources, read `doc/mcp/<tool>.md` or `doc/mcp/custom-sources.md`, register the source in `doc/_meta/information-sources.yaml`, and record availability, query patterns and limitations."
+description: "Before using connected tools or custom sources, read the durable source contract and operational reference, probe this runtime, then capitalize verified query patterns and limitations."
 ---
 # MCP Data Reading
 
 ## Purpose
 
-Before using connected tools or custom sources, read `doc/mcp/<tool>.md` or `doc/mcp/custom-sources.md`, register the source in `doc/_meta/information-sources.yaml`, and record availability, query patterns and limitations.
+Before using connected tools or custom sources, read `doc/mcp/<tool>.md` or `doc/mcp/custom-sources.md`, register the durable contract in `doc/_meta/information-sources.yaml`, probe this runtime, and record evidence, query patterns and limitations.
 
-For Jira, Confluence, Dynatrace or any expected MCP-backed source, first use `sources/mcp-readiness-check`. Do not silently fall back to repository-only evidence when an MCP source is missing from the current IDE agent session.
+For Jira, Confluence, Dynatrace or any expected connected source, first use
+`sources/runtime-source-probe`. Do not silently fall back to repository-only
+evidence when a required capability is missing from this run, and never
+persist that absence as a durable source property.
 
 ## Canonical paths
 
@@ -25,11 +28,11 @@ For Jira, Confluence, Dynatrace or any expected MCP-backed source, first use `so
 
 1. Read `doc/CORPUS_MAP.md` before creating or moving corpus content.
 2. Use `doc/CORPUS_MANIFEST.md` for conventions.
-3. Read `doc/mcp/MCP_READINESS.md` and `doc/_meta/mcp-readiness.md` before consuming MCP sources.
-4. Announce MCP consumption before using MCP tools.
-5. Verify that expected MCP servers are running and tools are attached to the current IDE agent/session.
-6. Run small read-only smoke tests when possible.
-7. Record MCP status as `available`, `available_unverified`, `not_attached_to_agent`, `server_not_running`, `not_configured`, `permission_blocked` or `mapping_unknown`.
+3. Read `doc/_meta/information-sources.yaml`, `doc/_meta/source-coverage.yaml` and the source's `operational_doc` before use.
+4. Announce connected-source consumption before using external tools.
+5. Use `sources/runtime-source-probe` to observe the selected transport in this run.
+6. Run the declared small read-only `safe_probe` when possible.
+7. Keep the observation ephemeral; update durable coverage only after evidence is collected.
 8. Do not assume the technology stack; detect it from repository evidence.
 9. Distinguish facts, hypotheses and unknowns.
 10. Use frontmatter metadata for important corpus files.
@@ -59,7 +62,11 @@ Not every useful source is an MCP. For SQL databases, APIs, file exports or manu
 
 ## No silent fallback
 
-If an expected MCP source is unavailable, state it explicitly to the operator, update `doc/_meta/mcp-readiness.md`, and mark related discoveries as blocked or partial. Continue only with a clearly labeled reduced scope.
+If a required source is unusable in this runtime, state the observation and its
+impact explicitly, and mark the current discovery blocked. Partial continuation
+requires a structured operator waiver with approver, reason and timestamp. Do not
+downgrade valid historical coverage solely because this run lacks access.
+For optional sources, continue only with a clearly labeled reduced scope.
 
 ## Post-session capitalization
 
@@ -83,7 +90,7 @@ Reading `doc/mcp/<tool>.md` before a session is necessary but not sufficient. Th
 
 ### Where this does NOT go
 
-Discoveries about MCP usage do **not** belong in:
+Point-in-time runtime capability does **not** belong in:
 - `doc/_meta/corpus-state.yaml` (state file — narrative there fragments the agent's read; `validate-corpus.mjs` flags `*_note` creep);
 - a one-off `_runs/<date>-<topic>.md` run note alone — the run note is fine as audit trail, but the *operational knowledge* must also land in `doc/mcp/<tool>.md` for the next agent to find.
 
@@ -91,4 +98,4 @@ The run note answers "what we did this session". The MCP file answers "how to us
 
 ### Discipline check
 
-Before closing a session that touched an MCP, ask: *can the next agent that opens `doc/mcp/<tool>.md` skip the discovery I just did?* If no, the file is not done. `validate-corpus.mjs` runs a `mcp-knowledge-stale` check (P2) that flags when a `<tool>_mcp_status: connected|available` is paired with a still-draft `doc/mcp/<tool>.md`.
+Before closing a session that touched a connected source, ask: *can the next agent that opens `doc/mcp/<tool>.md` skip the discovery I just did?* If no, the file is not done. `validate-corpus.mjs` flags a still-draft operational reference when historical coverage contains successful evidence for that source.

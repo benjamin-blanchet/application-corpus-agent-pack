@@ -1607,6 +1607,7 @@ const corpus = {
   cross_cutting: readYaml('_meta/cross-cutting-state.yaml') || {},
   feature_candidates: readYaml('_meta/feature-candidates.yaml') || {},
   info_sources: readYaml('_meta/information-sources.yaml') || {},
+  source_coverage: readYaml('_meta/source-coverage.yaml') || {},
   logical_boundaries: readYaml('_meta/logical-boundaries.yaml') || {},
   reconciliation: readYaml('_meta/reconciliation-ledger.yaml') || {},
   repo_map: readYaml('_meta/repository-map.yaml') || {},
@@ -1654,7 +1655,6 @@ const corpus = {
     cross_atlassian: readFileSafe('project/activity/CROSS_ATLASSIAN_REFERENCES.md'),
   },
   actionable_readiness: readFileSafe('_meta/actionable-readiness.md'),
-  mcp_readiness: readFileSafe('_meta/mcp-readiness.md'),
   handover: {
     summary: readFileSafe('_handover/HANDOVER_SUMMARY.md'),
     next30: readFileSafe('_handover/NEXT_30_DAYS.md'),
@@ -2037,6 +2037,7 @@ function renderApplication() {
   const envs = asList(dep.environments);
   const cs = corpus.corpus_state?.corpus || corpus.corpus_state || {};
   const sources = asList(corpus.info_sources?.information_sources || corpus.info_sources?.sources);
+  const sourceCoverageById = new Map(asList(corpus.source_coverage?.coverage).map((entry) => [entry.source_id, entry]));
   const heroMetrics = computeHeroMetrics();
   // Agent readiness — parse the actionable-readiness "Agent Task Readiness" table
   const agentReadiness = parseAgentReadiness();
@@ -2368,7 +2369,7 @@ function renderApplication() {
     </article>`;
   }).join('');
 
-  // ---- Sources strip — what feeds the corpus ----
+  // ---- Sources strip — durable contracts plus historical coverage ----
   function sourceIcon(cat) {
     if (/code/i.test(cat)) return '⌨';
     if (/project|jira/i.test(cat)) return '◧';
@@ -2378,15 +2379,19 @@ function renderApplication() {
     return '◌';
   }
   const sourceCards = sources.map((s) => {
-    const status = String(s.status || 'unknown').toLowerCase();
-    const tone = status === 'available' ? 'confirmed' : status === 'unknown' ? 'unknown' : 'partial';
+    const lifecycle = String(s.lifecycle || 'unknown').toLowerCase();
+    const coverage = sourceCoverageById.get(s.id) || {};
+    const coverageStatus = String(coverage.status || 'not_started').toLowerCase();
+    const tone = /^(?:covered|deep)$/.test(coverageStatus) ? 'confirmed'
+      : /^(?:inventory_only|started|partial)$/.test(coverageStatus) ? 'partial'
+      : 'unknown';
     return `<article class="src-card src-card-${tone}">
       <div class="src-icon">${sourceIcon(s.category || '')}</div>
       <div class="src-body">
         <div class="src-name">${esc(s.name || s.id || '—')}</div>
-        <div class="src-cat muted">${esc(s.category || '')}</div>
+        <div class="src-cat muted">${esc(s.category || '')} · contract ${esc(lifecycle)} · ${esc(coverage.freshness || 'unknown')}</div>
       </div>
-      <span class="pill pill-${tone}">${esc(status)}</span>
+      <span class="pill pill-${tone}">history ${esc(coverageStatus)}</span>
     </article>`;
   }).join('');
 
@@ -2561,7 +2566,7 @@ function computeHeroMetrics() {
   for (const [k, v] of Object.entries(cs)) {
     if (typeof v !== 'string') continue;
     if (!/_status$/.test(k)) continue;
-    if (/_mcp_status$/.test(k) || /_initialized$/.test(k)) continue;
+    if (/_initialized$/.test(k)) continue;
     // dedupe by stem
     const stem = k.replace(/_(coverage|discovery)?_status$/, '');
     if (seen.has(stem)) continue;
@@ -2614,7 +2619,7 @@ function computeHeroMetrics() {
   // Sentence parts
   const app = corpus.app?.application || {};
   const sources = asList(corpus.info_sources?.information_sources || corpus.info_sources?.sources);
-  const sourcesConfirmed = sources.filter((s) => /available|confirmed/i.test(String(s.status || ''))).length;
+  const sourcesDeclared = sources.filter((s) => s.lifecycle === 'declared').length;
   let evidenceCount = 0;
   const gEvidence = corpus.graph?.evidence?.graph?.evidence || corpus.graph?.evidence?.evidence;
   if (gEvidence) evidenceCount = asList(gEvidence).length;
@@ -2629,7 +2634,7 @@ function computeHeroMetrics() {
     coveredN: covered, coverageTotal: total,
     anchoredN: anchored, claimsTotal: claims,
     freshnessAges: ages,
-    sourcesConfirmed, sourcesTotal: sources.length,
+    sourcesDeclared, sourcesTotal: sources.length,
     evidenceCount,
     daysSinceKick,
     appName: app.name || 'application',
@@ -2682,7 +2687,7 @@ function buildSponsorPhrase(m) {
   if (m.maturityLevel != null) stadium = `stade <strong>L${m.maturityLevel}${m.phase ? ' ' + m.phase : ''}</strong>`;
   if (stadium) parts.push(stadium);
   if (m.daysSinceKick != null) parts.push(`dernier kickstart il y a <strong>${m.daysSinceKick}&nbsp;jour${m.daysSinceKick > 1 ? 's' : ''}</strong>`);
-  if (m.sourcesConfirmed) parts.push(`ancré sur <strong>${m.sourcesConfirmed}</strong> source${m.sourcesConfirmed > 1 ? 's' : ''}`);
+  if (m.sourcesDeclared) parts.push(`<strong>${m.sourcesDeclared}</strong> contrat${m.sourcesDeclared > 1 ? 's' : ''} de source déclaré${m.sourcesDeclared > 1 ? 's' : ''}`);
   if (m.evidenceCount) parts.push(`<strong>${m.evidenceCount}</strong> preuve${m.evidenceCount > 1 ? 's' : ''}`);
   return parts.join(' · ');
 }
@@ -3050,7 +3055,7 @@ function computeCoverageEntriesFor(cs) {
     const prev = byKey.get(c.key);
     if (!prev || rank(c.raw) < rank(prev.raw)) byKey.set(c.key, c);
   }
-  const out = [...byKey.values()].filter((c) => !(/_mcp_status$|^.*\smcp$/.test(c.raw) || / mcp$/.test(c.key)));
+  const out = [...byKey.values()];
   const statusOrder = { covered: 0, done: 0, available: 0, partial: 1, started: 2, not_started: 3, not_done: 3, blocked: 4, unknown: 5 };
   out.sort((a, b) => (statusOrder[a.value] ?? 9) - (statusOrder[b.value] ?? 9) || a.key.localeCompare(b.key));
   return out;
@@ -3931,6 +3936,7 @@ function prodSection(title, count, rows, kind) {
 function renderSources() {
   const is = corpus.info_sources || {};
   const sources = asList(is.information_sources || is.sources);
+  const coverageBySource = new Map(asList(corpus.source_coverage?.coverage).map((entry) => [entry.source_id, entry]));
 
   // Compute anchoring across all claim-like items
   const items = [
@@ -4007,20 +4013,26 @@ function renderSources() {
 
   const sourcesTable = `
     <section class="card">
-      <div class="card-head"><h3>Registered sources</h3><span class="card-meta">${sources.length}</span></div>
+      <div class="card-head"><h3>Durable source contracts</h3><span class="card-meta">${sources.length}</span></div>
       <div class="card-body">
         ${sources.length ? `<table class="rows-table"><thead><tr>
-          <th>Name</th><th>Category</th><th>Method</th><th>Status</th><th>Access</th><th>Restrictions</th>
+          <th>Name</th><th>Category</th><th>Transport(s)</th><th>Lifecycle</th><th>Requirement</th><th>Historical coverage</th><th>Freshness</th>
         </tr></thead><tbody>
-          ${sources.map((s) => `<tr>
+          ${sources.map((s) => {
+            const coverage = coverageBySource.get(s.id) || {};
+            const methods = asList(s.transports).map((transport) => transport.method || transport.id).filter(Boolean).join(' · ');
+            return `<tr>
             <td><strong>${esc(s.name || s.id || '—')}</strong></td>
             <td>${esc(s.category || '—')}</td>
-            <td>${esc(s.consumption?.method || s.consumption?.server || s.mcp || s.protocol || '—')}</td>
-            <td>${pill(s.status || 'unknown', s.status === 'available' ? 'confirmed' : s.status === 'unknown' ? 'unknown' : 'partial')}</td>
-            <td>${esc(s.consumption?.access_mode || '—')}</td>
-            <td class="muted">${esc(shorten(asList(s.restrictions).join(' · ') || s.notes || '', 220))}</td>
-          </tr>`).join('')}
+            <td>${esc(methods || '—')}</td>
+            <td>${pill(s.lifecycle || 'unknown', 'unknown')}</td>
+            <td>${esc(s.requirement || '—')}</td>
+            <td>${pill(coverage.status || 'not_started', /covered|deep/.test(coverage.status || '') ? 'confirmed' : /partial|started/.test(coverage.status || '') ? 'partial' : 'unknown')}</td>
+            <td>${esc(coverage.freshness || 'unknown')}</td>
+          </tr>`;
+          }).join('')}
         </tbody></table>` : '<div class="muted">No sources registered.</div>'}
+        <p class="muted">Runtime capability is intentionally absent: it is observed per run and never displayed as a durable property.</p>
       </div>
     </section>`;
 
@@ -4192,20 +4204,13 @@ function renderCorpusState() {
     const prev = byKey.get(c.key);
     if (!prev || sourceRank(c.raw) < sourceRank(prev.raw)) byKey.set(c.key, c);
   }
-  // Separate MCP availability entries from work-area coverage
-  const mcpEntries = [];
-  const workEntries = [];
-  for (const c of byKey.values()) {
-    if (/_mcp_status$|^.*\smcp$/.test(c.raw) || / mcp$/.test(c.key)) mcpEntries.push(c);
-    else workEntries.push(c);
-  }
+  const workEntries = [...byKey.values()];
   coverageEntries.length = 0;
   coverageEntries.push(...workEntries);
 
   // Sort: covered > partial > started > not_started
   const statusOrder = { covered: 0, done: 0, available: 0, partial: 1, started: 2, not_started: 3, not_done: 3, blocked: 4, unknown: 5 };
   coverageEntries.sort((a, b) => (statusOrder[a.value] ?? 9) - (statusOrder[b.value] ?? 9) || a.key.localeCompare(b.key));
-  mcpEntries.sort((a, b) => a.key.localeCompare(b.key));
 
   function covTone(s) {
     s = String(s).toLowerCase();
@@ -5597,6 +5602,7 @@ function renderImpactMap() {
 function buildHtml() {
   // CSS is inlined at build time — no sidecar dependency.
   const css = INLINED_CSS;
+  const sourceCoverageById = new Map(asList(corpus.source_coverage?.coverage).map((entry) => [entry.source_id, entry]));
   const customCss = `
 /* ---- additions for new tabs (server-rendered) ---- */
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 18px 0; }
@@ -6848,24 +6854,24 @@ body:not(.mermaid-loaded) .mermaid::before { content: '⏳ Mermaid loading…  (
         </div>
       </section>` : '';
 
-    // ─── Information sources — what feeds the corpus, with credibility ─────
+    // ─── Information sources — contracts and historical evidence ───────────
     const sourcesArr = asList(corpus.info_sources?.information_sources || corpus.info_sources?.sources);
-    const sourceRankLabel = { code: 1, prod: 2, observability: 2, ticketing: 3, jira: 3, wiki: 4, confluence: 4, dashboard: 4, human: 5, other: 6 };
+    const sourceRankLabel = { code: 1, prod: 2, observability: 2, metrics: 2, 'production-logs': 2, 'project-activity': 3, ticketing: 3, jira: 3, documentation: 4, wiki: 4, confluence: 4, dashboard: 4, human: 5, other: 6 };
     function srcTone(s) {
-      const st = String(s.status || '').toLowerCase();
-      if (/available|confirmed|active/.test(st)) return 'good';
-      if (/partial|started/.test(st)) return 'mid';
-      if (/unavailable|blocked/.test(st)) return 'low';
+      const historical = String(sourceCoverageById.get(s.id)?.status || 'not_started').toLowerCase();
+      if (/^(?:covered|deep)$/.test(historical)) return 'good';
+      if (/^(?:inventory_only|started|partial)$/.test(historical)) return 'mid';
+      if (historical === 'blocked') return 'low';
       return 'todo';
     }
     const sourcesCardHtml = sourcesArr.length ? `
       <section class="card ov-sources">
         <div class="card-head">
           <h3>Information sources</h3>
-          <span class="card-meta">${sourcesArr.filter((s) => srcTone(s) === 'good').length}/${sourcesArr.length} available · <a href="#" data-tab-goto="meta" data-sub-goto="sub-sources">anchoring →</a></span>
+          <span class="card-meta">${sourcesArr.filter((s) => srcTone(s) === 'good').length}/${sourcesArr.length} historically covered · <a href="#" data-tab-goto="meta" data-sub-goto="sub-sources">anchoring →</a></span>
         </div>
         <div class="card-body">
-          <p class="ov-cov-intro muted">What the corpus pulls from. Rank 1 (code) is the ground truth; lower ranks need reconciliation. Anchoring % shows how much knowledge is rank-1–3 sourced.</p>
+          <p class="ov-cov-intro muted">Registered source contracts and historical evidence. Rank 1 (code) is the ground truth; lower ranks need reconciliation. Current runtime usability is intentionally absent.</p>
           <div class="ov-src-grid">
             ${sourcesArr.slice(0, 12).map((s) => {
               const tone = srcTone(s);
@@ -6874,7 +6880,7 @@ body:not(.mermaid-loaded) .mermaid::before { content: '⏳ Mermaid loading…  (
                 <div class="ov-src-rank" title="Source priority rank (1=code, 5=human)">R${rank}</div>
                 <div class="ov-src-main">
                   <div class="ov-src-name">${esc(s.name || s.id || '—')}</div>
-                  <div class="ov-src-meta"><span class="ov-src-cat">${esc(s.category || '—')}</span><span class="ov-src-status ov-src-status-${tone}">${esc(s.status || 'unknown')}</span></div>
+                  <div class="ov-src-meta"><span class="ov-src-cat">${esc(s.category || '—')} · contract ${esc(s.lifecycle || 'unknown')}</span><span class="ov-src-status ov-src-status-${tone}">history ${esc(sourceCoverageById.get(s.id)?.status || 'not_started')}</span></div>
                 </div>
               </div>`;
             }).join('')}

@@ -134,7 +134,7 @@ If subagent reports disagree:
 
 Do not:
 
-- use subagents to bypass MCP readiness or validation;
+- use subagents to bypass runtime source probes, source policy or validation;
 - allow subagents to write durable corpus files in parallel;
 - enable recursive subagent delegation by default;
 - leave available subagents unused on a broad scope without explanation;

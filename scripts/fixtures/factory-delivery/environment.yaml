@@ -1,0 +1,88 @@
+version: 1
+profiles:
+  - id: fixture-local
+    kind: local
+    runtime_type: server
+    automated: true
+    operations:
+      build: fixture-build
+      start: fixture-start
+      health: fixture-health
+      stop: fixture-stop
+      reset: fixture-reset
+      revision_probe: fixture-revision
+    endpoint:
+      base_url_from: FACTORY_BASE_URL
+      tls: strict
+    revision:
+      must_equal_subject_sha: true
+      source: probe
+    dependencies:
+      - id: fixture-schema
+        kind: schema
+        readiness_operation: fixture-schema
+        required: true
+      - id: fixture-dataset
+        kind: dataset
+        readiness_operation: fixture-dataset
+        required: true
+      - id: fixture-credential
+        kind: credential
+        readiness_operation: fixture-credential
+        required: true
+    auth:
+      mode: service_identity
+      actor_ref: fixture-service
+      automated_compatible: true
+      secret_refs: [FACTORY_FIXTURE_CREDENTIAL]
+    data:
+      isolation: per_run
+      dataset_id_from: FACTORY_DATASET_ID
+      dataset_version_from: FACTORY_DATASET_VERSION
+      seed_operation: null
+      cleanup_operation: fixture-cleanup
+      cleanup_required: true
+    mutation_policy:
+      allowed: [fixture-record]
+      requires_human_approval: false
+    network:
+      policy: deny_by_default
+      destinations_ref: null
+  - id: fixture-cli
+    kind: local
+    runtime_type: cli
+    automated: true
+    operations:
+      build: fixture-build
+      start:
+        not_applicable: true
+        reason: The CLI has no persistent server process.
+      health:
+        not_applicable: true
+        reason: The CLI has no listening health endpoint.
+      stop:
+        not_applicable: true
+        reason: The CLI exits after each bounded command.
+      reset:
+        not_applicable: true
+        reason: The fixture command does not persist runtime state.
+      revision_probe: fixture-revision
+    endpoint:
+      not_applicable: true
+      reason: The CLI exposes no network endpoint.
+    revision:
+      must_equal_subject_sha: true
+      source: probe
+    dependencies: []
+    auth:
+      not_applicable: true
+      reason: The fixture command reads no authenticated service.
+    data:
+      not_applicable: true
+      reason: The fixture command has no application dataset.
+    mutation_policy:
+      allowed: []
+      requires_human_approval: false
+    network:
+      policy: deny_by_default
+      destinations_ref: null

@@ -28,7 +28,7 @@ It is designed for two audiences:
 | Work on a change/spec | [spec/template/README.md](./spec/template/README.md) |
 | Use connected sources/tools | [mcp/INDEX.md](./mcp/INDEX.md) |
 | Inventory MCP/custom sources | [_meta/mcp-source-wizard.md](./_meta/mcp-source-wizard.md) |
-| Check MCP readiness | [mcp/MCP_READINESS.md](./mcp/MCP_READINESS.md) and [_meta/mcp-readiness.md](./_meta/mcp-readiness.md) |
+| Review source contracts and historical coverage | [_meta/information-sources.yaml](./_meta/information-sources.yaml) and [_meta/source-coverage.yaml](./_meta/source-coverage.yaml) |
 | Continue roadmap-driven enrichment | [_roadmap/ROADMAP_STATE.md](./_roadmap/ROADMAP_STATE.md), [_roadmap/CORPUS_ROADMAP.md](./_roadmap/CORPUS_ROADMAP.md), [_runs/RUN_LEDGER.md](./_runs/RUN_LEDGER.md) |
 | Inspect the knowledge graph | [_graph/README.md](./_graph/README.md) |
 | Review current corpus state | [_meta/corpus-state.yaml](./_meta/corpus-state.yaml) |
@@ -91,13 +91,16 @@ Use `/continuous/roadmap-graph` to maintain the roadmap and graph, `/continuous/
 
 When VS Code exposes `agent` / `runSubagent`, broad corpus runs use `/actionable/subagent-coverage-orchestration` by default. Internal subagents cover features, runtime/API/batch, data/integration, reliability and the corpus control plane. The main `Corpus` agent remains the only writer.
 
-## MCP readiness
+## Source contracts and runtime probes
 
 Use `/sources/mcp-source-wizard` early to inventory Jira, Confluence, Dynatrace, Git hosting, custom MCP servers and non-MCP evidence sources.
 
-Use `/sources/mcp-readiness-check` before consuming Jira, Confluence, Dynatrace or custom MCP sources. The agent must verify that MCP servers are running and that tools are attached to the current IDE agent/session, then update `doc/_meta/mcp-readiness.md`.
+Use `/sources/runtime-source-probe` before consuming Jira, Confluence, Dynatrace or custom sources. The observation is point-in-time and is never persisted as global availability.
 
-If a source is expected but unavailable, the agent must say so clearly and mark dependent discovery as blocked or partial. It must not silently continue with repository-only evidence.
+If a required source is unusable, the agent must block and report the dated
+observation; partial continuation requires a structured operator waiver. An
+optional source may produce explicitly partial discovery. It must never silently
+continue with repository-only evidence.
 
 ## Discovery coverage
 

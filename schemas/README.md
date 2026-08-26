@@ -59,6 +59,9 @@ item:
 - [brick-inventory.yaml.schema.yaml](brick-inventory.yaml.schema.yaml)
 - [reconciliation-ledger.yaml.schema.yaml](reconciliation-ledger.yaml.schema.yaml)
 - [boundary.yaml.schema.yaml](boundary.yaml.schema.yaml) — sanctuarized inbound/outbound integration contract (`doc/architecture/boundary.yaml`); enforced by `validate-corpus.mjs § checkBoundaryContract`.
+- [source-contract.yaml.schema.yaml](source-contract.yaml.schema.yaml) — durable, transport-neutral source declarations in `doc/_meta/information-sources.yaml`.
+- [source-coverage.yaml.schema.yaml](source-coverage.yaml.schema.yaml) — historical source evidence and freshness in `doc/_meta/source-coverage.yaml`.
+- [runtime-source-observation.schema.yaml](runtime-source-observation.schema.yaml) — ephemeral output validated by `scripts/check-runtime-sources.mjs`; it has no canonical persisted path.
 
 ## Migration scaffold
 

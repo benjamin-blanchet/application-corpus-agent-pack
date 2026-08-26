@@ -5,7 +5,7 @@
 // Run directly from GitHub, no install, no zip:
 //   npx github:benjamin-blanchet/application-corpus-agent-pack sync            # dry-run preview
 //   npx github:benjamin-blanchet/application-corpus-agent-pack sync --apply    # install or upgrade
-//   npx github:benjamin-blanchet/application-corpus-agent-pack#v1.1.0 sync --apply   # pinned version
+//   npx github:benjamin-blanchet/application-corpus-agent-pack#v1.2.0 sync --apply   # pinned version
 //
 // npx clones the pack into a temp dir and runs this bin with cwd = the repo
 // you invoked it from. So the source pack is this package's own tree, and the

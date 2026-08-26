@@ -1,0 +1,127 @@
+{
+  "acceptance_run": null,
+  "blockers": [],
+  "delivery": null,
+  "derived_from": {
+    "current_inputs_sha256": "b8fb2e8800216fe3faae69b3d2f1eb27cab8060aff7a88879cc6f1a93cfd0525",
+    "events_sha256": "a88b8a20487d99171631db5afee348f314ce315048b71b503e6e1ab4789010ca",
+    "last_seq": 6
+  },
+  "digests": {
+    "corpus_manifest_sha256": null,
+    "evidence_manifest_sha256": null,
+    "plan_sha256": "6a58f4fe165fb670b12b126c486892ef235dde7110b18a883552b89f889ad038",
+    "spec_sha256": "134400759f2c7d641d9e89bed10a0246476902be46d8ec0edc2cc71be144d32a",
+    "test_bundle_sha256": null
+  },
+  "execution_policy": {
+    "mode": "balanced",
+    "models": {
+      "economy": "bounded-small",
+      "expert": "deep-reasoning",
+      "reviewer": "fresh-reviewer",
+      "standard": "balanced-coding"
+    },
+    "observed_at": "2026-08-26T13:11:00+02:00"
+  },
+  "gates": {
+    "acceptance": {
+      "basis_event": null,
+      "status": "pending"
+    },
+    "candidate": {
+      "basis_event": null,
+      "status": "pending"
+    },
+    "consolidated_review": {
+      "basis_event": null,
+      "status": "pending"
+    },
+    "corpus_closeout": {
+      "basis_event": null,
+      "status": "pending"
+    },
+    "evidence": {
+      "basis_event": null,
+      "status": "pending"
+    },
+    "integration": {
+      "basis_event": null,
+      "status": "pending"
+    },
+    "lot_reviews": {
+      "basis_event": null,
+      "status": "pending"
+    },
+    "release": {
+      "basis_event": null,
+      "status": "pending"
+    },
+    "specification": {
+      "basis_event": "EVT-000003",
+      "status": "valid"
+    },
+    "technical_plan": {
+      "basis_event": "EVT-000005",
+      "status": "valid"
+    }
+  },
+  "legacy": null,
+  "lots": {
+    "LOT-1": {
+      "attempts": 0,
+      "diff_sha256": null,
+      "reservation_id": null,
+      "review": null,
+      "status": "pending"
+    },
+    "LOT-2": {
+      "attempts": 0,
+      "diff_sha256": null,
+      "reservation_id": null,
+      "review": null,
+      "status": "pending"
+    },
+    "LOT-3": {
+      "attempts": 0,
+      "diff_sha256": null,
+      "reservation_id": null,
+      "review": null,
+      "status": "pending"
+    },
+    "LOT-4": {
+      "attempts": 0,
+      "diff_sha256": null,
+      "reservation_id": null,
+      "review": null,
+      "status": "pending"
+    },
+    "LOT-5": {
+      "attempts": 0,
+      "diff_sha256": null,
+      "reservation_id": null,
+      "review": null,
+      "status": "pending"
+    },
+    "LOT-6": {
+      "attempts": 0,
+      "diff_sha256": null,
+      "reservation_id": null,
+      "review": null,
+      "status": "pending"
+    }
+  },
+  "phase": "plan_approved",
+  "provenance": {
+    "candidate_sha": null,
+    "evidence_sha": null,
+    "publication": null,
+    "tested_sha": null
+  },
+  "ready_lots": [
+    "LOT-1"
+  ],
+  "reservations": {},
+  "run_id": "factory-v3-2026-08-26",
+  "v": 3
+}

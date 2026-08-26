@@ -163,7 +163,8 @@ For each well-known meta file, compare its current shape against the schema docu
 | `doc/_meta/brick-inventory.yaml` | `actionable/brick-inventory` |
 | `doc/_meta/actionable-readiness.md` | `actionable/readiness-gate` |
 | `doc/_meta/discovery-coverage.md` | `governance/discovery-coverage-contract` |
-| `doc/_meta/mcp-readiness.md` | `sources/mcp-readiness-check` |
+| `doc/_meta/source-coverage.yaml` | `governance/discovery-coverage-contract` |
+| `doc/_meta/information-sources.yaml` | `sources/information-source-onboarding` |
 | `doc/_meta/code-activity-signals.yaml` (new) | `pipeline/code-activity-signals` |
 | `doc/_meta/coverage-matrix.md` | `pipeline/p9-code-reconciliation-gate`, `governance/discovery-coverage-contract` |
 | `doc/_meta/source-inventory.md` | `sources/information-source-onboarding` |

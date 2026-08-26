@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "observed_at": "2026-01-01T00:00:00.000Z",
+  "run_id": "fixture-run-001",
+  "profile": "fixture-local",
+  "subject_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "deployed_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "instance_id": "fixture-instance",
+  "build_or_image": "fixture-build",
+  "schema_version_value": "fixture-schema-v1",
+  "dataset_id": "fixture-dataset",
+  "dataset_version": "fixture-dataset-v1",
+  "auth_actor_type": "service_identity",
+  "environment_contract_digest": "sha256:18dfdb68dbc2483f619e8fe5e00f8eb355b6441585dda158653c52d740c2c081",
+  "ci_contract_digest": "sha256:4ee9cfcaee70d2e0bc3465e0d8d285a34e359535c2cc1a5ed066437221485507",
+  "checks": [
+    { "id": "fixture-health", "kind": "health", "required": true, "outcome": "pass" },
+    { "id": "fixture-schema", "kind": "schema", "required": true, "outcome": "pass" },
+    { "id": "fixture-dataset", "kind": "dataset", "required": true, "outcome": "pass" },
+    { "id": "fixture-credential", "kind": "credential", "required": true, "outcome": "pass" }
+  ],
+  "status": "ready"
+}

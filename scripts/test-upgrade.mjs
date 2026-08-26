@@ -22,13 +22,13 @@ const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'corpus-pack-upgrade-tests
 const INCOMING_AGENT = '# incoming corpus agent\n';
 const LOCAL_AGENT = '# locally customized corpus agent\n';
 const STABLE_AGENT = '# stable agent\n';
-const STATE_TEMPLATE = "corpus:\n  pack_version: '1.1.0'\n  last_pack_upgrade: null\n";
+const STATE_TEMPLATE = "corpus:\n  pack_version: '1.2.0'\n  last_pack_upgrade: null\n";
 
 function sourceFixture() {
   return {
-    'PACK_VERSION': '1.1.0\nreleased: 2026-08-26\n',
+    'PACK_VERSION': '1.2.0\nreleased: 2026-08-26\n',
     'AGENTS.md': '# Incoming operating guide\n',
-    'scripts/tool.mjs': 'export const version = "1.1.0";\n',
+    'scripts/tool.mjs': 'export const version = "1.2.0";\n',
     'schemas/corpus-state.yaml.template': STATE_TEMPLATE,
     '.github/prompts/coverage.prompt.md': '# incoming prompt\n',
     '.github/agents/corpus.agent.md': INCOMING_AGENT,
@@ -39,7 +39,7 @@ function sourceFixture() {
     'doc/_meta/corpus-changelog.md': '| Date | Change | Reason | Actor |\n|---|---|---|---|\n',
     'doc/_meta/new-scaffold.md': '# New scaffold\n',
     'doc/spec/template/README.md': '# Reusable spec template\n',
-    'doc/spec/1.1.0/pack-internal/README.md': '# Pack development spec\n',
+    'doc/spec/1.2.0/pack-internal/README.md': '# Pack development spec\n',
   };
 }
 
@@ -145,7 +145,7 @@ const tests = [
       assert.equal(pkg.version, packVersion, 'package.json and PACK_VERSION differ');
       assert.equal(stateVersion, packVersion, 'fresh corpus-state template and PACK_VERSION differ');
       assert.equal(migrationTemplate, state, 'migration scaffold and fresh corpus-state model differ');
-      assert.match(read(repoRoot, 'PACK_VERSION'), /^1\.1\.0\r?\nreleased: 2026-08-26\r?\nnotes: .+/);
+      assert.match(read(repoRoot, 'PACK_VERSION'), /^1\.2\.0\r?\nreleased: 2026-08-26\r?\nnotes: .+/);
 
       const upgradeCore = read(repoRoot, 'scripts/lib/upgrade-core.mjs');
       assert.doesNotMatch(upgradeCore, /function\s+(?:stampState|buildReport)\b/);
@@ -206,7 +206,7 @@ const tests = [
       const output = runSync(source, target);
 
       assertExactSnapshot(target, before);
-      assert.match(output, /Version: 1\.0\.0 → 1\.1\.0/);
+      assert.match(output, /Version: 1\.0\.0 → 1\.2\.0/);
       assert.match(output, /Sync preview complete; no files were written\./);
       assert.doesNotMatch(output, /(?:Would write|Report written)/);
     },
@@ -219,7 +219,7 @@ const tests = [
       const output = runSync(source, target, '--apply');
 
       assertPreexistingBytes(path.join(target, 'doc'), docBefore);
-      assert.equal(read(target, 'PACK_VERSION').split(/\r?\n/)[0], '1.1.0');
+      assert.equal(read(target, 'PACK_VERSION').split(/\r?\n/)[0], '1.2.0');
       assert.equal(read(target, 'scripts/tool.mjs'), sourceFixture()['scripts/tool.mjs']);
       assert.equal(read(target, 'schemas/corpus-state.yaml.template'), STATE_TEMPLATE);
       assert.equal(read(target, '.github/prompts/coverage.prompt.md'), '# incoming prompt\n');
@@ -228,7 +228,7 @@ const tests = [
       assert.equal(read(target, '.github/agents/new.agent.md'), '# new agent\n');
       assert.equal(read(target, 'doc/_meta/new-scaffold.md'), '# New scaffold\n');
       assert.equal(read(target, 'doc/spec/template/README.md'), '# Reusable spec template\n');
-      assert.equal(fs.existsSync(path.join(target, 'doc/spec/1.1.0/pack-internal/README.md')), false);
+      assert.equal(fs.existsSync(path.join(target, 'doc/spec/1.2.0/pack-internal/README.md')), false);
       assert.deepEqual(durableReports(target), []);
       assert.match(output, /locally-modified agent\(s\) preserved/);
       assert.match(output, /Locally-modified agents preserved: 1/);
@@ -255,12 +255,12 @@ const tests = [
       const target = fixture('fresh-target');
       const output = runSync(source, target, '--apply');
 
-      assert.equal(read(target, 'PACK_VERSION').split(/\r?\n/)[0], '1.1.0');
-      assert.match(read(target, 'doc/_meta/corpus-state.yaml'), /pack_version: '1\.1\.0'/);
+      assert.equal(read(target, 'PACK_VERSION').split(/\r?\n/)[0], '1.2.0');
+      assert.match(read(target, 'doc/_meta/corpus-state.yaml'), /pack_version: '1\.2\.0'/);
       assert.equal(read(target, 'schemas/corpus-state.yaml.template'), read(target, 'doc/_meta/corpus-state.yaml'));
       assert.equal(read(target, '.github/agents/corpus.agent.md'), INCOMING_AGENT);
       assert.deepEqual(durableReports(target), []);
-      assert.match(output, /Version: <missing> → 1\.1\.0/);
+      assert.match(output, /Version: <missing> → 1\.2\.0/);
       assert.match(output, /Next step: open the Corpus agent and start the corpus\./);
     },
   },
@@ -290,7 +290,7 @@ const tests = [
       assert.equal(fs.existsSync(path.join(target, 'doc/_meta/corpus-state.yaml')), false);
       assert.equal(read(target, 'schemas/corpus-state.yaml.template'), STATE_TEMPLATE);
       assert.match(output, /Pack upgrade · APPLY/);
-      assert.match(output, /Version: <missing> → 1\.1\.0/);
+      assert.match(output, /Version: <missing> → 1\.2\.0/);
       assert.match(output, /Deferred to Corpus migration: 1/);
       assert.match(output, /Next step: open the Corpus agent and run the pack migration\./);
     },

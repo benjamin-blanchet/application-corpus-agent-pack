@@ -9,14 +9,14 @@ description: "Keep the operator in control during corpus initialization and cont
 
 Keep the operator in control during corpus initialization and continuous enrichment by ending important `Corpus` responses with a compact status footer.
 
-The footer shows pipeline progression (the 9 code-analysis passes), corpus completeness by sector, generated artifacts, blockers, MCP readiness and the next bounded action.
+The footer shows pipeline progression (the 9 code-analysis passes), corpus completeness by sector, generated artifacts, blockers, historical source coverage, current-run capability impacts and the next bounded action.
 
 ## When to use
 
 - During every corpus kickstart response.
 - Whenever the operator says "continue", "init", "kickstart", "lance", "où en est-on", or any equivalent kickstart-mode trigger.
 - After each pass completes (P1 → P9).
-- After each MCP readiness, project activity or production discovery phase.
+- After each runtime source probe, project activity or production discovery phase.
 - Before pausing for operator input.
 - Before any adoption readiness review.
 - When a continuous run reaches a natural pause and roadmap state matters.
@@ -34,7 +34,7 @@ Corpus status
 - Project knowledge:                  # empty | started | partial | usable | strong | blocked + one-line evidence
 - Production knowledge:               # ditto
 - Specs/change support:               # ditto
-- MCP/source readiness:               # Jira:status Confluence:status Dynatrace:status Custom:status
+- Source contracts / coverage:        # declared contracts + historical status/freshness; current-run probe impact separately
 - Indexes/navigation:                 # ditto
 - Roadmap/graph/runs:                 # active node + roadmap/graph/run-ledger status
 - Adoption guide:                     # empty unless operator requested adoption material
@@ -84,7 +84,7 @@ For the pipeline rows, use the discovery-coverage scale instead:
 | Project knowledge | App profile, repo map, stack, entry points, features (from P3/P4), APIs/entities/messaging (from P5), architecture diagrams. |
 | Production knowledge | Observability, incidents, known bugs, risks (including RISK-CODE-* from P7), playbooks, watchlist, runtime topology. |
 | Specs/change support | Spec templates, existing specs, implementation guidance. |
-| MCP/source readiness | Jira, Confluence, Dynatrace, GitHub, custom sources, source registry, smoke tests. |
+| Source contracts / coverage | Jira, Confluence, Dynatrace, GitHub and custom source contracts; historical evidence and freshness; any current-run probe impact explicitly labeled as transient. |
 | Indexes/navigation | `_indexes`, corpus map, source inventory, links, discoverability. |
 | Roadmap/graph/runs | Active roadmap node, next best actions, graph updates, run ledger. |
 | Adoption guide | AI champion, team guide, next 30 days, open decisions, operator closeout. **Empty until the operator asks for adoption material.** |
@@ -93,7 +93,7 @@ For the pipeline rows, use the discovery-coverage scale instead:
 ## Required behavior
 
 1. Read `doc/_meta/code-pipeline-state.yaml` before producing the footer — the pipeline rows must reflect its content exactly.
-2. Read `doc/_meta/discovery-coverage.md` for the source-coverage rows.
+2. Read canonical `doc/_meta/source-coverage.yaml` and its reconciled `discovery-coverage.md` view for source-coverage rows.
 3. Read `doc/_meta/corpus-state.yaml` for adoption stage and maturity level.
 4. Read `doc/_meta/blocking-questions.md` for active questions.
 5. Use `doc/_meta/coverage-matrix.md` when available.
@@ -115,7 +115,7 @@ Corpus status
 - Project knowledge: partial - P1–P3 covered, P4 in progress, 3/14 features non-stub
 - Production knowledge: started - Dynatrace 24h snapshot done, 7d errors pending
 - Specs/change support: template only
-- MCP/source readiness: Jira:available Confluence:available Dynatrace:available Custom:not_applicable
+- Source contracts / coverage: Jira:covered/fresh Confluence:partial/stale Dynatrace:started/fresh; current run Dynatrace probe usable
 - Indexes/navigation: started - by-feature populated from P3, others pending P5
 - Roadmap/graph/runs: started - active node `feature:duplicate`, run ledger updated
 - Adoption guide: empty - not requested

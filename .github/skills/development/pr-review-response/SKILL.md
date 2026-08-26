@@ -18,7 +18,7 @@ next one.
 ## When
 
 After a review lands on a change that went through the factory. The pull
-request already exists and was opened by a human.
+request already exists as a human- or Delivery-created draft.
 
 ## 1. Collect
 
@@ -47,6 +47,10 @@ satisfy a bot that was wrong is a change nobody asked for.
 A blocking fix is a change to the same subject, so it obeys the same rules: it
 belongs in an authorised bounded lot, it gets the verification its change type
 requires, and it goes through independent review like anything else.
+The Controller observes the changed inputs and automatically invalidates
+integration, review, corpus, candidate, acceptance/evidence and release gates
+as applicable. Never leave `release_ready` untouched because a comment arrived
+after the first review.
 
 A review comment does not authorise widening scope. If the correct fix falls
 outside the approved plan, that is a plan amendment and it needs the
@@ -77,4 +81,5 @@ and it belongs in the corpus so the next change starts from it.
   merged, open a new one.
 - Never resolve a thread you did not answer.
 - Never accept an automated finding without reading the code it points at.
-- The pull request and the merge remain human actions.
+- Delivery may update draft metadata; approval, ready-for-review and merge
+  remain human actions.

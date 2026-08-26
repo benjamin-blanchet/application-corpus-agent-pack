@@ -1,9 +1,9 @@
 ---
 type: mcp-reference
-status: draft
-confidence: unknown
-source: pack
-last_validated:
+status: active
+confidence: confirmed
+source: mixed
+last_validated: 2026-05-30
 title: "Dynatrace / APM"
 description: "Unknown until configured for the target team."
 ---
@@ -14,12 +14,12 @@ description: "Unknown until configured for the target team."
 
 Unknown until configured for the target team.
 
-Before Dynatrace consumption, run `sources/mcp-readiness-check` and update `doc/_meta/mcp-readiness.md`.
+Before Dynatrace consumption, read the durable source contract and run `sources/runtime-source-probe`; keep the result in the current run only.
 
 The agent must verify:
 
 - Dynatrace MCP server is running in the IDE context;
-- Dynatrace tools are attached to the current agent/session;
+- Dynatrace capabilities are visible in this runtime observation;
 - authentication allows read-only smoke tests;
 - app/service/entity/environment mapping is known or discoverable.
 
@@ -29,6 +29,8 @@ If the MCP tools are not attached, do not treat Dynatrace as nonexistent. Record
 
 | Item | Value | Source | Confidence |
 |---|---|---|---|
+| Environment mapping | demo-production | `doc/prod/RUNTIME_ARCHITECTURE.md` | confirmed |
+| Runtime entity | Demo Order Service | `doc/prod/RUNTIME_ARCHITECTURE.md` | confirmed |
 
 ## Useful queries or lookup patterns
 
@@ -36,7 +38,7 @@ Use [dynatrace-query-catalog.md](./dynatrace-query-catalog.md) as the serious-ki
 
 ## Common pitfalls
 
-- Check source availability before relying on it.
+- Probe this runtime's capability before relying on the transport.
 - Record query limits and unsupported fields.
 - Save reusable query patterns in this file after validation.
 
@@ -45,7 +47,10 @@ Use [dynatrace-query-catalog.md](./dynatrace-query-catalog.md) as the serious-ki
 
 Use this section to record verified Dynatrace conventions needed for the initial production discovery / rapport d'étonnement.
 
-Do not run Dynatrace-backed production discovery unless readiness is `available` or the operator explicitly approves a partial/unverified pass. Do not infer production health from repository code.
+Do not run Dynatrace-backed production discovery unless the point-in-time
+runtime observation is `usable`. If this source is required, absence blocks the
+run; partial continuation needs a structured operator waiver. Do not infer
+production health from repository code.
 
 | Discovery need | Verified query / lookup pattern | Required filters | Notes |
 |---|---|---|---|

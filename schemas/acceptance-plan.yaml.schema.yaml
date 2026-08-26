@@ -1,0 +1,34 @@
+# Schema for a specification package's executable acceptance contract.
+file_pattern: doc/spec/*/*/acceptance-plan.yaml
+template: .github/templates/software-factory/acceptance/acceptance-plan.yaml
+written_by_skill: development/factory-acceptance
+description: |
+  Maps every approved criterion to one or more independently reportable cases,
+  executable oracles, required evidence, and bounded mutations with cleanup.
+must_not_be_markdown: true
+root:
+  required_keys: [version, spec_ref, environment_profile, subject, campaign, criteria, cases, mutations]
+item:
+  inside_block: cases
+  required_keys: [id, criteria, test_ref, preconditions, oracle, evidence, mutations]
+criterion:
+  required_keys: [id]
+  one_of: [cases, waiver]
+oracle:
+  required_keys: [id, type, assertion]
+  enums:
+    type: [ui, api, db_read, log, file, human_attestation]
+mutation:
+  required_keys: [id, scope, cleanup_required]
+  optional_keys: [cleanup_operation, waiver]
+campaign_enums:
+  adapter: [playwright, command, manual]
+  unattended_required: [true, false]
+  continue_after_failure: [true, false]
+  flaky_blocks: [true, false]
+campaign_required_keys: [adapter, unattended_required, continue_after_failure, flaky_blocks, results_contract_version]
+evidence_requirement:
+  required_keys: [id, type, checkpoint]
+  type: [screenshot, trace, video, log, report, file]
+waiver:
+  required_keys: [reason, approver_ref, approved_at]

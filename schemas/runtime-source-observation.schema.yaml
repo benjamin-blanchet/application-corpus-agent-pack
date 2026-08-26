@@ -1,0 +1,41 @@
+# Output contract for scripts/check-runtime-sources.mjs and
+# sources/runtime-source-probe. This object is ephemeral: it may be printed or
+# embedded in a dated run record but no global current copy is committed.
+
+schema_version: 1
+description: Point-in-time transport-neutral observation of source capabilities in one runtime.
+
+root:
+  required_keys: [schema_version, observed_at, surface, observations]
+  optional_keys: [run_id]
+  additional_fields: forbidden
+
+item:
+  inside_block: observations
+  required_fields: [source_id, transport_id, state, observed_tools, probe]
+  optional_fields: [consent_attestation, fallback_reason]
+  additional_fields: forbidden
+  enums:
+    state: [usable, visible_unverified, not_visible, unreachable, permission_denied, mapping_missing, unsafe_to_probe]
+
+probe:
+  required_fields: [operation, outcome, limitation, limit, observed_count]
+  additional_fields: forbidden
+  enums:
+    outcome: [success, failure, not_run]
+  nullable_when_not_successful: [limit, observed_count]
+
+consent_attestation:
+  required_fields: [granted, approver, granted_at, reason]
+  additional_fields: forbidden
+
+rules:
+  - observed_at is an ISO-8601 timestamp with timezone.
+  - Every source_id and transport_id resolves to the durable source registry.
+  - A usable observation contains every required tool declared by its transport.
+  - A successful probe records an applied positive limit no greater than safe_limit and a non-negative observed_count no greater than that limit.
+  - Complementary transports all need usable observations; one usable alternative transport is sufficient.
+  - A usable fallback transport records a non-empty fallback_reason.
+  - Operator-required consent is attested with approver reason and timestamp before a transport can be usable.
+  - The observation is emitted to stdout or attached to one dated run and is never global corpus state.
+  - Probe operations are read-only and bounded by the source contract.

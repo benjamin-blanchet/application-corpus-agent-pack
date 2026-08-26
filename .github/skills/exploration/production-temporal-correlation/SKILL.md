@@ -22,7 +22,7 @@ Use this skill when:
 - `exploration/dynatrace-runtime-architecture` finds observed flows that do not match code-derived catalogs;
 - the operator asks for memory stats, reliability analysis, top used features, batch health, code/prod reality or production problems over the last days.
 
-If Dynatrace or another production source is expected but unavailable to the current IDE agent/session, run `sources/mcp-readiness-check`, ask a blocking question and do not replace this skill with code-only speculation.
+If Dynatrace or another production source is required but unusable in this runtime, run `sources/runtime-source-probe`, ask a blocking question and do not replace this skill with code-only speculation.
 
 ## Code-first guard (mandatory pre-flight, anti-loop)
 
@@ -42,7 +42,7 @@ Anti-loop addendum: even when code is covered, this skill should be invoked **on
 
 ## Mandatory reads
 
-1. `doc/_meta/mcp-readiness.md`
+1. `doc/_meta/information-sources.yaml` and `doc/_meta/source-coverage.yaml`
 2. `doc/_meta/discovery-coverage.md`
 3. `doc/_meta/brick-inventory.yaml`
 4. `doc/_roadmap/CORPUS_ROADMAP.yaml`

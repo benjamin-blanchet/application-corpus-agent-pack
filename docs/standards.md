@@ -51,6 +51,6 @@ The pack treats the context window as a budget. The five canonical strategies ar
 - **Isolation** — internal subagents for broad read-only coverage so the main agent's context stays clean.
 - **Format** — scan-friendly artefacts (tables, frontmatter, `foundations/corpus-status-footer`) cheap to re-read across runs.
 
-## MCP (Model Context Protocol)
+## Connected information sources
 
-`sources/mcp-source-wizard`, `sources/mcp-readiness-check`, `doc/mcp/MCP_READINESS.md` and the bounded query catalogs (`doc/mcp/atlassian-query-catalog.md`, `doc/mcp/dynatrace-query-catalog.md`) wire the corpus to Jira, Confluence, Dynatrace and custom MCP servers without silent fallback when tools are unattached. See [Sources & MCP](sources-and-mcp.md).
+`sources/mcp-source-wizard`, `sources/runtime-source-probe`, the durable source and coverage contracts, and the bounded query catalogs (`doc/mcp/atlassian-query-catalog.md`, `doc/mcp/dynatrace-query-catalog.md`) wire the corpus to Jira, Confluence, Dynatrace and custom sources without turning a session capability into persistent state. See [Sources & runtime access](sources-and-mcp.md).

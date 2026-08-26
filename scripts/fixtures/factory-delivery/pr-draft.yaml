@@ -1,0 +1,20 @@
+version: 1
+provider: github
+draft: true
+title: Fixture delivery
+base_ref: main
+head_ref_from: FACTORY_HEAD_REF
+body_path: scripts/fixtures/factory-delivery/PR_DESCRIPTION.md
+spec_ref: scripts/fixtures/factory-delivery/SPECIFICATION.md
+technical_plan_ref: scripts/fixtures/factory-delivery/technical-plan.yaml
+acceptance_matrix_ref: scripts/fixtures/factory-delivery/acceptance-plan.yaml
+replay_command: "node scripts/adapters/playwright/run.mjs --plan scripts/fixtures/factory-delivery/acceptance-plan.yaml --environment scripts/fixtures/factory-delivery/environment.yaml --observation scripts/fixtures/factory-delivery/observation.json --config .github/templates/software-factory/acceptance/playwright.config.mjs --subject-sha aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa --run-id fixture-run-001"
+required_checks: [factory-policy, factory-acceptance]
+authorization:
+  required: true
+  provider: external_receipt
+  gate_id: draft-pr
+permissions:
+  contents: read
+  pull_requests: write
+forbidden_actions: [push, approve, mark_ready, merge, force_push]

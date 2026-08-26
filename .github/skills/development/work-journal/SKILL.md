@@ -10,6 +10,9 @@ description: "Maintain JOURNAL.md: chronological, PII-minimised history of how a
 
 `JOURNAL.md` answers, months later, *how did this get built and what went wrong
 on the way* — without git archaeology and without asking someone to remember.
+In V3 it is the human-readable view of typed controller events and explicit
+operator notes. `factory/events.v3.jsonl`, not prose, is the machine source of
+truth for ordering and gates.
 
 It is the deliberate opposite of the validation report. The report proves what
 works and never narrates a bug; the journal is where all of that messy history
@@ -70,9 +73,11 @@ reliability. Record the attempts; do not compute a probability from them.
 `doc/spec/<version>/<ticket>/JOURNAL.md`, one per package, created with the
 package and appended to continuously.
 
-Every agent that acts on the change appends to the same journal — the developer
-through the lifecycle, the quality analyst during acceptance. The journal
-captures what the validation report must not.
+Roles return structured results to the Controller, which appends typed events
+and reconciles the concise human journal. Workers never edit events/state, and
+they do not paste full prompts/transcripts into the journal. The journal
+captures what the validation report must not without becoming a second state
+machine.
 
 ## When to append
 

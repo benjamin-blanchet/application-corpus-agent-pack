@@ -161,9 +161,11 @@ Project activity discovery may use Jira, Git, PR and CI data to understand the t
 
 CI/CD discovery must separate live delivery paths from historical residue. Old Jenkins scripts, archived workflow files or unused pipeline definitions are useful evidence, but they must not be treated as active deployment truth unless recent commits, PR/check evidence, branch protection, release records or operator confirmation support that claim.
 
+Runtime and factory delivery readiness are corpus facts, not assumptions. A usable corpus records `doc/project/runtime/ENVIRONMENTS.yaml`, `doc/project/runtime/LOCAL_STARTUP.md` and, when software-factory delivery is enabled, `doc/project/cicd/FACTORY_CI.yaml`. These files describe how to build, start, probe, stop and reset the application or explain why a role is structurally not applicable for the repository type.
+
 ## Generic information sources
 
-The pack supports more than predefined tools. Register SQL log databases, APIs, file exports, dashboards, CI/CD data, manual evidence and internal tools in `doc/_meta/information-sources.yaml`. Use `/sources/information-source-onboarding` before using a new source for durable corpus claims.
+The pack supports more than predefined tools. Register durable, transport-neutral contracts for SQL log databases, APIs, file exports, dashboards, CI/CD data, manual evidence and internal tools in `doc/_meta/information-sources.yaml`; record historical evidence in `doc/_meta/source-coverage.yaml`. Use `/sources/information-source-onboarding` before a new source and `/sources/runtime-source-probe` immediately before access. Runtime capability is never global corpus state.
 
 ## Safe operation guardrails
 

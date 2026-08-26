@@ -1,0 +1,20 @@
+# Schema for the bounded draft-pull-request operation.
+file_pattern: doc/spec/*/*/pr-draft.yaml
+template: .github/templates/software-factory/delivery/pr-draft.yaml
+written_by_skill: development/factory-pr
+description: |
+  Plans creation of one draft pull request for an existing remote branch. Push,
+  approval, ready-for-review, force-push, and merge are not capabilities.
+must_not_be_markdown: true
+root:
+  required_keys: [version, provider, draft, title, base_ref, head_ref_from, body_path, spec_ref, technical_plan_ref, acceptance_matrix_ref, replay_command, required_checks, authorization, permissions, forbidden_actions]
+enums:
+  provider: [github]
+  draft: [true]
+required_forbidden_actions: [push, approve, mark_ready, merge, force_push]
+required_permissions:
+  contents: read
+  pull_requests: write
+authorization:
+  required_keys: [required, provider, gate_id]
+  provider: [external_receipt]
