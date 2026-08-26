@@ -1,5 +1,13 @@
 # Loaded from the protected base. Candidate files are data only: this workflow
 # never executes candidate scripts, dependencies or declared CI operations.
+#
+# That is a property of the controller, not of this file. Every entry point
+# invoked below reads candidate bytes and hashes them; none spawns them.
+# `validate-factory.mjs` in particular verifies the corpus closeout by digest
+# only — running the subject's own validator is reserved for the local
+# controller, which owns the tree it is closing out. If you add a step here,
+# the question to answer is not "is this script trusted?" but "can the
+# candidate choose what it runs?"
 name: Factory policy
 
 on:

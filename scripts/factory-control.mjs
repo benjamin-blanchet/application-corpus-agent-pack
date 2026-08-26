@@ -386,7 +386,9 @@ function validateProspectiveArtifacts(event, state, loaded, packageDir) {
     }
   }
   if (event.type === 'corpus_closed') {
-    const findings = validateCorpusCloseoutArtifact({ event, repoRoot: loaded.repoRoot });
+    // The local controller owns the tree it is closing out, so running its
+    // own validator is running its own code.
+    const findings = validateCorpusCloseoutArtifact({ event, repoRoot: loaded.repoRoot, executeCandidateValidator: true });
     if (findings.length) {
       const error = coded(findings[0].code, findings[0].message);
       error.details = { findings };

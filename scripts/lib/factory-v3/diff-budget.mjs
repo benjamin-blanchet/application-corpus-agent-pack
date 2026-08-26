@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { minimalChildEnvironment } from './child-environment.mjs';
 
 import { normalizeRepoPath } from './path-claims.mjs';
 
@@ -49,7 +50,7 @@ export function exceededDiffBudget(metrics, limits) {
 }
 
 function gitNumstat(root, revision, repoPath) {
-  const result = spawnSync('git', ['-C', root, 'diff', '--no-renames', '--numstat', '-z', revision, '--', repoPath], { encoding: null, stdio: 'pipe' });
+  const result = spawnSync('git', ['-C', root, 'diff', '--no-renames', '--numstat', '-z', revision, '--', repoPath], { encoding: null, stdio: 'pipe', env: minimalChildEnvironment() });
   if (result.status !== 0) fail('factory-diff-budget-git', `cannot compute Git numstat for ${repoPath}`);
   if (result.stdout.length === 0) return null;
   const records = result.stdout.toString('utf8').split('\0').filter(Boolean);
@@ -62,7 +63,7 @@ function gitNumstat(root, revision, repoPath) {
 }
 
 function gitBlob(root, revision, repoPath) {
-  const result = spawnSync('git', ['-C', root, 'cat-file', 'blob', `${revision}:${repoPath}`], { encoding: null, stdio: 'pipe' });
+  const result = spawnSync('git', ['-C', root, 'cat-file', 'blob', `${revision}:${repoPath}`], { encoding: null, stdio: 'pipe', env: minimalChildEnvironment() });
   if (result.status === 0) return result.stdout;
   if (result.status === 128) return null;
   fail('factory-diff-budget-git', `cannot read ${repoPath} at ${revision}`);

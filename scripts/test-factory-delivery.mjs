@@ -841,6 +841,8 @@ test('portable Factory suite never dispatches the consumer package test script',
   const root = temporary('factory-portable-suite-');
   fs.mkdirSync(path.join(root, 'scripts'), { recursive: true });
   fs.copyFileSync(path.join(repository, 'scripts/test-factory-suite.mjs'), path.join(root, 'scripts/test-factory-suite.mjs'));
+  fs.mkdirSync(path.join(root, 'scripts/lib/factory-v3'), { recursive: true });
+  fs.copyFileSync(path.join(repository, 'scripts/lib/factory-v3/child-environment.mjs'), path.join(root, 'scripts/lib/factory-v3/child-environment.mjs'));
   fs.mkdirSync(path.join(root, 'scripts/factory-fixtures'), { recursive: true });
   fs.writeFileSync(path.join(root, 'scripts/factory-fixtures/catalog.json'), `${JSON.stringify({
     fixtures: [{

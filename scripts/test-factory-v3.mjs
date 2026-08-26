@@ -1562,6 +1562,30 @@ test('corpus closeout verifies recursive doc bytes while excluding current machi
   assert.ok(validateFactoryPackageV3(built.packageDir).some((finding) => finding.code === 'factory-corpus-tree-symlink'));
 });
 
+test('package validation never executes the subject corpus validator', (t) => {
+  const built = validGitBackedPackage(t);
+  const validatorPath = path.join(built.repoRoot, 'scripts', 'validate-corpus.mjs');
+  const marker = path.join(built.repoRoot, 'candidate-payload-ran');
+  const original = fs.readFileSync(validatorPath, 'utf8');
+
+  // Exactly the shape a hostile pull request would take: the file the
+  // controller is asked to attest is also a program, and it writes.
+  fs.writeFileSync(validatorPath, `#!/usr/bin/env node
+require('fs').writeFileSync(${JSON.stringify(marker)}, 'executed');
+process.stdout.write(JSON.stringify({summary:{ok:true,counts:{P0:0,P1:0,P2:0}},findings:[]}));
+`);
+
+  const findings = validateFactoryPackageV3(built.packageDir);
+  assert.equal(fs.existsSync(marker), false, 'the subject validator must not be spawned by package validation');
+  // The bytes changed, so the closeout proof must still fail — the guarantee
+  // is that drift is caught by digest, not by execution.
+  assert.ok(findings.some((finding) => finding.code === 'factory-corpus-validation-proof-mismatch'));
+
+  fs.writeFileSync(validatorPath, original);
+  assert.equal(fs.existsSync(marker), false);
+  assert.equal(validateFactoryPackageV3(built.packageDir).some((finding) => finding.code === 'factory-corpus-validation-proof-mismatch'), false);
+});
+
 test('controlled lot-result append verifies current file, tree and deletion bytes', (t) => {
   const valid = pendingLotResultPackage(t, { outputKind: 'tree', includeDeleted: true });
   const preview = runControlAppend(valid.packageDir, valid.input);

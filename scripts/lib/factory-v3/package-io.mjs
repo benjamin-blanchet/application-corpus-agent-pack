@@ -14,7 +14,7 @@ import {
 import { reduceFactory, stateMatchesDerived } from './reducer.mjs';
 import { validatePlan } from './contract.mjs';
 import { changedPathsInsideForbidden, changedPathsOutsideClaims, normalizeRepoPath, pathAllowedByPatterns } from './path-claims.mjs';
-import { captureCorpusTree, observeCorpusValidation } from './corpus-attestation.mjs';
+import { captureCorpusTree, observeCorpusValidation, observeCorpusValidator } from './corpus-attestation.mjs';
 import { changeInventoryDigest, normalizeChangeInventory } from './proof-contracts.mjs';
 import {
   assertGitCommit,
@@ -170,7 +170,10 @@ export function validateEvidenceForState({
   return { evidence: manifest, evidencePath: resolvedEvidencePath, findings: deduplicate(findings) };
 }
 
-export function validateFactoryPackageV3(packageDir) {
+// executeCandidateValidator stays false by default: this entry point is what
+// the policy workflow runs against a candidate checkout, and a candidate is
+// data. The local controller opts in on its own tree.
+export function validateFactoryPackageV3(packageDir, { executeCandidateValidator = false } = {}) {
   const findings = [];
   let loaded;
   try {
@@ -193,7 +196,7 @@ export function validateFactoryPackageV3(packageDir) {
     for (const receipt of event.data?.verifications || []) findings.push(...validateVerificationReceiptBytes({ repoRoot: loaded.repoRoot, receipt }));
   }
   const corpusEvent = [...loaded.events].reverse().find((event) => event.type === 'corpus_closed') || null;
-  if (corpusEvent) findings.push(...validateCorpusCloseoutArtifact({ event: corpusEvent, repoRoot: loaded.repoRoot }));
+  if (corpusEvent) findings.push(...validateCorpusCloseoutArtifact({ event: corpusEvent, repoRoot: loaded.repoRoot, executeCandidateValidator }));
   if (!fs.existsSync(loaded.specPath)) findings.push(finding('factory-specification-missing', `specification file is missing: ${loaded.plan.spec_path}`));
   if (loaded.environmentPath && !fs.existsSync(loaded.environmentPath)) findings.push(finding('factory-environment-contract-missing', `environment contract is missing: ${loaded.plan.environment_contract}`));
   if (!loaded.snapshot) findings.push(finding('factory-state-v3-missing', 'factory/state.v3.json is missing'));
@@ -233,7 +236,12 @@ export function validatePreimplementationConventionArtifacts({ event, plan, repo
   return findings;
 }
 
-export function validateCorpusCloseoutArtifact({ event, repoRoot }) {
+// executeCandidateValidator is false everywhere the subject may be untrusted.
+// Without it the validator's declared bytes are still compared to the bytes on
+// disk; only result_sha256 — which cannot be known without running the subject
+// — goes unverified. Both sides of that comparison were supplied by the
+// subject anyway, so re-running it proved nothing it could not also forge.
+export function validateCorpusCloseoutArtifact({ event, repoRoot, executeCandidateValidator = false }) {
   const findings = [];
   if (!event || event.type !== 'corpus_closed') return findings;
   if (!repoRoot) return [finding('factory-corpus-repository-missing', 'corpus closeout requires a containing Git repository')];
@@ -250,9 +258,19 @@ export function validateCorpusCloseoutArtifact({ event, repoRoot }) {
     if (canonicalJson(observedTree) !== canonicalJson(claimedTree)) {
       findings.push(finding('factory-corpus-tree-digest-mismatch', 'recursive doc/ bytes, inventory or controller exclusions differ from corpus_closed'));
     }
-    const observedValidation = observeCorpusValidation({ repoRoot });
-    if (canonicalJson(observedValidation) !== canonicalJson(event.data.validation)) {
-      findings.push(finding('factory-corpus-validation-proof-mismatch', 'corpus validation proof differs from the current validator bytes or result'));
+    const claimedValidation = event.data.validation;
+    if (executeCandidateValidator) {
+      const observedValidation = observeCorpusValidation({ repoRoot });
+      if (canonicalJson(observedValidation) !== canonicalJson(claimedValidation)) {
+        findings.push(finding('factory-corpus-validation-proof-mismatch', 'corpus validation proof differs from the current validator bytes or result'));
+      }
+    } else {
+      const observedValidator = observeCorpusValidator({ repoRoot });
+      const claimedValidator = { ...claimedValidation };
+      delete claimedValidator.result_sha256;
+      if (canonicalJson(observedValidator) !== canonicalJson(claimedValidator)) {
+        findings.push(finding('factory-corpus-validation-proof-mismatch', 'corpus validation proof differs from the current validator bytes'));
+      }
     }
   } catch (error) {
     findings.push(finding(error.code || 'factory-corpus-tree-unreadable', `cannot verify corpus closeout: ${error.message}`));

@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { minimalChildEnvironment } from './child-environment.mjs';
 import { canonicalHash, canonicalJsonPretty, normalizeText, sha256 } from './canonical-json.mjs';
 import { buildEvent, serializeEventLog } from './event-log.mjs';
 import { reduceFactory } from './reducer.mjs';
@@ -125,7 +126,7 @@ export function migrateV1Package({ repoRoot, packageDir, apply = false, at }) {
 
 function assertPackageClean(repoRoot, packageDir) {
   const relative = path.relative(repoRoot, packageDir) || '.';
-  const result = spawnSync('git', ['status', '--porcelain', '--', relative], { cwd: repoRoot, encoding: 'utf8' });
+  const result = spawnSync('git', ['status', '--porcelain', '--', relative], { cwd: repoRoot, encoding: 'utf8', env: minimalChildEnvironment() });
   if (result.status !== 0) fail('factory-migration-git-status', result.stderr.trim() || 'git status failed');
   if (result.stdout.trim()) fail('factory-migration-dirty-package', `migration target has uncommitted changes: ${relative}`);
 }

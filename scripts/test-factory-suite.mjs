@@ -8,6 +8,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+
+import { minimalChildEnvironment } from './lib/factory-v3/child-environment.mjs';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -99,7 +101,7 @@ for (const entry of suite) {
   const execution = spawnSync(process.execPath, [script, ...entry.argv.slice(1)], {
     cwd: root,
     encoding: 'utf8',
-    env: { ...process.env, ...(entry.env || {}) },
+    env: minimalChildEnvironment(entry.env || {}),
     maxBuffer: 32 * 1024 * 1024,
     timeout: 180_000,
   });

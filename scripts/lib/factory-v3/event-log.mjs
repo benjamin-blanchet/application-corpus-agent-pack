@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { minimalChildEnvironment } from './child-environment.mjs';
 import { canonicalHash, canonicalJson, sha256 } from './canonical-json.mjs';
 import { validateEventShape } from './contract.mjs';
 import { FactoryV3Error, fail } from './errors.mjs';
@@ -164,7 +165,7 @@ function resolveGitDir(repoRoot) {
   const markerStat = fs.lstatSync(marker);
   if (markerStat.isSymbolicLink()) fail('factory-controller-git-dir-symlink', '.git must not be a symbolic link');
   if (!markerStat.isDirectory() && !markerStat.isFile()) fail('factory-controller-git-dir-invalid', '.git must be a directory or regular gitdir file');
-  const result = spawnSync('git', ['-C', root, 'rev-parse', '--git-common-dir'], { encoding: 'utf8', stdio: 'pipe' });
+  const result = spawnSync('git', ['-C', root, 'rev-parse', '--git-common-dir'], { encoding: 'utf8', stdio: 'pipe', env: minimalChildEnvironment() });
   if (result.status !== 0) fail('factory-controller-git-dir-invalid', `cannot resolve Git common directory: ${String(result.stderr || '').trim()}`);
   const raw = result.stdout.trim();
   const lexical = path.resolve(root, raw);

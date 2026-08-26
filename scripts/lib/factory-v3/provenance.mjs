@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { minimalChildEnvironment } from './child-environment.mjs';
 import { canonicalHash, fileHash, sha256 } from './canonical-json.mjs';
 import { normalizeRepoPath, pathAllowedByPatterns } from './path-claims.mjs';
 
@@ -282,7 +283,7 @@ export function findGitRoot(start) {
 
 export function observedGitHead(repoRoot) {
   if (!repoRoot) return null;
-  const result = spawnSync('git', ['rev-parse', '--verify', 'HEAD^{commit}'], { cwd: repoRoot, encoding: 'utf8', stdio: 'pipe' });
+  const result = spawnSync('git', ['rev-parse', '--verify', 'HEAD^{commit}'], { cwd: repoRoot, encoding: 'utf8', stdio: 'pipe', env: minimalChildEnvironment() });
   const value = result.status === 0 ? result.stdout.trim().toLowerCase() : null;
   return validateEvidenceSha(value) ? value : null;
 }
@@ -414,7 +415,7 @@ function resolveCommit(repoRoot, revision, findings, kind) {
     findings.push(finding(`factory-${kind}-sha-required`, `${kind} requires a full Git SHA`));
     return null;
   }
-  const result = spawnSync('git', ['rev-parse', '--verify', `${revision}^{commit}`], { cwd: repoRoot, encoding: 'utf8', stdio: 'pipe' });
+  const result = spawnSync('git', ['rev-parse', '--verify', `${revision}^{commit}`], { cwd: repoRoot, encoding: 'utf8', stdio: 'pipe', env: minimalChildEnvironment() });
   const resolved = result.status === 0 ? result.stdout.trim().toLowerCase() : null;
   if (!validateEvidenceSha(resolved)) {
     findings.push(finding('factory-git-sha-unresolvable', `Git commit is not resolvable: ${revision}`));
@@ -464,11 +465,11 @@ function isObject(value) {
 }
 
 function gitOk(cwd, args) {
-  return spawnSync('git', args, { cwd, encoding: 'utf8', stdio: 'pipe' }).status === 0;
+  return spawnSync('git', args, { cwd, encoding: 'utf8', stdio: 'pipe', env: minimalChildEnvironment() }).status === 0;
 }
 
 function gitLines(cwd, args) {
-  const result = spawnSync('git', args, { cwd, encoding: 'utf8', stdio: 'pipe' });
+  const result = spawnSync('git', args, { cwd, encoding: 'utf8', stdio: 'pipe', env: minimalChildEnvironment() });
   if (result.status !== 0) return [];
   return result.stdout.split(/\r?\n/).filter(Boolean);
 }

@@ -1,4 +1,5 @@
 import { spawnSync } from 'node:child_process';
+import { minimalChildEnvironment } from './child-environment.mjs';
 
 import { canonicalHash, canonicalJson, normalizeText, sha256 } from './canonical-json.mjs';
 import { controllerCorpusExclusions } from './corpus-attestation.mjs';
@@ -321,7 +322,7 @@ function resolveExactCommit(repoRoot, revision) {
 }
 
 function isAncestor(repoRoot, ancestor, descendant) {
-  const result = spawnSync('git', ['-C', repoRoot, 'merge-base', '--is-ancestor', ancestor, descendant], { encoding: null, stdio: 'pipe' });
+  const result = spawnSync('git', ['-C', repoRoot, 'merge-base', '--is-ancestor', ancestor, descendant], { encoding: null, stdio: 'pipe', env: minimalChildEnvironment() });
   if (result.status === 0) return true;
   if (result.status === 1) return false;
   fail('factory-git-review-failed', `git merge-base failed: ${String(result.stderr || result.stdout || '').trim()}`);
@@ -332,7 +333,7 @@ function gitText(repoRoot, args) {
 }
 
 function gitBuffer(repoRoot, args) {
-  const result = spawnSync('git', ['-C', repoRoot, ...args], { encoding: null, stdio: 'pipe' });
+  const result = spawnSync('git', ['-C', repoRoot, ...args], { encoding: null, stdio: 'pipe', env: minimalChildEnvironment() });
   if (result.status !== 0) fail('factory-git-review-failed', `git ${args[0]} failed: ${String(result.stderr || result.stdout || '').trim()}`);
   return result.stdout;
 }

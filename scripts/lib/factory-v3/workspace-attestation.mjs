@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { minimalChildEnvironment } from './child-environment.mjs';
 
 import { canonicalJson, fileHash, sha256 } from './canonical-json.mjs';
 import { normalizeRepoPath } from './path-claims.mjs';
@@ -159,14 +160,14 @@ export function assertGitCommit(root, revision) {
 }
 
 function readGitFile(root, revision, repoPath) {
-  const result = spawnSync('git', ['-C', root, 'cat-file', 'blob', `${revision}:${repoPath}`], { encoding: null, stdio: 'pipe' });
+  const result = spawnSync('git', ['-C', root, 'cat-file', 'blob', `${revision}:${repoPath}`], { encoding: null, stdio: 'pipe', env: minimalChildEnvironment() });
   if (result.status === 0) return result.stdout;
   if (result.status === 128) return null;
   fail('factory-workspace-base-read-failed', `cannot read ${repoPath} at ${revision}: ${String(result.stderr || '').trim()}`);
 }
 
 function runGit(root, args) {
-  const result = spawnSync('git', ['-C', root, ...args], { encoding: null, stdio: 'pipe' });
+  const result = spawnSync('git', ['-C', root, ...args], { encoding: null, stdio: 'pipe', env: minimalChildEnvironment() });
   if (result.status !== 0) fail('factory-workspace-git-failed', `git ${args[0]} failed: ${String(result.stderr || result.stdout || '').trim()}`);
   return result.stdout;
 }

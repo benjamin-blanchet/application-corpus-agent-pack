@@ -3,6 +3,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 
 import { canonicalHash, fileHash } from './canonical-json.mjs';
+import { minimalChildEnvironment } from './child-environment.mjs';
 import { normalizeRepoPath } from './path-claims.mjs';
 import {
   CORPUS_TREE_ALGORITHM,
@@ -41,14 +42,36 @@ export function captureCorpusTree({ repoRoot, packageRef }) {
   };
 }
 
+// The subject's own validator bytes, named and hashed without running them.
+// Everything a privileged context is allowed to learn about a candidate's
+// corpus validation lives here: a digest is evidence, an execution is trust.
+export function observeCorpusValidator({ repoRoot }) {
+  const root = realRepositoryRoot(repoRoot);
+  const validator = confinedNode(root, CORPUS_VALIDATOR_PATH, { kind: 'file' });
+  return {
+    algorithm: CORPUS_VALIDATION_ALGORITHM,
+    validator_path: CORPUS_VALIDATOR_PATH,
+    validator_sha256: fileHash(validator),
+    arguments: ['--json'],
+    status: 'passed',
+  };
+}
+
+// Runs the subject's validator. Only ever call this where the subject is
+// trusted — the local controller on its own checkout. Never from a workflow
+// that loaded a candidate: the candidate would be the code being run.
 export function observeCorpusValidation({ repoRoot }) {
   const root = realRepositoryRoot(repoRoot);
   const validator = confinedNode(root, CORPUS_VALIDATOR_PATH, { kind: 'file' });
+  // Hash before spawning, so the digest names the bytes that ran rather than
+  // whatever the run may have left in their place.
+  const declared = observeCorpusValidator({ repoRoot });
   const result = spawnSync(process.execPath, [validator, '--json'], {
     cwd: root,
     encoding: 'utf8',
     stdio: 'pipe',
     timeout: 120_000,
+    env: minimalChildEnvironment(),
   });
   if (result.error) fail('factory-corpus-validator-failed', `corpus validator could not run: ${result.error.message}`);
   if (result.status !== 0) fail('factory-corpus-validator-failed', `corpus validator exited ${String(result.status)}: ${String(result.stderr || '').trim()}`);
@@ -59,14 +82,7 @@ export function observeCorpusValidation({ repoRoot }) {
     fail('factory-corpus-validator-output', `corpus validator did not return JSON: ${error.message}`);
   }
   if (parsed?.summary?.ok !== true || parsed?.summary?.counts?.P0 !== 0) fail('factory-corpus-validator-not-clean', 'corpus validator did not report a clean P0 result');
-  return {
-    algorithm: CORPUS_VALIDATION_ALGORITHM,
-    validator_path: CORPUS_VALIDATOR_PATH,
-    validator_sha256: fileHash(validator),
-    arguments: ['--json'],
-    status: 'passed',
-    result_sha256: canonicalHash(parsed),
-  };
+  return { ...declared, result_sha256: canonicalHash(parsed) };
 }
 
 export function captureCorpusCloseout({ repoRoot, packageRef }) {
