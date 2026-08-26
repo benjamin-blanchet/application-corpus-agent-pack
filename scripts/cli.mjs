@@ -63,6 +63,7 @@ Options:
   --force         Overwrite locally-modified agents without prompting.
   -h, --help      Show this help.
 
-Guarantees: doc/ is never overwritten; locally-modified agents are never
-overwritten without confirmation.`);
+Guarantees: existing files under doc/ are never overwritten; missing pack
+scaffolds may be copied. Locally-modified agents are never overwritten without
+confirmation.`);
 }

@@ -59,3 +59,10 @@ item:
 - [brick-inventory.yaml.schema.yaml](brick-inventory.yaml.schema.yaml)
 - [reconciliation-ledger.yaml.schema.yaml](reconciliation-ledger.yaml.schema.yaml)
 - [boundary.yaml.schema.yaml](boundary.yaml.schema.yaml) — sanctuarized inbound/outbound integration contract (`doc/architecture/boundary.yaml`); enforced by `validate-corpus.mjs § checkBoundaryContract`.
+
+## Migration scaffold
+
+- [corpus-state.yaml.template](corpus-state.yaml.template) — canonical fallback
+  copied by `governance/pack-upgrade` only when an older corpus has no state
+  file. The release tests require it to remain byte-for-byte identical to the
+  fresh-install model at `doc/_meta/corpus-state.yaml`.

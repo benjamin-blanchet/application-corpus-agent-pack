@@ -5,3 +5,9 @@
 docs/
 examples/
 .github/workflows/
+
+# Repository development specs are not consumer scaffolds. Keep only the
+# reusable template in the installable pack.
+doc/spec/*
+!doc/spec/template/
+!doc/spec/template/**

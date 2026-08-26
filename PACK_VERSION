@@ -1,3 +1,3 @@
 1.1.0
-released: 2026-08-24
-notes: The software factory. A need becomes a specification through a bounded clarification gate, a briefing, and an explicit human approval; the approved specification becomes a technical intervention plan with lots partitioned by observable outcome, exclusive path ownership per wave and a review budget that gates; lots execute through bounded workers under three independent review levels; every artefact binds to one frozen tested SHA at the release gate, and the pull request stays a human action. scripts/validate-factory.mjs enforces the state machine, the dependency graph, path ownership, criterion coverage and provenance deterministically, and proves itself with --self-test before judging anything. Design rationale and the measured evidence behind each rule: docs/factory-design-notes.md.
+released: 2026-08-26
+notes: Adds the first software-factory contracts and deterministic validator while hardening CRLF/BOM frontmatter and state reads, derived corpus-state inventories, located P4 evidence, and the sync-to-agent-migration boundary.

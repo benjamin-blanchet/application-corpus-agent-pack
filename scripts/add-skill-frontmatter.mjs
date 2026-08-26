@@ -20,6 +20,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { normalizeText } from './lib/text.mjs';
 
 const REPO_ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const SKILLS_ROOT = path.join(REPO_ROOT, '.github/skills');
@@ -103,7 +104,7 @@ function buildFrontmatter({ name, category, description }) {
 }
 
 function processFile(filePath) {
-  const raw = fs.readFileSync(filePath, 'utf8');
+  const raw = normalizeText(fs.readFileSync(filePath, 'utf8'));
   if (raw.startsWith('---\n')) {
     return { skipped: true };
   }

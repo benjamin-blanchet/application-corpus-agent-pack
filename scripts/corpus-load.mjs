@@ -41,6 +41,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { normalizeText } from './lib/text.mjs';
 
 const CHARS_PER_TOKEN = 3.5;
 const DEFAULT_BUDGET = 2000;
@@ -210,7 +211,7 @@ function main() {
   const taskTerms = tokenize(opts.task);
   const scored = [];
   for (const abs of walkSync(docRoot)) {
-    const text = fs.readFileSync(abs, 'utf8');
+    const text = normalizeText(fs.readFileSync(abs, 'utf8'));
     const rel = path.relative(docRoot, abs).split(path.sep).join('/');
     const entry = scoreFile({ rel, text, fm: parseFrontmatter(text) }, taskTerms, opts);
     if (entry) scored.push(entry);

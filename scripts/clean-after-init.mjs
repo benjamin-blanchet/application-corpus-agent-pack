@@ -24,6 +24,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { normalizeText } from './lib/text.mjs';
 
 const SCRIPT_DIR = path.dirname(new URL(import.meta.url).pathname);
 const REPO_ROOT = path.resolve(SCRIPT_DIR, '..');
@@ -77,7 +78,7 @@ function readPackVersion() {
 function collectSkillTargets() {
   const targets = [];
   for (const { skillDir, skillFile } of walkSkillDirs(SKILLS_ROOT)) {
-    const raw = fs.readFileSync(skillFile, 'utf8');
+    const raw = normalizeText(fs.readFileSync(skillFile, 'utf8'));
     const fm = parseFrontmatter(raw);
     if (!fm) continue;
     if (fm.lifecycle === 'init-only') {

@@ -15,6 +15,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseBoundary } from './lib/boundary.mjs';
+import { normalizeText } from './lib/text.mjs';
 
 // =====================================================================
 // Inlined dashboard theme — embedded at build time. Single self-contained script.
@@ -1537,7 +1538,7 @@ function parseYaml(text) {
 function readFileSafe(rel) {
   const p = path.join(docRoot, rel);
   if (!fs.existsSync(p)) return null;
-  try { return fs.readFileSync(p, 'utf8'); }
+  try { return normalizeText(fs.readFileSync(p, 'utf8')); }
   catch { return null; }
 }
 function readYaml(rel) {

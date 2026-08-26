@@ -18,6 +18,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { normalizeText } from './lib/text.mjs';
 
 const root = process.cwd();
 const apply = process.argv.includes('--apply');
@@ -35,7 +36,7 @@ if (!fs.existsSync(stateAbs)) {
 // ============================================================================
 
 function exists(rel) { return fs.existsSync(path.join(root, rel)); }
-function read(rel) { return fs.readFileSync(path.join(root, rel), 'utf8'); }
+function read(rel) { return normalizeText(fs.readFileSync(path.join(root, rel), 'utf8')); }
 
 function walk(dirAbs) {
   if (!fs.existsSync(dirAbs)) return [];
@@ -176,7 +177,7 @@ function computeDerived() {
   if (fs.existsSync(idxDir)) {
     const populated = walk(idxDir)
       .filter((f) => f.endsWith('.md') && path.basename(f) !== 'by-source.md')
-      .filter((f) => countMarkdownTableRows(fs.readFileSync(f, 'utf8')) > 1);
+      .filter((f) => countMarkdownTableRows(normalizeText(fs.readFileSync(f, 'utf8'))) > 1);
     derived.corpus.indexes_initialized = populated.length >= 1;
   }
 
@@ -649,4 +650,4 @@ if (jsonMode) {
   }
 }
 
-process.exit(0);
+process.exitCode = 0;

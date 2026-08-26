@@ -17,27 +17,46 @@ npx github:benjamin-blanchet/application-corpus-agent-pack sync --apply
 `npx` fetches the pack and copies it into the current repository — no zip, no manual paste. The **same command installs and upgrades**: on an already-equipped repo it behaves as an in-place upgrade. Pin a version once releases are tagged:
 
 ```bash
-npx github:benjamin-blanchet/application-corpus-agent-pack#v1.0.0 sync --apply
+npx github:benjamin-blanchet/application-corpus-agent-pack#v1.1.0 sync --apply
 ```
 
 ## Upgrade safety
 
-- `doc/` (your corpus) is **never** overwritten, even with `--force`.
-- A locally-modified agent under `.github/agents/` is never overwritten without confirmation (you are prompted per file; non-interactive runs preserve it and flag it in the upgrade report).
-- Pack-owned files (skills, helper scripts, root index files, `AGENTS.md`, `KICKSTART.md`, `.github/copilot-instructions.md`) are refreshed to the new version — do not edit them. Put repository-specific Copilot instructions in `.github/instructions/*.instructions.md`, which the pack never ships or touches.
-- Every run writes a `doc/_meta/pack-*.md` report.
+- Existing files under `doc/` (your corpus) are **never** overwritten, even
+  with `--force`. Missing pack scaffolds may be added; on upgrade, a missing
+  `doc/_meta/corpus-state.yaml` is deferred to the Corpus migration. The sync
+  still refreshes `schemas/corpus-state.yaml.template`, so that migration can
+  reconstruct the state without guessing its previous version.
+- A locally-modified agent under `.github/agents/` is never overwritten without confirmation (you are prompted per file; non-interactive runs preserve it and surface it in the console summary).
+- Pack-owned files (skills, prompt assets, helper scripts, schemas,
+  `AGENTS.md`, `KICKSTART.md`, `.github/copilot-instructions.md`) are refreshed
+  to the new version — do not edit them. Put repository-specific Copilot
+  instructions in `.github/instructions/*.instructions.md`, which the pack
+  never ships or touches.
+- `sync` prints a copy summary but writes no durable migration history. After
+  an upgrade, invoke the Corpus agent: `governance/pack-upgrade` owns the
+  version stamp, schema repair, changelog row, and `doc/_meta/pack-upgrade-*.md`
+  report, including its final post-report validation.
+- The migration report is created first as an `in-progress` checkpoint. A
+  later `continue` resumes an interrupted transition from that report, keeps
+  the original `from_version`, and never duplicates its changelog row.
 
 Once the pack is in place, the consumer repo can self-upgrade later without `npx`:
 
 ```bash
 node scripts/update-pack.mjs --from-github --apply          # latest
-node scripts/update-pack.mjs --from-github=v1.0.0 --apply   # pinned
+node scripts/update-pack.mjs --from-github=v1.1.0 --apply   # pinned
 ```
 
 <details>
-<summary>Manual install (no Node / offline)</summary>
+<summary>Fresh offline install (no Node)</summary>
 
-Copy the pack files into the target application repository — `.github/`, `doc/`, `scripts/`, `schemas/`, `AGENTS.md`, `KICKSTART.md` and `PACK_VERSION` (everything in this repository except `README.md`, `LICENSE.md`, `docs/`, `examples/` and Git/Node metadata).
+This fallback is for a fresh repository only, never for upgrading an existing
+corpus. Copy `.github/`, `doc/`, `scripts/`, `schemas/`, `AGENTS.md`,
+`KICKSTART.md` and `PACK_VERSION` into the target (everything except
+`README.md`, `LICENSE.md`, `docs/`, `examples/` and Git/Node metadata). For an
+upgrade, use the safe `sync` engine so local additions and corpus content are
+classified and preserved.
 
 </details>
 

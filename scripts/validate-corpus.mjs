@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseBoundary, KINDS_INBOUND, KINDS_OUTBOUND, PROTOCOLS, CRITICALITY, CONFIDENCE, SOURCE, CONFIRMED_SOURCES } from './lib/boundary.mjs';
+import { normalizeText } from './lib/text.mjs';
 
 const root = process.cwd();
 const docRoot = path.join(root, 'doc');
@@ -26,18 +27,6 @@ function isDirectory(relPath) {
   }
 }
 
-// Corpora authored on Windows are CRLF. Every parser below assumes LF, so
-// normalize on read: otherwise frontmatter is invisible and roughly half the
-// checks silently no-op while reporting false "missing frontmatter" findings.
-function normalizeEol(text) {
-  // A Windows editor ships a BOM alongside CRLF, and a leading \uFEFF defeats
-  // every `startsWith('---')` exactly the way CRLF did: hundreds of false
-  // "missing frontmatter" findings, and every frontmatter-gated check
-  // silently skipped. Strip both or neither.
-  const stripped = text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
-  return stripped.includes('\r') ? stripped.replace(/\r\n/g, '\n') : stripped;
-}
-
 // OKF reserves these names for generated listings. They are machine output,
 // so no corpus naming convention applies to them.
 const OKF_RESERVED = ['index.md', 'log.md'];
@@ -47,7 +36,7 @@ function isGeneratedListing(name) {
 }
 
 function read(relPath) {
-  return normalizeEol(fs.readFileSync(path.join(root, relPath), 'utf8'));
+  return normalizeText(fs.readFileSync(path.join(root, relPath), 'utf8'));
 }
 
 function walk(dirAbs) {
@@ -100,12 +89,12 @@ function parseSimpleYamlMap(text) {
 }
 
 function hasFrontmatter(content) {
-  const text = normalizeEol(content);
+  const text = normalizeText(content);
   return text.startsWith('---\n') && text.indexOf('\n---', 4) !== -1;
 }
 
 function frontmatter(content) {
-  const text = normalizeEol(content);
+  const text = normalizeText(content);
   if (!hasFrontmatter(text)) return {};
   const end = text.indexOf('\n---', 4);
   return parseSimpleYamlMap(text.slice(4, end));
@@ -207,7 +196,7 @@ function checkMarkdownLinks() {
   const linkPattern = /\[[^\]]+\]\(([^)]+)\)/g;
   for (const abs of markdownFiles) {
     const fileRel = rel(abs);
-    const content = normalizeEol(fs.readFileSync(abs, 'utf8'));
+    const content = normalizeText(fs.readFileSync(abs, 'utf8'));
     let match;
     while ((match = linkPattern.exec(content))) {
       let target = match[1].trim();
@@ -240,7 +229,7 @@ function checkFrontmatter() {
   });
   for (const abs of important) {
     const fileRel = rel(abs);
-    const content = normalizeEol(fs.readFileSync(abs, 'utf8'));
+    const content = normalizeText(fs.readFileSync(abs, 'utf8'));
     if (!hasFrontmatter(content)) {
       add('P2', 'missing-frontmatter', 'Important corpus Markdown file has no frontmatter', fileRel);
       continue;
@@ -264,7 +253,7 @@ function checkOkfConformance() {
     const fileRel = rel(abs);
     if (fileRel.includes('/spec/template/')) continue;
     if (/\/(index|log)\.md$/.test(fileRel)) continue; // reserved listings — not concept docs
-    const content = normalizeEol(fs.readFileSync(abs, 'utf8'));
+    const content = normalizeText(fs.readFileSync(abs, 'utf8'));
     if (!hasFrontmatter(content)) {
       add('P0', 'okf-missing-frontmatter', 'OKF: concept document has no frontmatter block (every non-reserved .md needs frontmatter + non-empty type)', fileRel);
       continue;
@@ -427,7 +416,7 @@ function checkCorpusStateBackwardDrift() {
       // from the populated count so the pack template itself doesn't trigger.
       const populated = walk(indexDir)
         .filter((file) => file.endsWith('.md') && path.basename(file) !== 'by-source.md')
-        .filter((file) => countMarkdownTableRows(normalizeEol(fs.readFileSync(file, 'utf8'))) > 1);
+        .filter((file) => countMarkdownTableRows(normalizeText(fs.readFileSync(file, 'utf8'))) > 1);
       if (populated.length >= 1) {
         add('P1', 'corpus-state-backward-drift-indexes', `${populated.length} index file(s) under doc/_indexes/ have data rows, but corpus.indexes_initialized is ${corpus.indexes_initialized ?? 'unset'}`, 'doc/_meta/corpus-state.yaml');
       }
@@ -1172,7 +1161,7 @@ function lintFrontmatterContract(schema) {
       );
     }
 
-    const text = normalizeEol(fs.readFileSync(abs, 'utf8'));
+    const text = normalizeText(fs.readFileSync(abs, 'utf8'));
     if (!hasFrontmatter(text)) {
       // checkFrontmatter already reports missing frontmatter separately; skip
       continue;
@@ -1531,7 +1520,7 @@ function checkYamlHygiene() {
   const yamlFiles = walk(docRoot).filter((f) => f.endsWith('.yaml') || f.endsWith('.yml'));
   for (const abs of yamlFiles) {
     const fileRel = rel(abs);
-    const text = normalizeEol(fs.readFileSync(abs, 'utf8'));
+    const text = normalizeText(fs.readFileSync(abs, 'utf8'));
 
     // 1. Markdown-in-yaml detector: the file starts with `---\n` and contains
     // a second `---` on its own line. That's a Markdown frontmatter pattern,
@@ -1717,7 +1706,7 @@ function checkIndexColumns() {
   for (const name of fs.readdirSync(dir)) {
     if (!/^by-.+\.md$/.test(name)) continue;
     const abs = path.join(dir, name);
-    const text = normalizeEol(fs.readFileSync(abs, 'utf8'));
+    const text = normalizeText(fs.readFileSync(abs, 'utf8'));
     const lines = text.split(/\r?\n/);
     const headerLine = lines.find((l) => /^\|\s*\S/.test(l));
     if (!headerLine) {
@@ -1826,7 +1815,7 @@ function checkTimestampFormat() {
   const yamlFiles = walk(docRoot).filter((f) => f.endsWith('.yaml') || f.endsWith('.yml'));
   for (const abs of yamlFiles) {
     const fileRel = rel(abs);
-    const text = normalizeEol(fs.readFileSync(abs, 'utf8'));
+    const text = normalizeText(fs.readFileSync(abs, 'utf8'));
     const lines = text.split(/\r?\n/);
     const seen = new Set();
     for (let i = 0; i < lines.length; i++) {
@@ -1887,7 +1876,7 @@ function checkSpecLayout() {
     if (files.length === 0) return;
     const isSkeleton = files.length === 1 && files[0] === 'README.md';
     if (isSkeleton) {
-      const fm = frontmatter(normalizeEol(fs.readFileSync(path.join(dirAbs, 'README.md'), 'utf8')));
+      const fm = frontmatter(normalizeText(fs.readFileSync(path.join(dirAbs, 'README.md'), 'utf8')));
       const normalize = (v) => (typeof v === 'string' ? v : '');
       if (normalize(fm.status) !== 'skeleton') {
         add(
@@ -1938,7 +1927,7 @@ function checkSecrets() {
     [/\b(api[_-]?key|token|secret)\s*[:=]\s*['"]?[A-Za-z0-9._~+/=-]{16,}/i, 'possible-token-or-secret'],
   ];
   for (const abs of files) {
-    const content = normalizeEol(fs.readFileSync(abs, 'utf8'));
+    const content = normalizeText(fs.readFileSync(abs, 'utf8'));
     for (const [pattern, code] of patterns) {
       if (pattern.test(content)) add('P0', code, `Potential secret detected by pattern: ${code}`, rel(abs));
     }
@@ -2089,4 +2078,8 @@ if (jsonMode) {
   }
 }
 
-process.exit(summary.counts.P0 > 0 ? 1 : 0);
+// Let Node drain stdout before terminating. `process.exit()` can truncate the
+// pretty-printed JSON when this command is piped (observed on Node 18 at the
+// platform pipe-buffer boundary), which makes otherwise valid reports
+// impossible for callers to parse.
+process.exitCode = summary.counts.P0 > 0 ? 1 : 0;
