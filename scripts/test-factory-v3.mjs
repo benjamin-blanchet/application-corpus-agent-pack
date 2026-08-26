@@ -31,7 +31,7 @@ import {
   validateReleaseProvenance,
 } from './lib/factory-v3/provenance.mjs';
 import { reduceFactory, stateMatchesDerived } from './lib/factory-v3/reducer.mjs';
-import { nextWave, validateLotResult, validateReservedWave } from './lib/factory-v3/scheduler.mjs';
+import { nextWave, readyLots, validateLotResult, validateReservedWave } from './lib/factory-v3/scheduler.mjs';
 import {
   ENVELOPE_HASH_ALGORITHM,
   CORPUS_TREE_ALGORITHM,
@@ -196,6 +196,48 @@ test('[BF-006] a dependency and its consumer cannot run in the same wave', () =>
     { lot_id: 'LOT-1', reservation_id: 'RES-1' },
     { lot_id: 'LOT-2', reservation_id: 'RES-2' },
   ]));
+});
+
+test('an unrecognised artifact class fails closed on lots, not only on gates', () => {
+  // The exact inversion this replaces: an operator who meant 'implementation'
+  // and typed 'implementaion' used to invalidate more gates and no lots, so
+  // every lot stayed integrated and every review stayed passed.
+  const declared = releasedStateAfterChange(['implementation']);
+  const mistyped = releasedStateAfterChange(['implementaion']);
+
+  for (const [label, state] of [['declared', declared], ['mistyped', mistyped]]) {
+    assert.equal(state.gates.lot_reviews.status, 'stale', label);
+    for (const [lotId, entry] of Object.entries(state.lots)) {
+      assert.equal(entry.status, 'stale', `${label}: ${lotId} must not survive the invalidation`);
+      if (entry.review) assert.equal(entry.review.status, 'stale', `${label}: ${lotId} review`);
+    }
+  }
+
+  // And it stays at least as conservative as the class it was mistaken for.
+  assert.ok(invalidatedGates(['implementaion']).length >= invalidatedGates(['implementation']).length);
+  assert.equal(invalidatedGates(['control']).length, 0);
+});
+
+test('a superseded blocker is history, not an obstacle to scheduling', () => {
+  const plan = validPlan();
+  const state = reduceFactory({ plan, events: approvedHistory(plan) });
+  assert.deepEqual(readyLots(plan, state).map((lot) => lot.id), ['LOT-1']);
+
+  // The reducer mints 'superseded' whenever a failed review is overtaken by a
+  // passing one, and offers no path back to 'resolved'. A scheduler that
+  // blocks on anything other than 'open' therefore stops for good.
+  const superseded = deepCopy(state);
+  superseded.blockers = [{ id: 'EV-1', kind: 'consolidated_review', status: 'superseded', reason: 'overtaken' }];
+  assert.deepEqual(readyLots(plan, superseded).map((lot) => lot.id), ['LOT-1']);
+  assert.deepEqual(nextWave(plan, superseded).map((item) => item.lot_id), ['LOT-1']);
+
+  const open = deepCopy(state);
+  open.blockers = [{ id: 'EV-1', kind: 'consolidated_review', status: 'open', reason: 'review failed' }];
+  assert.deepEqual(readyLots(plan, open), []);
+
+  const resolved = deepCopy(state);
+  resolved.blockers = [{ id: 'EV-1', kind: 'consolidated_review', status: 'resolved', reason: 'recovered' }];
+  assert.deepEqual(readyLots(plan, resolved).map((lot) => lot.id), ['LOT-1']);
 });
 
 test('[BF-048] reservation requires a preimplementation convention contract', () => {
@@ -2357,8 +2399,8 @@ function integrationResult(reviewedSnapshot = testReviewedSnapshot(), verificati
   return envelope;
 }
 
-function releasedStateAfterChange(classes, affectedLots = []) {
-  const plan = validPlan();
+function releasedStateAfterChange(classes, affectedLots = [], suppliedPlan = null) {
+  const plan = suppliedPlan || validPlan();
   const events = releasedHistory(plan);
   push(events, 'artifact_change_observed', { classes, affected_lots: affectedLots, reason: 'test mutation' });
   return reduceFactory({ plan, events });

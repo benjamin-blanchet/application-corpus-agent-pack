@@ -1,4 +1,5 @@
 import { claimsConflict, changedPathsInsideForbidden, changedPathsOutsideClaims, normalizedClaim } from './path-claims.mjs';
+import { isBlockerActive } from './contract.mjs';
 import { sensitiveFactoryPaths, validateRoleCapability } from './capabilities.mjs';
 import {
   ENVELOPE_HASH_ALGORITHM,
@@ -163,7 +164,7 @@ function isReady(lot, state, activeReservations) {
   if (current && !['pending', 'needs_correction', 'blocked', 'stale'].includes(current.status)) return false;
   const effectiveMax = current?.effective_max_attempts ?? (lot.max_attempts + (current?.attempt_budget_extensions || 0));
   if ((current?.attempts || 0) >= effectiveMax) return false;
-  if ((state.blockers || []).some((blocker) => blocker.status !== 'resolved' && (!blocker.lot_id || blocker.lot_id === lot.id))) return false;
+  if ((state.blockers || []).some((blocker) => isBlockerActive(blocker) && (!blocker.lot_id || blocker.lot_id === lot.id))) return false;
   for (const dependency of lot.dependencies || []) {
     const dep = state.lots?.[dependency];
     if (!dep || dep.status !== 'integrated' || dep.review?.verdict !== 'passed') return false;

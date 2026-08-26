@@ -55,7 +55,15 @@ export function invalidateState(state, classes, reason, affectedLots = [], plan 
     state.delivery.stale_reason = reason;
   }
 
-  const invalidatesAllLots = normalized.includes('spec_contract') || normalized.includes('plan_contract');
+  // 'unknown' is where every unrecognised class lands, so it has to be the
+  // most conservative class in the table, not the least. It used to invalidate
+  // ten gates while leaving every lot integrated and every review passed: an
+  // operator who mistyped 'implementation' got a state strictly greener than
+  // the one they asked for, silently. Failing closed means failing closed on
+  // the lots too.
+  const invalidatesAllLots = normalized.includes('spec_contract')
+    || normalized.includes('plan_contract')
+    || normalized.includes('unknown');
   const invalidatesImplementation = invalidatesAllLots || normalized.includes('implementation');
   if (invalidatesImplementation) {
     const target = affectedLots.length ? transitiveDependents(affectedLots, plan) : null;

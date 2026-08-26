@@ -111,6 +111,21 @@ export const GATE_NAMES = [
   'corpus_closeout', 'candidate', 'acceptance', 'evidence', 'release',
 ];
 
+// A blocker's whole vocabulary, in one place. It used to live implicitly in
+// three files that each wrote the predicate their own way: the scheduler
+// treated anything not 'resolved' as blocking, the reducer only ever tested
+// 'open', and recovery required 'open'. Since the reducer also produces
+// 'superseded' with no path back, a consolidated review that failed and then
+// passed left a blocker that blocked scheduling for good and could not be
+// recovered. Same predicate, three spellings, one deadlock.
+export const BLOCKER_STATUSES = ['open', 'resolved', 'superseded'];
+
+// Blocking is a property of being open. Superseded means the situation that
+// raised the blocker no longer holds — it is history, not an obstacle.
+export function isBlockerActive(blocker) {
+  return blocker?.status === 'open';
+}
+
 export const PHASES = [
   'draft', 'spec_approved', 'plan_approved', 'executing', 'integrated',
   'consolidated_reviewed', 'corpus_closed', 'candidate_frozen',

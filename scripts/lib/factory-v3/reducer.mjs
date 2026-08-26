@@ -1,6 +1,6 @@
 import { canonicalHash, deepCopy } from './canonical-json.mjs';
 import { assertEventChain, eventLogHash } from './event-log.mjs';
-import { GATE_NAMES, PHASES, validatePlan } from './contract.mjs';
+import { GATE_NAMES, PHASES, isBlockerActive, validatePlan } from './contract.mjs';
 import { invalidateState } from './invalidation.mjs';
 import { nextWave, validateLotResult, validateReservedWave } from './scheduler.mjs';
 import { validateAcceptanceProvenance, validateEvidenceSha } from './provenance.mjs';
@@ -290,7 +290,7 @@ function applyEvent(state, plan, event) {
       lotState.diff_sha256 = event.data.result.diff_sha256;
       lotState.changed_paths = [...new Set(event.data.result.changed_paths || [])].sort();
       for (const blocker of state.blockers) {
-        if (blocker.lot_id === lotId && blocker.kind === 'review_correction' && blocker.status === 'open') blocker.status = 'superseded';
+        if (blocker.lot_id === lotId && blocker.kind === 'review_correction' && isBlockerActive(blocker)) blocker.status = 'superseded';
       }
       return;
     }
@@ -349,7 +349,7 @@ function applyEvent(state, plan, event) {
       invariant(event.data.approved_by && !Number.isNaN(Date.parse(event.data.approved_at)) && Date.parse(event.data.approved_at) <= Date.parse(event.at), 'factory-refactor-approval', `${lotId}: refactor approval requires nonfuture operator provenance`);
       lot.refactor_approval = { event_id: event.event_id, escalation_event_id: event.data.escalation_event_id, amendment_ref: event.data.amendment_ref, plan_sha256: event.data.amended_plan_sha256 };
       for (const blocker of state.blockers) {
-        if (blocker.id === event.data.escalation_event_id && blocker.lot_id === lotId && blocker.status === 'open') blocker.status = 'resolved';
+        if (blocker.id === event.data.escalation_event_id && blocker.lot_id === lotId && isBlockerActive(blocker)) blocker.status = 'resolved';
       }
       lot.status = 'needs_correction';
       return;
@@ -390,7 +390,7 @@ function applyEvent(state, plan, event) {
       const openFindings = (event.data.findings || []).filter((finding) => finding.status === 'open');
       invariant(event.data.verdict !== 'failed' || openFindings.length > 0, 'factory-failed-review-without-finding', 'failed consolidated review requires an open actionable finding');
       invariant(event.data.verdict !== 'passed' || openFindings.length === 0, 'factory-passed-review-open-finding', 'passing consolidated review cannot retain an open finding');
-      const priorFailures = state.blockers.filter((blocker) => blocker.kind === 'consolidated_review' && blocker.status === 'open');
+      const priorFailures = state.blockers.filter((blocker) => blocker.kind === 'consolidated_review' && isBlockerActive(blocker));
       if (event.data.verdict === 'passed') {
         for (const blocker of priorFailures) invariant(blocker.integration_basis !== state.gates.integration.basis_event, 'factory-consolidated-review-without-correction', 'a failed consolidated review requires corrected integration or operator recovery before passing');
       }
@@ -399,7 +399,7 @@ function applyEvent(state, plan, event) {
       state.provenance.consolidated_snapshot = event.data.verdict === 'passed' ? deepCopy(event.data.reviewed_snapshot) : null;
       state.reviews.consolidated = { event_id: event.event_id, verdict: event.data.verdict, actor: deepCopy(event.actor), findings: deepCopy(event.data.findings || []) };
       if (event.data.verdict === 'failed') state.blockers.push({ id: event.event_id, kind: 'consolidated_review', integration_basis: state.gates.integration.basis_event, status: 'open', reason: 'consolidated review failed' });
-      else for (const blocker of state.blockers) if (blocker.kind === 'consolidated_review' && blocker.status === 'open') blocker.status = 'superseded';
+      else for (const blocker of state.blockers) if (blocker.kind === 'consolidated_review' && isBlockerActive(blocker)) blocker.status = 'superseded';
       return;
     }
     case 'corpus_closed':
@@ -500,7 +500,7 @@ function applyEvent(state, plan, event) {
       return;
     case 'release_reviewed':
       for (const gate of ['specification', 'technical_plan', 'lot_reviews', 'integration', 'consolidated_review', 'corpus_closeout', 'candidate', 'acceptance', 'evidence']) requireGate(state, gate, event, gate === 'acceptance' ? ['valid', 'waived'] : ['valid']);
-      invariant(!state.blockers.some((blocker) => blocker.status === 'open'), 'factory-release-open-blocker', 'release review cannot pass while a blocker is open');
+      invariant(!state.blockers.some(isBlockerActive), 'factory-release-open-blocker', 'release review cannot pass while a blocker is open');
       invariant(event.actor.role === 'reviewer' && event.data.fresh_context === true, 'factory-release-review-independence', 'release review requires a reviewer in a fresh context');
       invariant(event.actor.model.planned === 'reviewer' && event.actor.model.used === state.execution_policy?.models?.reviewer, 'factory-release-review-model', 'release review must use the resolved reviewer profile');
       invariant(event.actor.model.model_family === state.execution_policy?.model_families?.reviewer, 'factory-release-review-model-family', 'release review model family must match the resolved reviewer family');
@@ -552,7 +552,7 @@ function applyEvent(state, plan, event) {
       invariant(event.data.approved_by && event.data.approved_at && !Number.isNaN(Date.parse(event.data.approved_at)), 'factory-recovery-approval', 'controller recovery requires operator approval provenance');
       invariant(Array.isArray(event.data.blocker_ids) && event.data.blocker_ids.length > 0, 'factory-recovery-blockers', 'controller recovery must name blockers to resolve');
       for (const blockerId of event.data.blocker_ids) {
-        const blocker = state.blockers.find((candidate) => candidate.id === blockerId && candidate.status === 'open');
+        const blocker = state.blockers.find((candidate) => candidate.id === blockerId && isBlockerActive(candidate));
         invariant(blocker, 'factory-recovery-unknown-blocker', `open blocker not found: ${blockerId}`);
         blocker.status = 'resolved';
         blocker.resolved_by_event = event.event_id;
