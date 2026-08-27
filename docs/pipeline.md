@@ -14,7 +14,7 @@ Code analysis is the first vector of corpus knowledge and is **mandatory** for e
 | P6 | `pipeline/p6-code-style-naming` | Actual conventions per layer, lint vs. code reconciled |
 | P7 | `pipeline/p7-structural-issues` | 11 categories of smells; HIGH/CRITICAL → risk files |
 | P8 | `pipeline/p8-code-maturity` | 12-dimension scorecard with evidence-citation |
-| P9 | `pipeline/p9-code-reconciliation-gate` | Resolve every contradiction (apply source priority); flip `code_analysis_status: covered` |
+| P9 | `pipeline/p9-code-reconciliation-gate` | Reconcile contradictions by claim scope, revision and environment; flip `code_analysis_status: covered` |
 
 The pipeline is **resumable, not restartable** — the agent always verifies state before generating.
 
@@ -52,7 +52,9 @@ doc/project/architecture/diagrams/
 
 Plus per-feature diagrams in `doc/project/features/<slug>/{ARCHITECTURE,WORKFLOWS,BUSINESS_RULES}.md`.
 
-All diagrams are inline mermaid, sourced from code (rank 1), never from Confluence (rank 7).
+All implementation diagrams are inline Mermaid and generated from the analyzed
+code revision. External diagrams may be retained as dated intent/history, but
+are not imported as implementation evidence.
 
 ## Actionable corpus readiness
 

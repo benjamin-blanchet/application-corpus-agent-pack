@@ -16,17 +16,22 @@ Every specification criterion maps to at least one case, executable oracle and
 required proof, or an approved waiver. A screenshot is evidence, not an oracle
 by itself.
 
-## Shipped execution boundary
+## Execution boundary
 
-The installable pack does not yet provide the process/filesystem sandbox,
-credential broker, enforceable egress policy or bounded mutation API required
-to run candidate code safely. `factory-acceptance.mjs` therefore validates the
-contracts and produces the structured
-`acceptance-execution-boundary-unavailable` blocker before lifecycle or adapter
-execution, including for a `deny_by_default` network profile. A GitHub
-Environment, signed receipt, runner label or empty allowlist is not proof of
-host isolation. Candidate execution becomes eligible only when an external
-executor and its trusted machine verifier are integrated as one boundary.
+The generic pack provides no candidate-code sandbox. Without a configured
+provider, `factory-acceptance.mjs` returns the structured
+`acceptance-execution-boundary-unavailable` blocker before local lifecycle or
+adapter execution. A GitHub Environment, signed receipt, runner label or empty
+allowlist is not proof of host isolation.
+
+A constructed corpus may select a protected external provider with
+`--executor-provider` or `FACTORY_EXECUTOR_PROVIDER`. It must export
+`apiVersion = 1` and `executeAcceptance(request)`, delegate to an isolated
+process/filesystem/egress broker, and return the closed attested response
+contract. The verifier rejects missing/extra fields, wrong run/SHA/digests or
+unenforced required controls. No demonstration provider ships to consumers;
+the integration suite exercises the successful boundary using an in-test
+fixture only.
 
 ## Verdict integrity
 

@@ -14,12 +14,12 @@
  *
  * It is read-only. It never writes to the corpus.
  *
- * Token estimate mirrors estimate-token-cost.mjs (ceil(chars / 3.5)) so the
- * budget here speaks the same units as the pack's token-cost reporting.
+ * The token budget uses a deliberately simple ceil(chars / 3.5) approximation
+ * for slice selection only. It is not a cost estimate or billing claim.
  *
  * Usage:
  *   node scripts/corpus-load.mjs --task "refund webhook retries"
- *   node scripts/corpus-load.mjs --task "..." --doc examples/demo-corpus/doc
+ *   node scripts/corpus-load.mjs --task "..." --doc doc
  *   node scripts/corpus-load.mjs --feature billing --budget 4000
  *   node scripts/corpus-load.mjs --task "..." --paths src/billing,src/api
  *   node scripts/corpus-load.mjs --task "..." --json
@@ -204,7 +204,7 @@ function main() {
   const docRoot = path.resolve(opts.doc);
   if (!fs.existsSync(docRoot)) {
     console.error(`Corpus root not found: ${docRoot}`);
-    console.error('Pass --doc <dir> (e.g. --doc examples/demo-corpus/doc).');
+    console.error('Pass --doc <dir> (e.g. --doc doc).');
     process.exit(2);
   }
 

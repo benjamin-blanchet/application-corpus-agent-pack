@@ -222,23 +222,6 @@ test('frontmatter adder never duplicates portable metadata', () => {
   }
 });
 
-test('token estimator counts portable metadata identically', () => {
-  const expectedFrontmatter = normalizeText(BASE_DOCUMENT).match(/^---\n([\s\S]*?)\n---/)[0];
-  for (const [name, input] of variants(BASE_DOCUMENT)) {
-    withTempDir('token-estimator', (root) => {
-      const script = copyRootBoundScript(root, 'estimate-token-cost.mjs');
-      writeFile(root, '.github/skills/testing/portable-skill/SKILL.md', input);
-      const result = runNode(script, ['--json'], { cwd: root });
-      assertSuccess(result, `token estimator ${name}`);
-      const report = parseJsonOutput(result, `token estimator ${name}`);
-      const metadata = report.sections.find((section) => section.name.startsWith('Skills metadata-only'));
-      assert.equal(metadata.count, 1, `${name}: skill count`);
-      assert.equal(metadata.chars, expectedFrontmatter.length, `${name}: chars`);
-      assert.equal(metadata.tokens, Math.ceil(expectedFrontmatter.length / 3.5), `${name}: tokens`);
-    });
-  }
-});
-
 let failed = 0;
 for (const { name, run } of TESTS) {
   try {

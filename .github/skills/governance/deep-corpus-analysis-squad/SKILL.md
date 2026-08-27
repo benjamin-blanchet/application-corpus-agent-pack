@@ -80,7 +80,10 @@ The squad does not replace this pipeline; it cannot mark the source-code lane co
 ### Functional/domain analysis
 
 - Builds on top of P4 + P5 outputs; does not replace them.
-- **Code is the truth. Confluence is documentation that drifts.** Apply the source priority ranking from `foundations/core-rules`: when Confluence and code disagree about current behavior, code wins. Confluence claims are preserved as historical context, not as current truth.
+- **Authority follows claim scope.** Code anchors implementation; deployed
+  evidence anchors runtime; approved specifications anchor intent; dated
+  documentation may anchor history. Preserve scoped differences with revision
+  and environment instead of forcing one universal winner.
 - Search Confluence by app name, repo name, project key, components and feature slugs from `feature-candidates.yaml` — not by guesses.
 - Read relevant pages, not only search result snippets. Capture page ID, last-modified date, last-modified author and a Confluence trust score (`high`/`medium`/`low`/`archival`) per `exploration/confluence-exploration`.
 - Reconcile each behavioral Confluence claim against code/migrations/config. Record the result in the feature folder.

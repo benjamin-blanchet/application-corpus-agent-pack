@@ -12,7 +12,9 @@ A corpus is not limited to its own repository. The pack can read the corpora of 
 
 Each application declares its inbound/outbound surface — exposed and called APIs, produced and consumed events, shared datastores, external systems, file exchanges — in `doc/architecture/boundary.yaml`, the sanctuarized machine-readable source of truth (schema in `schemas/boundary.yaml.schema.yaml`, conventions in `governance/boundary-contract`).
 
-It is a first-class P3/P5 output and is reconciled against runtime flows — code wins.
+It is a first-class P3/P5 implementation contract. Runtime flows are retained
+as environment- and revision-scoped observations; a difference may indicate
+deployment lag, configuration or genuine drift and must be reconciled as such.
 
 ## Ecosystem graph
 

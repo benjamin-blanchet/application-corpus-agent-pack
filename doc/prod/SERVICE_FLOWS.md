@@ -12,12 +12,11 @@ description: "This file captures inbound and outbound runtime flows observed thr
 
 This file captures inbound and outbound runtime flows observed through Dynatrace/APM or another verified production source. Use it to reconcile production behavior with API, integration, messaging and persistence catalogs.
 
-> **Reconcile against the sanctuarized boundary contract.** The code-derived
-> source of truth for inbound/outbound is `doc/architecture/boundary.yaml`
-> (`governance/boundary-contract`). These runtime flows are rank-3 evidence:
-> corroborate, enrich latency/volume/failure, and surface edges the code missed
-> — but when runtime and code disagree, **code wins**. Record a runtime-observed
-> edge absent from the contract as a reconciliation item, not as ground truth.
+> **Reconcile against the sanctuarized boundary contract.** That contract
+> describes implementation at an analyzed revision. These flows describe a
+> named environment, deployed revision and observation window. A difference
+> can be deployment lag, configuration/feature flags or contract drift; retain
+> both scoped claims and open a reconciliation item.
 
 ## Inbound Flows
 

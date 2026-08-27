@@ -88,4 +88,5 @@ If global Confluence search is unsupported, record `unsupported` and ask the ope
 | Project trajectory / roadmap signal | `doc/project/activity/PROJECT_TRAJECTORY.md` |
 | Code/documentation contradiction | `doc/_meta/reconciliation-ledger.yaml` during P9 |
 
-Confluence is rank 7. Code, runtime config and production evidence win when they disagree.
+Confluence can evidence intent or history. It does not prove implementation at
+a revision or runtime in an environment without corroborating evidence.

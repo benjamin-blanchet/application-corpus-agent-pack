@@ -96,7 +96,7 @@ Never put speculative entries in indexes.
 When sources are available:
 
 - **Jira**: cover the contract from `governance/discovery-coverage-contract`. Tie issues to feature slugs from P3. When available, also run `exploration/atlassian-project-trajectory` for cross-project app mentions, blockers, incidents, migration signals.
-- **Confluence**: walk the relevant page tree (not snippets) using feature/component names from P3–P5. Apply trust scoring per `exploration/confluence-exploration`. **When code and Confluence disagree, code wins**; preserve the Confluence claim under "Confluence-stated, does not match code".
+- **Confluence**: walk the relevant page tree (not snippets) using feature/component names from P3–P5. Apply trust scoring per `exploration/confluence-exploration`. When it differs from code, classify the claims as implementation, runtime, intent or history and preserve revision/environment context.
 - **Production observability**: run `exploration/production-discovery`. When Dynatrace is available, also run `exploration/dynatrace-runtime-architecture`. When signals warrant cross-window analysis, run `exploration/production-temporal-correlation`.
 - **Project activity and delivery**: run `exploration/project-activity-discovery` if Jira/Git/PR/CI is available, enriched by `exploration/atlassian-project-trajectory`. Run `exploration/ci-cd-activity-discovery` when CI/CD files, local Git history, PR checks or workflow-run evidence are available.
 
@@ -139,3 +139,17 @@ asks for it or an adoption readiness review. When used,
 `governance/team-handover` is an adoption-guide generator. It must
 present the roadmap state, what is reliable, what is still partial, and
 how the team should use the corpus.
+
+## Trusted-baseline quality bar
+
+Kickstart is not a token first pass. For a primary application, every
+directory is inventoried, every entry point is classified, every feature is
+interviewed when ambiguity remains, and every contradiction is reconciled.
+Connected-source coverage is bounded and evidenced; unavailable sources are
+reported as `blocked` or `partial`, never silently skipped.
+
+Generated knowledge must also be discoverable: refresh affected indexes,
+graph nodes/edges, the coverage matrix, repository map and source inventory
+before reporting the kickstart complete. A P1→P9 structural baseline is not
+the same as actionable or adoption-ready knowledge; apply
+`procedure-readiness.md` before either claim.

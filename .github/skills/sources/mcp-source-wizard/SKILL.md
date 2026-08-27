@@ -24,7 +24,7 @@ This wizard asks the operator a short, structured set of questions about Jira, C
 
 Use this skill:
 
-- near the beginning of `foundations/corpus-kickstart`;
+- near the beginning of `modes/corpus-kickstart`;
 - before project activity discovery;
 - before production discovery;
 - when the operator says the team has custom MCP servers or internal tools;

@@ -1,5 +1,5 @@
 corpus:
-  pack_version: '1.2.0'
+  pack_version: '1.1.0'
   last_pack_upgrade: null
   maturity_level: 0
   phase: pack_copied

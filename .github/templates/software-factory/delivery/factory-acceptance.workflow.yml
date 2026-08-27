@@ -34,6 +34,10 @@ jobs:
       FACTORY_INPUT_PLAN: ${{ github.event.client_payload.plan }}
       FACTORY_INPUT_ENVIRONMENT: ${{ github.event.client_payload.environment }}
       FACTORY_INPUT_CI: ${{ github.event.client_payload.ci }}
+      # Empty keeps the generic pack fail-closed. A constructed corpus may set
+      # this repository variable to a reviewed module in the protected
+      # controller checkout; the module must delegate to an attested sandbox.
+      FACTORY_EXECUTOR_PROVIDER: ${{ vars.FACTORY_EXECUTOR_PROVIDER }}
       FACTORY_BASE_URL: ${{ github.event.client_payload.base_url }}
       FACTORY_DATASET_ID: ${{ github.event.client_payload.dataset_id }}
       FACTORY_DATASET_VERSION: ${{ github.event.client_payload.dataset_version }}

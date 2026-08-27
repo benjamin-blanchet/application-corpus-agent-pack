@@ -4,30 +4,30 @@
 
 ## Why this exists
 
-Agents are effective on a codebase they understand — and weak on one they must re-derive every session. The real behavior of an application lives in its code; written documentation drifts; and in a multi-application landscape, how services actually talk to each other is mostly tribal knowledge.
+Agents are effective on a codebase they understand — and weak on one they must re-derive every session. Application structure lives primarily in code, while deployed behavior also depends on revision, configuration and environment; written documentation and intent can drift independently.
 
-This pack turns a repository into a **durable, code-true knowledge base that agents read instead of re-discovering** — and that **composes across applications** into a single ecosystem view. The corpus is owned by the team, lives alongside the code, and is built primarily from the code itself, so it stays true as the system evolves.
+This pack turns a repository into a **durable, evidence-backed knowledge base that agents read instead of re-discovering** — and that **composes across applications** into a single ecosystem view. The corpus is owned by the team, lives alongside the code, and is built primarily from the code itself.
 
-- **Code decides — everything else enriches.** Production, tickets, docs and dashboards feed the corpus through MCP, but every durable claim is reconciled against code, which wins when sources disagree.
+- **Authority follows the claim.** Code anchors implementation, deployed evidence anchors runtime, approved specifications anchor intent, and dated records anchor history.
 - **A lasting asset, not a session.** The corpus is a versioned artefact maintained over many focused runs, not throwaway agent output.
 - **One app, then the whole landscape.** Each application documents its own boundary; those boundaries recompose into a cross-application graph, and peer corpora are read across the org via MCP.
 
-## Core principle: code is the source of truth
+## Core principle: authority follows claim scope
 
-When two sources disagree about how the application behaves today, the higher-rank source wins:
+Claims are classified before sources are reconciled:
 
-```
-1. Repository code (current main/default branch)
-2. Migrations + runtime config
-3. Production observability (Dynatrace/APM/logs)
-4. Tests
-5. Operator interview answers
-6. Jira / PRs / commits
-7. Confluence and other written documentation
-8. Tribal knowledge
-```
+| Scope | Best evidence |
+|---|---|
+| `implementation` | Code, migrations, configuration and tests at an explicit revision. |
+| `runtime` | Deployed revision, effective configuration/flags and dated observation in a named environment. |
+| `intent` | Approved specification, acceptance criteria, tests and explicit product/operator decisions. |
+| `history` | Dated tickets, PRs, commits, decision records, interviews and documentation. |
 
-Confluence, Jira and dashboards are useful for intent, history and stakeholders — but they drift. They are reconciled against code before being treated as truth. The full ranking lives in `foundations/core-rules` and is enforced throughout the pack.
+A main-branch implementation and an older deployed revision can legitimately
+differ. The corpus preserves both instead of forcing one false universal
+answer. Time-sensitive claims carry `claim_scope`, `revision`, `environment`
+and `observed_at` where applicable. Full rules live in
+`foundations/core-rules`.
 
 ## Corpus layout
 
@@ -72,7 +72,8 @@ The corpus is not a static documentation site. It is a governed knowledge base f
 ## Design principles
 
 - Stack-neutral by default.
-- Code is the source of truth; Confluence and other docs are reconciled against code.
+- Code is the structural spine; source authority is evaluated by claim scope,
+  revision, environment and observation time.
 - Every kickstart on a primary application repository runs the full P1 → P9 pipeline. There is no opt-in "light" mode.
 - The code analysis pipeline is **resumable, not restartable** — the agent always verifies state before generating.
 - Only human-facing roles are exposed as agents; technical capabilities are skills.
@@ -80,7 +81,8 @@ The corpus is not a static documentation site. It is a governed knowledge base f
 - Production knowledge is first-class.
 - Every P4 feature has a per-feature interview log.
 - Every important claim carries source and confidence metadata.
-- Frontmatter `confidence: confirmed` requires evidence from a rank 1–3 source (or an interview corroborated by code).
+- Frontmatter `confidence: confirmed` requires direct evidence appropriate to
+  the declared claim scope.
 - Corpus validation is deterministic through `scripts/validate-corpus.mjs`, with hard gates on the pipeline.
 - Adoption guide claims are hard-gated on `code_analysis_status: covered`, `actionable_readiness_status: covered` and roadmap honesty.
 - Architecture diagrams are mandatory and generated from code, never imported from Confluence.

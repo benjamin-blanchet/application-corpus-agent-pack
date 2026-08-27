@@ -1,5 +1,2 @@
 # Generated artefacts — never committed
 doc/_site/
-
-# Local baseline for scripts/estimate-token-cost.mjs — each consumer generates their own
-.token-cost-baseline.json

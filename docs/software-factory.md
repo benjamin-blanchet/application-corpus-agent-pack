@@ -159,19 +159,16 @@ the reducer is conditioned on a valid `candidate` gate, so it applies only after
 the candidate is frozen. A module added once the lots have closed sits outside
 every digest and produces no finding.
 
-**The acceptance chain is deliberately blocked, and has never run green end to
-end.** `factory-acceptance.mjs` pushes an execution-boundary finding
-unconditionally, before any adapter is selected, so every campaign exits
-blocked. That is not a defect: the installable pack has no attestable isolated
-process, filesystem and egress executor, and a signed receipt cannot turn an
-ordinary child process into one, so the runner fails closed instead of
-pretending. The consequence is worth being explicit about — the acceptance,
-release and draft-PR workflows cannot complete until an external isolated broker
-is integrated, and the per-campaign scoped acceptance credentials described in
-the environment contract are a contract, not an implementation. The adapter
-execution code beneath that boundary is unreachable today; the day the boundary
-is lifted, it becomes candidate code running in a privileged context, and that
-is the review to do first.
+**The generic pack blocks acceptance by default.** It ships no process,
+filesystem and egress sandbox, so a campaign without an external provider
+returns `acceptance-execution-boundary-unavailable`. A constructed corpus can
+unlock the path by selecting a provider module from the protected controller
+with `--executor-provider` or repository variable
+`FACTORY_EXECUTOR_PROVIDER`. The module must delegate to a real isolated
+broker, bind its response to the frozen run/SHA/contracts and return the closed
+attested response schema. The integration path is exercised green by pack
+tests with an in-test fixture; no permissive or demonstration provider is
+installed in consumer repositories.
 
 **Gate invalidation is declarative.** `artifact_change_observed` records what an
 operator or an agent *states* about a change; nothing in the pipeline derives
@@ -207,13 +204,15 @@ effect when their host-control attestation is absent. Generic IDE source edits
 are checked again from the real Git delta at handoff; that is detection, not a
 claim that the IDE was sandboxed.
 
-Concretely, the shipped `factory-acceptance.mjs` always returns the structured
-`acceptance-execution-boundary-unavailable` blocker before candidate lifecycle
-or adapter execution. This remains true for `deny_by_default`: an empty egress
-allowlist, GitHub Environment approval, signed receipt or runner label does not
-isolate a same-user process. Applications must integrate an external
-process/filesystem/egress executor and its trusted verifier before claiming an
-executed Acceptance campaign.
+Concretely, `factory-acceptance.mjs` returns the structured
+`acceptance-execution-boundary-unavailable` blocker when no provider is
+configured. `deny_by_default`, an empty egress allowlist, GitHub Environment
+approval, a signed receipt or a runner label still do not isolate a same-user
+process. A configured provider must export `apiVersion = 1` and
+`executeAcceptance(request)`, live in the protected controller (recommended:
+`.corpus-pack/local/executors/<provider>.mjs`), and return only the verified
+`schema_version/provider/binding/boundary/attestation/observation/results/lifecycle/adapter`
+shape. Invalid, unbound or unattested responses fail closed.
 
 ## Validation and migration
 

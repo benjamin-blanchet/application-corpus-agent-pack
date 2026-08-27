@@ -2,6 +2,8 @@
 name: peer-corpus-access
 category: sources
 description: "Retrieve and read another application's corpus (a declared peer/linked corpus) via local workspace, sparse git clone, or GitHub MCP, with SHA-gated freshness and a uniform read handle. Use when a skill must read, search, or walk a peer corpus. Read-only."
+references:
+  - procedure-refresh.md
 ---
 # Peer Corpus Access
 
@@ -104,89 +106,11 @@ A peer may pin the method via its `access` field:
 
 `access` is captured in the declaration interview, never invented here.
 
-## Retrieval & freshness (sync)
+## Retrieval and freshness
 
-**Principle: always consume an up-to-date corpus. Freshness is a diff, not a
-re-clone.** Re-cloning every session is wasteful and re-reading a stale cache
-is wrong; the middle path is a SHA-gated incremental refresh — cheap when
-nothing changed, delta-only when something did.
-
-### Refresh policy
-
-Driven by the peer's `refresh_policy`:
-
-| Policy | Behavior at session start |
-|---|---|
-| `each-session` | Run the freshness diff before the first read. **Recommended for any actively consumed peer.** |
-| `on-demand` (default) | Run the freshness diff the first time the peer is read in the session. |
-| `manual` | Do not auto-refresh; the operator owns freshness. Read the cache as-is but **flag its `last_synced_at` in the recap** so staleness is visible. |
-
-`workspace` (`type: path`) peers are always operator-owned — no auto-refresh;
-just note their working-tree state if relevant.
-
-### git-sparse refresh (the common path)
-
-**Delegate the deterministic git work to `scripts/sync-peer-corpus.mjs`** —
-don't hand-compose the git incantation. It does the sparse+shallow+partial
-clone (or the SHA-gated incremental refresh) and reports the result as JSON:
-
-```bash
-node scripts/sync-peer-corpus.mjs --name <name> --url <url> --ref <ref> --surface <surface> --json
-# → { status: cloned|updated|unchanged|error, cache_path, before_sha, after_sha,
-#     changed_files: [...], synced_at, error }
-```
-
-The script materializes only `surface` (e.g. `doc/`, never the app source),
-ensures `.corpus-cache/` is gitignored, and on a present cache fetches shallow,
-compares SHAs, and advances **only on change** (`unchanged` => near-free
-no-op). On `status: error` (no git, auth, network) it exits non-zero — that is
-the signal to fall back to the GitHub MCP transport, loudly.
-
-After a successful sync, **persist** the reported `after_sha` and `synced_at`
-into the peer's `source.last_synced_sha` / `last_synced_at` (the script does not
-write `app-profile.yaml`; the agent is the single writer of that file).
-
-Surface `changed_files` in the recap when non-empty ("app-b corpus advanced: 3
-files under doc/ changed since last session"). That diff is the point of
-refreshing — it tells the operator what moved in the peer.
-
-The exact commands the script runs (for reference / manual fallback only):
-`git clone --depth 1 --filter=blob:none --sparse <url> <cache>` →
-`git -C <cache> sparse-checkout set <surface>`; then on refresh
-`git -C <cache> fetch --depth 1 origin <ref>`, compare `HEAD` vs `FETCH_HEAD`,
-`git -C <cache> diff --name-only <before> <after> -- <surface>`,
-`git -C <cache> reset --hard <after>`.
-
-### github-mcp refresh (no-git environments / pinned)
-
-The diff is computed from commit SHAs, so an unchanged peer costs ~one call:
-
-1. Read the current head SHA of `<ref>` (`get_repository` / get-branch).
-2. Compare to the peer's stored `source.last_synced_sha`.
-   - **Equal** → cache fresh, no fetch. Stop.
-   - **Unequal / unknown** → list the changed files between the two SHAs
-     (compare endpoint / `list_commits`), filter to `surface`, and
-     `get_file_contents` **only those files**, writing them into
-     `.corpus-cache/<name>/`. For an unknown baseline (first sync), hydrate the
-     whole surface once (§ Strategy B).
-3. Update `source.last_synced_sha` and `last_synced_at`.
-
-This is the MCP analog of the git diff: fetch deltas, not the whole tree.
-
-### Staleness fallback
-
-If refresh fails (offline, auth lost, MCP detached), **do not block and do not
-pretend it's fresh**: read the existing cache and state plainly in the recap
-that the peer is at `last_synced_at <date>` / SHA `<short>` and could not be
-refreshed. A labeled stale read beats a broken session; a silent stale read
-does not. Record the failure in `doc/_meta/blocking-questions.md` if it
-recurs.
-
-### State tracking
-
-Per git peer in `app-profile.yaml` `source`: `cache_path`, `last_synced_sha`,
-`last_synced_at`. In `corpus-state.yaml`: `corpus.last_external_peer_pull`,
-`corpus.last_adjacent_sync_check`.
+Load `procedure-refresh.md` before the first read required by the declared
+refresh policy. It owns sparse-Git/MCP delta refresh, state updates and the
+explicit stale-cache fallback.
 
 ## Uniform access handle (the contract)
 
@@ -294,7 +218,7 @@ After accessing a peer in a run, update:
   step.
 - A peer corpus is a **secondary, code-derived source** (when `has_pack:
   true`): it enriches and contextualizes; it never overrides this app's own
-  code under `foundations/core-rules § Source priority`.
+  evidence under `foundations/core-rules § Source authority depends on the claim`.
 
 ## Anti-patterns
 

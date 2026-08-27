@@ -38,6 +38,7 @@ const selectedLearningTests = learningTestsArg >= 0
 const discoveredLearningTests = new Set();
 const script = path.join(here, 'check-runtime-sources.mjs');
 const fixtures = path.join(here, 'runtime-source-fixtures');
+const sourceCorpusFixture = path.join(fixtures, 'valid-source-corpus');
 const contractText = fs.readFileSync(path.join(repoRoot, 'doc/_meta/information-sources.yaml'), 'utf8');
 const contract = parseSourceContracts(contractText);
 let failed = 0;
@@ -144,10 +145,6 @@ test('durable-state-scanner-allows-historical-and-contractual-vocabulary', () =>
     'doc/_meta/information-sources.yaml',
     'doc/_meta/source-coverage.yaml',
   ];
-  if (!portable) durableContractFiles.push(
-    'examples/demo-corpus/doc/_meta/information-sources.yaml',
-    'examples/demo-corpus/doc/_meta/source-coverage.yaml',
-  );
   for (const relative of durableContractFiles) {
     const fields = findForbiddenDurableRuntimeFields(fs.readFileSync(path.join(repoRoot, relative), 'utf8'));
     assert(fields.length === 0, `${relative} produced false positives: ${fields.join(', ')}`);
@@ -298,35 +295,23 @@ test('source-coverage-denies-runtime-fields-and-incomplete-target-evidence', () 
   assert(errors.some((error) => error.includes('target requires evidence_refs')), 'covered target without evidence passed');
 });
 
-if (!portable) test('demo-source-contract-coverage-run-and-human-view-stay-in-parity', () => {
-  const demoRoot = path.join(repoRoot, 'examples/demo-corpus');
-  const demoDoc = path.join(demoRoot, 'doc');
-  const demoContract = parseSourceContracts(fs.readFileSync(path.join(demoDoc, '_meta/information-sources.yaml'), 'utf8'));
-  const contractErrors = validateSourceContracts(demoContract);
+if (!portable) test('source-fixture-contract-coverage-run-and-human-view-stay-in-parity', () => {
+  const fixtureDoc = path.join(sourceCorpusFixture, 'doc');
+  const fixtureContract = parseSourceContracts(fs.readFileSync(path.join(fixtureDoc, '_meta/information-sources.yaml'), 'utf8'));
+  const contractErrors = validateSourceContracts(fixtureContract);
   assert(contractErrors.length === 0, contractErrors.join('; '));
-  const demoCoverage = parseSourceCoverage(fs.readFileSync(path.join(demoDoc, '_meta/source-coverage.yaml'), 'utf8'));
-  const coverageErrors = validateSourceCoverage(demoCoverage, demoContract);
+  const fixtureCoverage = parseSourceCoverage(fs.readFileSync(path.join(fixtureDoc, '_meta/source-coverage.yaml'), 'utf8'));
+  const coverageErrors = validateSourceCoverage(fixtureCoverage, fixtureContract);
   assert(coverageErrors.length === 0, coverageErrors.join('; '));
-  const ledger = fs.readFileSync(path.join(demoDoc, '_runs/RUN_LEDGER.md'), 'utf8');
-  for (const entry of demoCoverage.coverage) {
-    assert(ledger.includes(`| ${entry.last_successful_run} |`), `${entry.source_id} run is absent from the demo ledger`);
+  const ledger = fs.readFileSync(path.join(fixtureDoc, '_runs/RUN_LEDGER.md'), 'utf8');
+  for (const entry of fixtureCoverage.coverage) {
+    assert(ledger.includes(`| ${entry.last_successful_run} |`), `${entry.source_id} run is absent from the fixture ledger`);
     for (const evidenceRef of [...entry.evidence_refs, ...entry.targets.flatMap((target) => target.evidence_refs)]) {
-      assert(fs.existsSync(path.join(demoRoot, evidenceRef)), `${entry.source_id} evidence does not resolve: ${evidenceRef}`);
+      assert(fs.existsSync(path.join(sourceCorpusFixture, evidenceRef)), `${entry.source_id} evidence does not resolve: ${evidenceRef}`);
     }
   }
-  const view = fs.readFileSync(path.join(demoDoc, '_meta/discovery-coverage.md'), 'utf8');
-  assert(/^\| Runtime entity\/service mapping \| covered \|/m.test(view), 'Dynatrace target drifted from demo coverage');
-  assert(/^\| Open\/active issues \| covered \|/m.test(view), 'Jira target drifted from demo coverage');
-  const legacyFiles = [
-    '_meta/mcp-source-wizard.md',
-    '_indexes/by-source.md',
-    'mcp/custom-sources.md',
-    'mcp/dynatrace.md',
-  ];
-  const legacyPattern = /readiness pending|readiness\s+is\s+`available`|`consumption\.(?:method|access_mode)`|mariadb_logs_example/;
-  for (const rel of legacyFiles) {
-    assert(!legacyPattern.test(fs.readFileSync(path.join(demoDoc, rel), 'utf8')), `legacy runtime contract remains in demo ${rel}`);
-  }
+  const view = fs.readFileSync(path.join(fixtureDoc, '_meta/discovery-coverage.md'), 'utf8');
+  assert(/^\| Repository source \| covered \|/m.test(view), 'Repository status drifted from fixture coverage');
 });
 
 test('unknown-source-and-unsafe-state-combinations-fail', () => {
@@ -363,8 +348,8 @@ test('cli-prints-plan-and-never-creates-global-runtime-state', () => {
 if (!portable) test('dashboard-separates-contract-lifecycle-from-historical-coverage', () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'runtime-source-dashboard-'));
   try {
-    const out = path.join(tmp, 'demo.html');
-    const result = spawnSync(process.execPath, [path.join(here, 'build-corpus-site.mjs'), '--doc', path.join(repoRoot, 'examples/demo-corpus/doc'), '--out', out], {
+    const out = path.join(tmp, 'fixture.html');
+    const result = spawnSync(process.execPath, [path.join(here, 'build-corpus-site.mjs'), '--doc', path.join(sourceCorpusFixture, 'doc'), '--out', out], {
       cwd: repoRoot,
       encoding: 'utf8',
     });

@@ -12,6 +12,7 @@ import {
   validateSourceContracts,
   validateSourceCoverage,
 } from './check-runtime-sources.mjs';
+import { CORPUS_SECTIONS, SECTION_REGISTRY_PATH } from './lib/corpus-sections.mjs';
 
 function argumentValue(name) {
   const exact = process.argv.indexOf(name);
@@ -119,95 +120,92 @@ function frontmatter(content) {
   return parseSimpleYamlMap(text.slice(4, end));
 }
 
+const MINIMAL_CORPUS_FILES = new Set([
+  'doc/README.md',
+  'doc/CORPUS_MAP.md',
+  'doc/CORPUS_MANIFEST.md',
+  'doc/_meta/corpus-state.yaml',
+  'doc/_meta/code-pipeline-state.yaml',
+]);
+
+let sectionRegistryCache;
+
+function materializedSections() {
+  if (sectionRegistryCache !== undefined) return sectionRegistryCache;
+  sectionRegistryCache = new Map();
+  if (!exists(SECTION_REGISTRY_PATH)) return sectionRegistryCache;
+  let registry;
+  try {
+    registry = JSON.parse(read(SECTION_REGISTRY_PATH));
+  } catch (error) {
+    add('P0', 'corpus-section-registry-invalid', `Cannot parse ${SECTION_REGISTRY_PATH}: ${error.message}`, SECTION_REGISTRY_PATH);
+    return sectionRegistryCache;
+  }
+  if (registry.schema_version !== 1 || !registry.sections || Array.isArray(registry.sections) || typeof registry.sections !== 'object') {
+    add('P0', 'corpus-section-registry-invalid', 'Section registry must contain schema_version: 1 and an object named sections', SECTION_REGISTRY_PATH);
+    return sectionRegistryCache;
+  }
+  for (const [name, declaration] of Object.entries(registry.sections)) {
+    const definition = CORPUS_SECTIONS[name];
+    if (!definition) {
+      add('P0', 'corpus-section-unknown', `Unknown materialized corpus section: ${name}`, SECTION_REGISTRY_PATH);
+      continue;
+    }
+    const declaredFiles = Array.isArray(declaration?.files) ? declaration.files : null;
+    if (!declaredFiles) {
+      add('P0', 'corpus-section-declaration-invalid', `Section ${name} must declare its materialized files`, SECTION_REGISTRY_PATH);
+      continue;
+    }
+    const expected = new Set(definition.files.map(([, target]) => target));
+    const actual = new Set();
+    for (const record of declaredFiles) {
+      if (!record || typeof record.path !== 'string' || !expected.has(record.path)) {
+        add('P0', 'corpus-section-declaration-invalid', `Section ${name} contains an unexpected file declaration`, SECTION_REGISTRY_PATH);
+        continue;
+      }
+      actual.add(record.path);
+    }
+    for (const target of expected) {
+      if (!actual.has(target)) add('P0', 'corpus-section-declaration-incomplete', `Section ${name} does not declare ${target}`, SECTION_REGISTRY_PATH);
+    }
+    sectionRegistryCache.set(name, { files: actual });
+  }
+  return sectionRegistryCache;
+}
+
+function checkMaterializedSections() {
+  const sections = materializedSections();
+  for (const [name, declaration] of sections) {
+    for (const dependency of CORPUS_SECTIONS[name].dependencies) {
+      if (!sections.has(dependency)) add('P0', 'corpus-section-dependency-missing', `Section ${name} requires section ${dependency}`, SECTION_REGISTRY_PATH);
+    }
+    for (const file of declaration.files) {
+      if (!exists(file)) add('P0', 'declared-section-file-missing', `Materialized section ${name} is missing declared file: ${file}`, file);
+    }
+  }
+  for (const [name, definition] of Object.entries(CORPUS_SECTIONS)) {
+    for (const [template] of definition.files) {
+      if (!exists(template)) add('P0', 'offline-section-template-missing', `Offline template for section ${name} is missing: ${template}`, template);
+    }
+  }
+}
+
 function checkRequiredStructure() {
   const requiredFiles = [
     'doc/README.md',
     'doc/CORPUS_MAP.md',
     'doc/CORPUS_MANIFEST.md',
-    'doc/_meta/app-profile.yaml',
     'doc/_meta/corpus-state.yaml',
     'doc/_meta/code-pipeline-state.yaml',
-    'doc/_meta/open-questions.md',
-    'doc/_meta/update-candidates.md',
-    'doc/_meta/validation-checklist.md',
-    'doc/_meta/discovery-coverage.md',
-    'doc/_meta/source-coverage.yaml',
-    'doc/_meta/blocking-questions.md',
-    'doc/_meta/deep-analysis-plan.md',
-    'doc/_meta/brick-inventory.yaml',
-    'doc/_meta/actionable-readiness.md',
-    'doc/_meta/kickstart-progress.md',
-    'doc/_meta/mcp-source-wizard.md',
-    'doc/_meta/interaction-history/README.md',
-    'doc/_meta/interaction-history/SESSION-template.md',
-    'doc/_roadmap/README.md',
-    'doc/_roadmap/CORPUS_ROADMAP.md',
-    'doc/_roadmap/CORPUS_ROADMAP.yaml',
-    'doc/_roadmap/ROADMAP_STATE.md',
-    'doc/_roadmap/NEXT_BEST_ACTIONS.md',
-    'doc/_roadmap/ROADMAP_DECISIONS.md',
-    'doc/_graph/README.md',
-    'doc/_graph/nodes.yaml',
-    'doc/_graph/edges.yaml',
-    'doc/_graph/evidence.yaml',
-    'doc/_runs/README.md',
-    'doc/_runs/RUN_LEDGER.md',
-    'doc/_runs/RUN_TEMPLATE.md',
-    'doc/architecture/README.md',
-    'doc/architecture/boundary.yaml',
-    'doc/project/cicd/README.md',
-    'doc/project/cicd/PIPELINES.md',
-    'doc/project/cicd/RECENT_ACTIVITY.md',
-    '.github/agents/corpus-control-plane-subagent.agent.md',
-    '.github/skills/exploration/production-temporal-correlation/SKILL.md',
-    '.github/skills/exploration/ci-cd-activity-discovery/SKILL.md',
-    '.github/templates/prod-knowledge/production-temporal-correlation-template.md',
-    'scripts/inventory-repo.mjs',
-    'scripts/export-graph-json.mjs',
-    'scripts/sync-peer-corpus.mjs',
-    'scripts/recompose-ecosystem.mjs',
-    'scripts/check-runtime-sources.mjs',
-    'scripts/test-runtime-sources.mjs',
+    'scripts/materialize-corpus-section.mjs',
+    'scripts/lib/corpus-sections.mjs',
   ];
-  const requiredDirs = [
-    'doc/_meta',
-    'doc/_meta/interaction-history',
-    'doc/_indexes',
-    'doc/_roadmap',
-    'doc/_graph',
-    'doc/_runs',
-    'doc/_handover',
-    'doc/project',
-    'doc/prod',
-    'doc/spec',
-    'doc/mcp',
-    'doc/architecture',
-  ];
+  const requiredDirs = ['doc/_meta'];
   for (const file of requiredFiles) {
     if (!exists(file)) add('P0', 'missing-required-file', `Missing required corpus file: ${file}`, file);
   }
   for (const dir of requiredDirs) {
     if (!isDirectory(dir)) add('P0', 'missing-required-directory', `Missing required corpus directory: ${dir}`, dir);
-  }
-  const expectedIndexes = [
-    'by-feature.md',
-    'by-component.md',
-    'by-technical-component.md',
-    'by-api.md',
-    'by-batch.md',
-    'by-screen.md',
-    'by-use-case.md',
-    'by-business-entity.md',
-    'by-risk.md',
-    'by-bug.md',
-    'by-production-signal.md',
-    'by-project-signal.md',
-    'by-source.md',
-    'by-brick.md',
-  ];
-  for (const indexName of expectedIndexes) {
-    const file = `doc/_indexes/${indexName}`;
-    if (!exists(file)) add('P1', 'missing-index', `Missing expected index file: ${file}`, file);
   }
 }
 
@@ -407,7 +405,7 @@ function checkCorpusState() {
       : [];
     if (snapshots.length === 0) add('P1', 'state-prod-snapshot-missing', 'Production discovery is marked done, but no production discovery snapshot exists', 'doc/_meta/corpus-state.yaml');
   }
-  if (corpus.operating_mode === 'continuous_enrichment') {
+  if (corpus.operating_mode === 'continuous_enrichment' && corpus.phase !== 'pack_copied') {
     for (const file of ['doc/_roadmap/CORPUS_ROADMAP.yaml', 'doc/_roadmap/ROADMAP_STATE.md', 'doc/_runs/RUN_LEDGER.md']) {
       if (!exists(file)) add('P0', 'continuous-enrichment-artifact-missing', `operating_mode=continuous_enrichment but ${file} is missing`, 'doc/_meta/corpus-state.yaml');
     }
@@ -1669,8 +1667,6 @@ function checkSourceContracts() {
   const legacyNames = [
     `doc/_meta/${['mcp', 'readiness'].join('-')}.md`,
     `doc/mcp/${['MCP', 'READINESS'].join('_')}.md`,
-    `examples/demo-corpus/doc/_meta/${['mcp', 'readiness'].join('-')}.md`,
-    `examples/demo-corpus/doc/mcp/${['MCP', 'READINESS'].join('_')}.md`,
   ];
   for (const legacy of legacyNames) {
     if (exists(legacy)) add('P0', 'legacy-runtime-state-file', `Legacy global runtime-state artifact must be removed: ${legacy}`, legacy);
@@ -1778,7 +1774,7 @@ function checkSourceContracts() {
     }
   }
 
-  const activeRoots = ['AGENTS.md', 'README.md', 'docs', '.github', 'doc', 'examples/demo-corpus/doc'];
+  const activeRoots = ['AGENTS.md', 'README.md', 'docs', '.github', 'doc'];
   const forbiddenReference = /mcp[-_]readiness|MCP_READINESS|sources\/mcp-readiness-check|`consumption\.(?:method|access_mode)`|readiness\s+is\s+`available`|record\s+the\s+source\s+as\s+`partial`\s+or\s+`unavailable`|mariadb_logs_example/i;
   for (const activeRoot of activeRoots) {
     const abs = path.join(root, activeRoot);
@@ -2132,10 +2128,11 @@ function checkCanonicalPaths() {
 
   const canonical = manifest.paths.map((p) => p.path).filter(Boolean);
   const canonicalSet = new Set(canonical);
+  const declaredTargets = new Set([...materializedSections().values()].flatMap((section) => [...section.files]));
 
   // 1. Shipped skeleton files that must be present in the pack.
   for (const p of manifest.paths) {
-    if (p.delivery === 'skeleton' && p.gated === true && !exists(p.path)) {
+    if (p.delivery === 'skeleton' && p.gated === true && (MINIMAL_CORPUS_FILES.has(p.path) || declaredTargets.has(p.path)) && !exists(p.path)) {
       add('P1', 'canonical-skeleton-missing', `Canonical skeleton file declared in corpus-paths.yaml is missing: ${p.path}`, p.path);
     }
   }
@@ -2173,6 +2170,7 @@ function checkCanonicalPaths() {
 }
 
 checkRequiredStructure();
+checkMaterializedSections();
 checkCanonicalPaths();
 checkMarkdownLinks();
 checkFrontmatter();

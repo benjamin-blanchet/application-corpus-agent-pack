@@ -14,7 +14,7 @@ Only human-facing agents are listed here. Repository orientation is handled by t
 
 | Task | Agent | Main skills |
 |---|---|---|
-| Kickstart corpus | `corpus` | `foundations/kickstart-setup`, `foundations/corpus-kickstart`, `exploration/repo-explain` |
+| Kickstart corpus | `corpus` | `foundations/kickstart-setup`, `modes/corpus-kickstart`, `exploration/repo-explain` |
 | Create or enrich feature knowledge | `corpus` | `authoring/feature-folder-creation`, `exploration/code-exploration` |
 | Capture durable knowledge after a task | `corpus` | `governance/corpus-update`, `authoring/knowledge-capture` |
 | Write a spec from a need | `functional-analyst` | `authoring/spec-from-need`, `authoring/spec-writing`, `exploration/repo-explain` |

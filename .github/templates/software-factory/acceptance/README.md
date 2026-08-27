@@ -15,12 +15,16 @@ operation installs the exact browser selected by the repository lockfile.
 `operation`; the command adapter executes it without a shell and emits the
 same explicit results and evidence contracts.
 
-The shipped adapter CLIs validate their frozen inputs but deliberately stop
-before spawning candidate code. The pack currently has no process/filesystem
-isolation and no enforceable egress boundary; a protected environment or a
-signed receipt cannot provide those controls. Integrate an external isolated
-executor before enabling replay. The future executor entry point will retain
-this command shape:
+The shipped direct adapter CLIs remain fail-closed because running them as an
+ordinary child process would not create an isolation boundary. A configured
+provider owns the complete remote campaign and may reuse the lower-level
+adapter discovery/reporting modules inside its isolated broker; it returns the
+validated observation, results, lifecycle and adapter record instead of asking
+the controller to spawn candidate code. Without that provider, acceptance
+stops before candidate code. The pack itself supplies no process/filesystem
+isolation or enforceable egress boundary; a protected environment or signed
+receipt cannot provide those controls. An external executor that reuses the
+adapter contract retains this command shape inside its sandbox:
 
 ```text
 node scripts/adapters/playwright/run.mjs --plan <acceptance-plan> --environment <environment-contract> --ci <ci-contract> --observation <run-observation> --config <playwright-config> --subject-sha <full-commit-sha> --run-id <run-id> --evidence-root <run-directory>
@@ -51,7 +55,7 @@ of passing oracles. If an application error becomes visible, call
 `recordUserVisibleError` before the failing assertion; that fact is retained
 across retries, propagated to the manifest and prevents a passed campaign.
 
-The installable worker blocks every candidate lifecycle/adapter process,
+Without a configured provider, the installable worker blocks every candidate lifecycle/adapter process,
 including secret-free `deny_by_default` profiles. It cannot prove that an
 ordinary child process cannot read the runner home, sibling checkouts or reach
 the network. It also does not support `ephemeral_storage_state` or another
@@ -67,6 +71,7 @@ cleanup also blocks; the reporter never infers success from a passing UI
 assertion. The lifecycle runner independently executes the exact cleanup
 operation declared by the plan/CI contracts and records its contract digest,
 timestamps and exit code; a test annotation cannot self-attest that operation.
-The shipped worker nevertheless blocks mutation campaigns before lifecycle
-until mutation execution is moved behind an isolated non-production broker
-with a signed, run-bound authorization receipt.
+The direct worker nevertheless blocks mutation campaigns before lifecycle. A
+configured provider may return mutation evidence only when its isolated
+non-production broker verified the exact signed, run-bound authorization and
+cleanup proof.

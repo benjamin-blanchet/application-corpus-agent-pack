@@ -31,47 +31,63 @@ Shared rules for every agent: do not invent facts, detect actual stack, use conf
 8. Reconcile affected files instead of appending contradictions.
 9. Use `governance/safe-operation-guardrails` before high-risk, destructive, broad or external side-effect actions.
 10. Register durable, transport-neutral source contracts in `doc/_meta/information-sources.yaml`, probe runtime capability per run, and record historical evidence in `doc/_meta/source-coverage.yaml`. Never persist current availability globally.
-11. Apply the source priority rule (below) on every disagreement between sources.
+11. Apply the scoped source-authority rule (below) on every disagreement.
 
-## Source priority (truth ranking)
+## Source authority depends on the claim
 
-When two sources disagree about how the application behaves, resolve in this order:
+There is no universal source ranking. First classify the claim, then reconcile
+sources that speak about the same scope, revision, environment and time.
 
-| Rank | Source | Why |
+| `claim_scope` | Question answered | Primary evidence |
 |---|---|---|
-| 1 | **Repository code** (current main/default branch) | What runs is the truth. Code does not lie about behavior. |
-| 2 | **Database migrations + runtime configuration** | Same reason: executed by the system. |
-| 3 | **Production observability** (Dynatrace/APM/logs/metrics) | Real-world evidence of runtime behavior. |
-| 4 | **Tests** | Encode intended behavior, but may be stale; still strong. |
-| 5 | **Operator interview answers** | Strong on intent and history; weaker on current behavior than code. |
-| 6 | **Jira tickets, PRs, commit messages** | Capture intent at a point in time; rot quickly. |
-| 7 | **Confluence and other written documentation** | Drifts. **Treat with caution by default.** Useful for history, glossary, intent — never as ground truth for current behavior unless reconciled with a higher-rank source. |
-| 8 | **Anything else** (chat, tribal knowledge, dashboards without source) | Hypothesis only. |
+| `implementation` | What can this revision do and how is it built? | Repository code at an explicit revision, migrations, build/runtime configuration and tests. |
+| `runtime` | What is this environment doing now? | Deployed revision, effective configuration/feature flags and time-bounded production observation. |
+| `intent` | What behavior is approved or expected? | Approved specification, acceptance criteria, tests and explicit operator/product decisions. |
+| `history` | Why did this exist or change? | Tickets, PRs, commits, decision records, interviews and dated documentation. |
+
+Every durable disputed or time-sensitive claim should carry enough context to
+avoid false contradictions:
+
+```yaml
+claim_scope: implementation | runtime | intent | history
+revision: <git-sha-or-ref>          # required when code/deployment-specific
+environment: <name-or-not-applicable>
+observed_at: <ISO-8601-or-not-applicable>
+```
 
 Operational rules:
 
-- When code and Confluence disagree about current behavior, **code wins**. Update the corpus with the code-backed version, record the Confluence claim under "Historical / Confluence-stated (does not match code)" with the page reference and date, and open an interview question if the divergence may indicate a documentation defect that the team should fix.
-- Never copy a Confluence page into the corpus as confirmed truth. If a fact comes only from Confluence, mark `confidence: probable` (not `confirmed`) and source `confluence`.
-- Mark frontmatter `confidence: confirmed` only when the highest-rank source supporting the claim is rank 1–3 (code, runtime config, production), or when an interview answer is corroborated by code.
-- A "design intent" claim (why something exists) can come from Confluence or operator interview at `confidence: probable`; a "behavior" claim cannot, unless reconciled with code.
-- During reconciliation (`pipeline/p9-code-reconciliation-gate`), apply this ranking explicitly. Record the rank that won.
+- Code is the spine for mapping the application, but `main` does not prove
+  current production behavior. For `runtime`, the deployed revision plus
+  effective configuration and direct observation outrank undeployed code.
+- For `implementation`, code at the named revision outranks prose describing
+  that revision. Tests strengthen the claim but can be stale or incomplete.
+- For `intent`, an approved specification can intentionally differ from the
+  current implementation. Preserve both claims with their scopes.
+- For `history`, dated tickets, decisions and interviews may be authoritative
+  even though they do not describe current behavior.
+- Confluence/Jira-only claims are not automatically false. Keep them at
+  `probable` unless the relevant scope is corroborated, and retain dates/links.
+- Reconcile only like with like. A runtime observation at revision `abc123`
+  does not contradict implementation at `def456`; it describes another state.
+- During P9, record the winning evidence for each claim scope, or keep both
+  scoped claims when both are true.
 
-## Code-first principle (load-bearing)
+`confidence: confirmed` requires direct evidence appropriate to the declared
+scope. A source type alone is not enough.
 
-The pack's core value proposition — and what distinguishes it from generic RAG-on-Confluence or scan-Dynatrace approaches — is **crossing code knowledge with production observability, in that order**:
+## Code-first corpus construction (load-bearing)
 
-- **Code is the foundation.** The repository code is rank 1 (truth) and the canonical baseline of corpus understanding. Without a covered P1→P9 code analysis pipeline, the corpus has no spine.
-- **Production enriches code knowledge — not the other way around.** Dynatrace, logs, metrics, traces, batch health are read **in the light of** the code structure, integration map, error-handling patterns and feature catalog produced by P1→P9. Production findings are interpreted against code; code is not interpreted against production.
-- **Without P1→P9 covered, every other lane is reduced-capability.** A production signal without a code-derived integration map is just noise; a Jira ticket without a feature folder is just text; a Confluence page without a code anchor is just history. The agent can collect these, but it cannot **make sense** of them with the same depth.
+P1→P9 remains mandatory for a primary application because code supplies the
+structural spine: modules, entry points, features, integrations and change
+surfaces. Production, tickets, documentation and interviews enrich that spine
+and may be authoritative for runtime, intent or history claims.
 
-Behavioral consequences (enforced by `foundations/core-discipline`, the prod-flavored exploration skills and the Continuous Enrichment mode of the Corpus agent):
-
-- When `corpus.code_analysis_status != covered` and an operator request would otherwise pull the agent deep into production/Jira/Confluence work, the agent **must** surface this state, bound the requested work to a single artefact (snapshot or short investigation), and propose returning to code analysis as the next action.
-- Findings produced while `code_analysis_status != covered` are marked at `confidence: probable` at best — they describe what is observed but cannot describe what is *meant* without code corroboration.
-- The agent never substitutes production discovery for code analysis. A rich Dynatrace surface is not an excuse to skip P1→P9; it is exactly the moment when P1→P9 becomes most valuable.
-- Loop prevention: a prod-flavored skill (`exploration/production-discovery`, `exploration/dynatrace-runtime-architecture`, `exploration/production-temporal-correlation`) executes **at most one bounded pass** when code is not covered. Multi-iteration deep dives, temporal correlation across multiple windows, or repeated dynatrace pulls are not permitted until P1→P9 is `covered`.
-
-This is not a stylistic preference. It is the principle that makes the pack's findings reliable instead of plausible.
+When `code_analysis_status != covered`, deep non-code discovery remains
+bounded and its architectural interpretation limited. The agent surfaces the
+gap, records the observation with its proper scope, and returns to the code
+pipeline. It never converts a rich external source into a substitute for the
+missing application map.
 
 ## Stack-neutral detection hints
 

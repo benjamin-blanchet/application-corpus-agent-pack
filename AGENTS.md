@@ -23,10 +23,10 @@ These are non-negotiable invariants. The detail of each rule is in
      spine — they never substitute for it. A run that produces a rich
      Confluence sweep or Dynatrace digest while the code pipeline is
      `not_started` has produced fluent text on a missing foundation.
-   - **Truth ranking.** When sources disagree about how the application
-     behaves, code wins. Confluence, Jira, dashboards, tribal knowledge
-     are signals — never ground truth without reconciliation. Full
-     ranking: `foundations/core-rules § Source priority`. Behavioral
+   - **Scoped truth.** Code is the structural spine, but source authority
+     depends on the claim: implementation, runtime, intent or history.
+     Reconcile claims only at the same revision, environment and time. Full
+     model: `foundations/core-rules § Source authority`. Behavioral
      enforcement: `foundations/core-rules § Code-first principle` +
      `foundations/core-discipline § Rule 5`.
 2. **Write boundaries.** Every agent has a declared write surface. Cross-
@@ -50,11 +50,14 @@ Every durable claim carries:
 ```yaml
 confidence: suspected | probable | confirmed | unknown
 source: code | prod | jira | confluence | human | mixed | unknown
+claim_scope: implementation | runtime | intent | history
+revision: <git-sha-or-ref-or-not-applicable>
+environment: <name-or-not-applicable>
 ```
 
-`confidence: confirmed` requires evidence from a rank 1-3 source (code,
-runtime config, production), or an operator interview corroborated by code.
-Confluence-only or Jira-only claims must use `confidence: probable` at most.
+`confidence: confirmed` requires direct evidence appropriate to the declared
+scope. A production observation must identify its environment, time and
+deployed revision when available; code evidence must identify the revision.
 
 ## Human-facing agents
 
@@ -121,7 +124,7 @@ Invoke the `corpus` agent with any kickstart trigger, in any language
 full repo analysis" / "fais l'analyse complète du repo", etc.). The
 agent reads state first, produces a resume report, then proposes the next
 bounded action. The full kickstart procedure is owned by
-`modes/kickstart` (or the persona's "Operating modes § Kickstart"
+`modes/corpus-kickstart` (or the persona's "Operating modes § Kickstart"
 section if the modes/ skills are not yet extracted).
 
 For pack installation, expected outputs, dashboard, declared source contracts,

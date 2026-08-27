@@ -153,7 +153,9 @@ Diagram rules (apply to every diagram inside a feature folder):
 - Mermaid only, inline. No external images.
 - Every node/edge label cites a real symbol or file path from the silo read.
 - `source: code` in the diagram block's caption; never `confluence`.
-- A diagram contradicting a Confluence diagram for the same scope is the canonical one (code wins, rank 1 vs rank 7). Reference the Confluence page under "External references" but do not import its shapes.
+- The code-derived diagram is canonical for implementation at the analyzed
+  revision. Reference a differing Confluence diagram as dated intent/history;
+  do not import its shapes as implementation evidence.
 
 If a section legitimately does not apply to a feature, the file must say so explicitly with the reason — not be left empty.
 

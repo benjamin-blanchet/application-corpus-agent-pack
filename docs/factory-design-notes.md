@@ -175,10 +175,10 @@ Another framework's users report the complementary failure: specs are
 task-centric, so after merge they become historical artefacts and no
 module-level knowledge accumulates.
 
-The difference is not the corpus. It is **reconciliation against code** — the
-source-of-truth ranking, and the pass that finds contradictions and resolves
-them. That is what the withdrawn approach gave up, and it is the reason this
-one is not the same bet.
+The difference is not the corpus. It is **evidence reconciliation** — code as
+the implementation spine, runtime/intent/history kept in their proper scopes,
+and the pass that resolves real contradictions without erasing valid revision
+or environment differences.
 
 ### Deterministic beats inferred, where a deterministic form exists
 
