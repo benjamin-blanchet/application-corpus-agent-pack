@@ -1106,10 +1106,14 @@ test('every privileged workflow rejects candidate-defined dispatch and an unpinn
     ));
     expectCode(typeFindings, 'delivery-workflow-definition-source-invalid');
 
-    const pinFindings = mutateWorkflowTemplate(file, (text) => text.replace(
-      `  ${job}:\n    if: \${{ github.sha == vars.FACTORY_CONTROLLER_SHA }}\n`,
-      `  ${job}:\n`,
-    ));
+    // Drop the job-level pin wherever it sits, so a comment above it cannot
+    // silently turn this mutation into a no-op and the assertion into a
+    // tautology.
+    const pinFindings = mutateWorkflowTemplate(file, (text) => {
+      const withoutPin = text.replace(/^ {4}if: \$\{\{ github\.sha == vars\.FACTORY_CONTROLLER_SHA \}\}\n/m, '');
+      assert.notEqual(withoutPin, text, `${file}: the controller pin was not found to remove`);
+      return withoutPin;
+    });
     expectCode(pinFindings, 'delivery-workflow-controller-pin-missing');
   }
 });
@@ -2199,6 +2203,7 @@ test('release CLI produces one consumer-valid envelope and stale inputs produce 
   const attestationObservationRoot = temporary('factory-release-attestation-');
   const runObservationFile = path.join(attestationObservationRoot, 'run.json');
   const artifactsObservationFile = path.join(attestationObservationRoot, 'artifacts.json');
+  const jobsObservationFile = path.join(attestationObservationRoot, 'jobs.json');
   const attestationFile = path.join(attestationObservationRoot, 'acceptance-attestation.json');
   writeData(runObservationFile, {
     id: 12345,
@@ -2215,6 +2220,7 @@ test('release CLI produces one consumer-valid envelope and stale inputs produce 
     expired: false,
     workflow_run: { id: 12345 },
   }] });
+  writeData(jobsObservationFile, { jobs: [{ name: 'release', status: 'completed', conclusion: 'success' }] });
   const observed = runNode('scripts/factory-actions-attestation.mjs', [
     '--repository', 'acme/repo',
     '--run-id', '12345',
@@ -2223,12 +2229,34 @@ test('release CLI produces one consumer-valid envelope and stale inputs produce 
     '--workflow-ref', '.github/workflows/factory-acceptance.yml',
     '--artifact-name', 'factory-evidence-envelope-12345',
     '--run-json', runObservationFile,
+    '--jobs-json', jobsObservationFile,
     '--artifacts-json', artifactsObservationFile,
     '--out', attestationFile,
     '--json',
   ]);
   assert.equal(observed.status, 0, observed.stderr || observed.stdout);
   assert.deepEqual(readData(attestationFile), acceptanceAttestation);
+
+  // The same run, with its jobs skipped instead of executed. GitHub still
+  // reports conclusion: success, so the CLI must refuse on the jobs alone.
+  const skippedJobsFile = path.join(attestationObservationRoot, 'jobs-skipped.json');
+  writeData(skippedJobsFile, { jobs: [{ name: 'release', status: 'completed', conclusion: 'skipped' }] });
+  const skipped = runNode('scripts/factory-actions-attestation.mjs', [
+    '--repository', 'acme/repo',
+    '--run-id', '12345',
+    '--candidate-sha', scenario.candidateSha,
+    '--workflow-sha', controllerSha,
+    '--workflow-ref', '.github/workflows/factory-acceptance.yml',
+    '--artifact-name', 'factory-evidence-envelope-12345',
+    '--run-json', runObservationFile,
+    '--jobs-json', skippedJobsFile,
+    '--artifacts-json', artifactsObservationFile,
+    '--out', path.join(attestationObservationRoot, 'skipped-attestation.json'),
+    '--json',
+  ]);
+  assert.equal(skipped.status, 1, 'a run that executed nothing must not produce an attestation');
+  assert.match(skipped.stdout + skipped.stderr, /without executing a single job/);
+  assert.equal(fs.existsSync(path.join(attestationObservationRoot, 'skipped-attestation.json')), false);
   const releaseArgs = (out, attestation = attestationFile) => [
     '--root', scenario.repo,
     '--controller-root', controller,
@@ -2306,6 +2334,7 @@ test('release CLI produces one consumer-valid envelope and stale inputs produce 
     '--workflow-ref', '.github/workflows/factory-acceptance.yml',
     '--artifact-name', 'factory-evidence-envelope-12345',
     '--run-json', runObservationFile,
+    '--jobs-json', jobsObservationFile,
     '--artifacts-json', artifactsObservationFile,
     '--out', staleObservedOut,
     '--json',
@@ -2384,7 +2413,8 @@ test('GitHub Actions attestation rejects stale runs, expired artifacts and false
     acceptance_attestation_sha256: canonicalHash(observedEnvelopeAttestation),
     acceptance_artifact_digest: envelopeArtifact.digest,
   };
-  const input = { repository: 'acme/repo', runId: '12345', manifest, contract, testedSha: subjectSha, workflowSha, runRecord, artifactResponse: { artifacts: [artifact, envelopeArtifact] } };
+  const jobsResponse = { jobs: [{ name: 'acceptance', status: 'completed', conclusion: 'success' }] };
+  const input = { repository: 'acme/repo', runId: '12345', manifest, contract, testedSha: subjectSha, workflowSha, runRecord, jobsResponse, artifactResponse: { artifacts: [artifact, envelopeArtifact] } };
   assert.equal(verifyGitHubActionsAttestation(input).artifact.id, 456);
   assert.equal(verifyGitHubActionsAttestation({ ...input, manifestLocator, releaseMetadata }).manifestArtifact.id, 789);
   assert.throws(() => verifyGitHubActionsAttestation({ ...input, manifestLocator, releaseMetadata: { ...releaseMetadata, acceptance_artifact_digest: `sha256:${'8'.repeat(64)}` } }), /does not bind/);
@@ -2392,6 +2422,13 @@ test('GitHub Actions attestation rejects stale runs, expired artifacts and false
   assert.throws(() => verifyGitHubActionsAttestation({ ...input, runRecord: { ...runRecord, head_sha: subjectSha } }), /exact successful acceptance workflow/);
   assert.throws(() => verifyGitHubActionsAttestation({ ...input, artifactResponse: { artifacts: [{ ...artifact, expired: true }, envelopeArtifact] } }), /unexpired minimized evidence bundle/);
   assert.throws(() => verifyGitHubActionsAttestation({ ...input, artifactResponse: { artifacts: [{ ...artifact, expires_at: '2026-08-30T00:00:00.000Z' }, envelopeArtifact] } }), /retention/);
+
+  // A run whose every job was skipped is reported conclusion: success, and a
+  // skipped required check satisfies branch protection. Conclusion alone must
+  // not be enough.
+  assert.throws(() => verifyGitHubActionsAttestation({ ...input, jobsResponse: { jobs: [{ name: 'acceptance', status: 'completed', conclusion: 'skipped' }] } }), /without executing a single job/);
+  assert.throws(() => verifyGitHubActionsAttestation({ ...input, jobsResponse: { jobs: [] } }), /lists no job/);
+  assert.throws(() => verifyGitHubActionsAttestation({ ...input, jobsResponse: undefined }), /lists no job/);
 });
 
 test('preflight is blocked in dry-run and executes only declared side-effect-free probes', () => {

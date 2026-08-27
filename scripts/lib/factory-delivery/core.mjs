@@ -55,6 +55,26 @@ export function ensureRequired(object, keys, scope, findings, file) {
   }
 }
 
+// GitHub reports a run whose jobs were every one of them skipped as
+// `conclusion: success`, and branch protection counts a skipped required
+// check as satisfied. A conclusion is therefore not evidence that anything
+// ran — a job-level `if:` that evaluates false produces a green run that
+// executed nothing.
+//
+// Every attestation over a protected run must establish that at least one job
+// actually completed successfully. Absent or empty job lists fail closed:
+// unproven is not proven.
+export function assertRunExecutedAJob(jobsResponse, label) {
+  const jobs = asArray(jobsResponse?.jobs);
+  if (jobs.length === 0) throw new Error(`${label} lists no job, so nothing attests that it executed`);
+  const executed = jobs.filter((job) => job?.status === 'completed' && job?.conclusion === 'success');
+  if (executed.length === 0) {
+    const conclusions = [...new Set(jobs.map((job) => String(job?.conclusion ?? 'null')))].sort().join(', ');
+    throw new Error(`${label} completed without executing a single job (job conclusions: ${conclusions})`);
+  }
+  return executed.length;
+}
+
 export function duplicateIds(items) {
   const seen = new Set();
   const duplicates = new Set();

@@ -127,14 +127,16 @@ function verifyFrozen(file, revision, label, findings) {
 
 function verifyActionsAttestation(repository, runId, manifest, contract, testedSha, workflowSha, manifestLocator, releaseMetadata) {
   const runRecord = JSON.parse(run('gh', ['api', `repos/${repository}/actions/runs/${runId}`]).stdout || '{}');
+  const jobsResponse = JSON.parse(run('gh', ['api', `repos/${repository}/actions/runs/${runId}/jobs?per_page=100`]).stdout || '{}');
   const artifactResponse = JSON.parse(run('gh', ['api', `repos/${repository}/actions/runs/${runId}/artifacts?per_page=100`]).stdout || '{}');
-  return verifyGitHubActionsAttestation({ repository, runId, manifest, contract, testedSha, workflowSha, runRecord, artifactResponse, manifestLocator, releaseMetadata });
+  return verifyGitHubActionsAttestation({ repository, runId, manifest, contract, testedSha, workflowSha, runRecord, jobsResponse, artifactResponse, manifestLocator, releaseMetadata });
 }
 
 function verifyReleaseActionsAttestation(repository, runId, { controllerSha, candidateSha, acceptanceRunId, metadata }) {
   const runRecord = JSON.parse(run('gh', ['api', `repos/${repository}/actions/runs/${runId}`]).stdout || '{}');
+  const jobsResponse = JSON.parse(run('gh', ['api', `repos/${repository}/actions/runs/${runId}/jobs?per_page=100`]).stdout || '{}');
   const artifactResponse = JSON.parse(run('gh', ['api', `repos/${repository}/actions/runs/${runId}/artifacts?per_page=100`]).stdout || '{}');
-  return verifyReleaseGitHubActionsAttestation({ repository, runId, controllerSha, candidateSha, acceptanceRunId, metadata, runRecord, artifactResponse });
+  return verifyReleaseGitHubActionsAttestation({ repository, runId, controllerSha, candidateSha, acceptanceRunId, metadata, runRecord, jobsResponse, artifactResponse });
 }
 
 try {

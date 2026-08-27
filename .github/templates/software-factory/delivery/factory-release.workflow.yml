@@ -14,6 +14,12 @@ concurrency:
 
 jobs:
   release:
+    # A false condition here skips the job, and GitHub reports a run whose
+    # jobs were all skipped as `conclusion: success`. That is safe only
+    # because every verifier of this run now also requires that at least one
+    # job actually executed (assertRunExecutedAJob). Do not weaken that check
+    # and leave this guard as the only one: a green run that ran nothing
+    # would attest a release.
     if: ${{ github.sha == vars.FACTORY_CONTROLLER_SHA }}
     runs-on: ubuntu-latest
     timeout-minutes: 20

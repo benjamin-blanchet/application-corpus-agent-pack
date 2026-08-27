@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 
-import { SHA_PATTERN, stableJson } from './core.mjs';
+import { SHA_PATTERN, assertRunExecutedAJob, stableJson } from './core.mjs';
 
 const RECEIPT_KEYS = [
   'version',
@@ -152,6 +152,7 @@ export function verifyGitHubActionsAttestation({
   testedSha,
   workflowSha,
   runRecord,
+  jobsResponse,
   artifactResponse,
   manifestLocator = null,
   releaseMetadata = null,
@@ -165,6 +166,7 @@ export function verifyGitHubActionsAttestation({
     || runRecord?.conclusion !== 'success'
     || runRecord?.event !== contract?.ci_attestation?.event
     || runRecord?.path !== contract?.ci_attestation?.workflow_ref) throw new Error('GitHub Actions run does not attest the exact successful acceptance workflow and candidate');
+  assertRunExecutedAJob(jobsResponse, 'the acceptance run');
   const artifactId = String(manifest?.publication?.artifact_id || '');
   if (!/^\d+$/.test(artifactId)) throw new Error('evidence artifact id must be a numeric GitHub Actions artifact id');
   const artifactMatches = (artifactResponse?.artifacts || []).filter((item) => String(item.id) === artifactId
@@ -308,6 +310,7 @@ export function verifyReleaseGitHubActionsAttestation({
   acceptanceRunId,
   metadata,
   runRecord,
+  jobsResponse,
   artifactResponse,
 } = {}) {
   if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository || '') || !/^\d+$/.test(String(runId || ''))) throw new Error('release repository or run identity is invalid');
@@ -317,6 +320,7 @@ export function verifyReleaseGitHubActionsAttestation({
     || runRecord?.conclusion !== 'success'
     || runRecord?.event !== 'repository_dispatch'
     || runRecord?.path !== '.github/workflows/factory-release.yml') throw new Error('GitHub Actions run does not attest the exact protected release workflow and controller');
+  assertRunExecutedAJob(jobsResponse, 'the release run');
   if (metadata?.controller_sha !== controllerSha || metadata?.candidate_sha !== candidateSha || String(metadata?.acceptance_run_id) !== String(acceptanceRunId)) throw new Error('release metadata is not bound to the controller, candidate and acceptance run');
   const artifacts = (artifactResponse?.artifacts || []).filter((item) => item.name === `factory-release-envelope-${runId}`);
   if (artifacts.length !== 1) throw new Error('release run must publish exactly one expected release envelope');
