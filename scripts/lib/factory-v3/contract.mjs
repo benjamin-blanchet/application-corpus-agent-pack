@@ -418,7 +418,15 @@ function validateClosedEventPayload(event, add) {
     case 'attempt_budget_extended':
       if (event.subject?.lot_id === null || typeof event.subject?.lot_id !== 'string' || !event.subject.lot_id) add('factory-attempt-extension-lot', 'attempt_budget_extended requires a lot subject');
       requireSha256(event.basis?.plan_sha256, 'factory-attempt-extension-plan-basis', 'attempt budget extension requires a plan basis', add);
-      requireSha256(event.basis?.diff_sha256, 'factory-attempt-extension-diff-basis', 'attempt budget extension requires a diff basis', add);
+      // A lot whose worker died before reporting has no diff at all, and
+      // lot.diff_sha256 stays null: demanding a digest here made the budget
+      // unextendable for exactly the lots that needed it, so a crash on the
+      // last attempt ended the run. Null is the honest basis for "no result
+      // was ever reported"; the reducer still requires basis.diff_sha256 to
+      // equal lot.diff_sha256, so this cannot skip binding a diff that exists.
+      if (event.basis?.diff_sha256 !== null) {
+        requireSha256(event.basis?.diff_sha256, 'factory-attempt-extension-diff-basis', 'attempt budget extension requires the exhausted diff, or null when no result was reported', add);
+      }
       requireNonEmptyString(event.data.reason, 'factory-attempt-extension-reason', 'attempt budget extension requires a reason', add);
       validateApprovalPayload(event, event.data, 'attempt budget extension', 'factory-attempt-extension-approval', add);
       break;

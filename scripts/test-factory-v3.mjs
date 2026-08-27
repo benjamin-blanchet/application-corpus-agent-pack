@@ -198,6 +198,50 @@ test('[BF-006] a dependency and its consumer cannot run in the same wave', () =>
   ]));
 });
 
+test('a worker that dies on its last attempt does not end the run', () => {
+  const plan = validPlan();
+  const max = plan.lots.find((candidate) => candidate.id === 'LOT-1').max_attempts;
+  const events = approvedHistory(plan);
+
+  // Every attempt starts and then reports nothing at all — the shape of a
+  // timeout or a killed process. lot_started has already spent the attempt.
+  for (let attempt = 1; attempt <= max; attempt += 1) {
+    push(events, 'wave_reserved', { reservations: [{ reservation_id: `RES-${attempt}`, lot_id: 'LOT-1' }] });
+    push(events, 'lot_started', { reservation_id: `RES-${attempt}`, workspace_snapshot: testWorkspaceSnapshot() }, { lotId: 'LOT-1', actor: actors.implementer });
+    const blocked = push(events, 'lot_blocked', { reason: `worker died on attempt ${attempt}` }, { lotId: 'LOT-1' });
+    push(events, 'controller_recovery_approved', {
+      reason: 'worker died without reporting', approved_by: 'tech-owner', approved_at: AT,
+      blocker_ids: [blocked.event_id], release_reservations: [],
+    }, { lotId: 'LOT-1' });
+  }
+
+  const exhausted = reduceFactory({ plan, events });
+  assert.equal(exhausted.lots['LOT-1'].attempts, max);
+  assert.equal(exhausted.lots['LOT-1'].diff_sha256, null, 'a lot that never reported has no diff to bind');
+  assert.deepEqual(readyLots(plan, exhausted), [], 'the budget is spent, so nothing is schedulable yet');
+
+  // The one escape from an exhausted budget used to demand a SHA-256 basis
+  // that this lot could not possibly have, so the run died here.
+  push(events, 'attempt_budget_extended', {
+    reason: 'both workers died without reporting', approved_by: 'tech-owner', approved_at: AT,
+  }, { lotId: 'LOT-1', planHash: canonicalHash(plan) });
+
+  const recovered = reduceFactory({ plan, events });
+  assert.equal(recovered.lots['LOT-1'].effective_max_attempts, max + 1);
+  assert.deepEqual(readyLots(plan, recovered).map((entry) => entry.id), ['LOT-1']);
+
+  // Null must not become a way around binding a diff that does exist.
+  const reported = throughLotResult(validPlan());
+  const lot = reduceFactory({ plan: validPlan(), events: reported }).lots['LOT-1'];
+  assert.match(String(lot.diff_sha256), /^[0-9a-f]{64}$/);
+  assert.throws(() => reduceFactory({
+    plan: validPlan(),
+    events: [...reported, buildEvent(reported, eventInput('attempt_budget_extended', {
+      reason: 'unbound', approved_by: 'tech-owner', approved_at: AT,
+    }, { lotId: 'LOT-1', planHash: canonicalHash(validPlan()), expected_previous_seq: reported.length }))],
+  }), (error) => error.code === 'factory-attempt-extension-diff-basis');
+});
+
 test('an unrecognised artifact class fails closed on lots, not only on gates', () => {
   // The exact inversion this replaces: an operator who meant 'implementation'
   // and typed 'implementaion' used to invalidate more gates and no lots, so
