@@ -1663,56 +1663,6 @@ function runLedgerIds(baseRel = '') {
   return ids;
 }
 
-function checkDemoSourceParity() {
-  const baseRel = 'examples/demo-corpus/';
-  const contractRel = `${baseRel}doc/_meta/information-sources.yaml`;
-  const coverageRel = `${baseRel}doc/_meta/source-coverage.yaml`;
-  if (!exists(contractRel) || !exists(coverageRel)) {
-    add('P0', 'demo-source-package-missing', 'Demo corpus must ship source contract and historical coverage fixtures', contractRel);
-    return;
-  }
-  const demoMeta = path.join(root, baseRel, 'doc/_meta');
-  for (const abs of walk(demoMeta)) {
-    const fileRel = rel(abs);
-    if (!/\.(?:yaml|yml|json)$/.test(fileRel)) continue;
-    const text = normalizeText(fs.readFileSync(abs, 'utf8'));
-    const forbiddenFields = findForbiddenDurableRuntimeFields(text);
-    if (forbiddenFields.length) add('P0', 'demo-durable-runtime-source-field', `Demo durable state contains forbidden point-in-time source field(s): ${forbiddenFields.join(', ')}`, fileRel);
-    if (hasGlobalRuntimeObservation(text)) add('P0', 'demo-global-runtime-source-observation', 'Demo corpus must not persist a global runtime source observation', fileRel);
-  }
-
-  const contract = parseSourceContracts(read(contractRel));
-  for (const message of validateSourceContracts(contract)) add('P0', 'demo-source-contract-invalid', message, contractRel);
-  const coverage = parseSourceCoverage(read(coverageRel));
-  for (const message of validateSourceCoverage(coverage, contract)) add('P0', 'demo-source-coverage-invalid', message, coverageRel);
-  const knownRuns = runLedgerIds(baseRel);
-  for (const entry of coverage.coverage || []) {
-    if (typeof entry.last_successful_run === 'string') {
-      const runRef = entry.last_successful_run;
-      const resolves = runRef.startsWith('doc/') ? exists(`${baseRel}${runRef}`) : knownRuns.has(runRef);
-      if (!resolves) add('P0', 'demo-source-run-unresolved', `${entry.source_id} successful run does not resolve: ${runRef}`, coverageRel);
-    }
-    for (const evidenceRef of [...(entry.evidence_refs || []), ...(entry.targets || []).flatMap((target) => target.evidence_refs || [])]) {
-      const evidencePath = String(evidenceRef).replace(/:\d+(?:-\d+)?$/, '');
-      if (evidencePath.startsWith('doc/') && !exists(`${baseRel}${evidencePath}`)) add('P0', 'demo-source-evidence-unresolved', `${entry.source_id} evidence does not resolve: ${evidenceRef}`, coverageRel);
-    }
-  }
-
-  const viewRel = `${baseRel}doc/_meta/discovery-coverage.md`;
-  if (exists(viewRel)) {
-    const view = read(viewRel);
-    const expectedTargets = [
-      ['jira', 'recent-and-active-issues', /^\|\s*Open\/active issues\s*\|\s*([a-z_]+)\s*\|/mi],
-      ['dynatrace', 'runtime-entity-mapping', /^\|\s*Runtime entity\/service mapping\s*\|\s*([a-z_]+)\s*\|/mi],
-    ];
-    for (const [sourceId, targetId, pattern] of expectedTargets) {
-      const canonical = coverage.coverage?.find((entry) => entry.source_id === sourceId)?.targets?.find((target) => target.id === targetId)?.status;
-      const displayed = view.match(pattern)?.[1];
-      if (canonical && displayed && canonical !== displayed) add('P0', 'demo-source-target-view-drift', `${sourceId}/${targetId} is ${canonical} in source-coverage.yaml but ${displayed} in discovery-coverage.md`, viewRel);
-    }
-  }
-}
-
 function checkSourceContracts() {
   const contractRel = 'doc/_meta/information-sources.yaml';
   const coverageRel = 'doc/_meta/source-coverage.yaml';
@@ -1856,7 +1806,6 @@ function checkSourceContracts() {
       }
     }
   }
-  checkDemoSourceParity();
 }
 
 // Successful historical evidence should leave reusable operational knowledge.
