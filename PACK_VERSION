@@ -1,3 +1,3 @@
-1.2.0
-released: 2026-08-26
-notes: Adds Software Factory V3 with an event-derived control plane, bounded roles and models, transport-neutral source contracts, executable environment and acceptance evidence, independent review loops, and draft-only PR delivery.
+1.1.0
+released: 2026-08-27
+notes: Adds conflict-safe installation, offline core/sources/factory profiles, lazy corpus sections, a protected external-executor boundary, leaner skills and documentation, and removes the demonstration corpus and token estimator.

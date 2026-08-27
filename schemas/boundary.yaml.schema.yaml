@@ -62,5 +62,5 @@ kinds_outbound: [sync-call, async-produce, db-write, file-export, notification]
 counterparty_specials: [any, unknown]
 counterparty_external_prefix: "external:"
 
-# confidence: confirmed requires a rank 1-3 source.
+# confidence: confirmed requires direct evidence appropriate to claim_scope.
 confirmed_requires_source_in: [code, prod, mixed]

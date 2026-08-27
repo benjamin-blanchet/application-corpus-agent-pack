@@ -33,11 +33,20 @@ const INCOMING_FACTORY_LEARNING = 'schema_version: 2\npromotions: []\n';
 const LOCAL_FACTORY_LEARNING = 'schema_version: 1\npromotions: []\n';
 const LEGACY_MCP_READINESS_SKILL = '# obsolete readiness skill\n';
 const LOCAL_EXTENSION_SKILL = '# local extension must survive\n';
+const PROFILE_CONFIG = fs.readFileSync(path.join(repoRoot, 'pack/profiles.json'), 'utf8');
+const PUBLIC_CLI = fs.readFileSync(path.join(repoRoot, 'scripts/cli.mjs'), 'utf8');
+const UPGRADE_CORE = fs.readFileSync(path.join(repoRoot, 'scripts/lib/upgrade-core.mjs'), 'utf8');
+const PROFILE_BUNDLES = fs.readFileSync(path.join(repoRoot, 'scripts/lib/profile-bundles.mjs'), 'utf8');
 
 function sourceFixture() {
   return {
     'PACK_VERSION': '1.2.0\nreleased: 2026-08-26\n',
+    'pack/profiles.json': PROFILE_CONFIG,
     'AGENTS.md': '# Incoming operating guide\n',
+    '.github/copilot-instructions.md': '# Incoming Copilot instructions\n',
+    'scripts/cli.mjs': PUBLIC_CLI,
+    'scripts/lib/upgrade-core.mjs': UPGRADE_CORE,
+    'scripts/lib/profile-bundles.mjs': PROFILE_BUNDLES,
     'scripts/tool.mjs': 'export const version = "1.2.0";\n',
     'schemas/corpus-state.yaml.template': STATE_TEMPLATE,
     '.github/prompts/coverage.prompt.md': '# incoming prompt\n',
@@ -46,6 +55,8 @@ function sourceFixture() {
     '.github/agents/corpus.agent.md': INCOMING_AGENT,
     '.github/agents/stable.agent.md': STABLE_AGENT,
     '.github/agents/new.agent.md': '# new agent\n',
+    '.github/skills/actionable/brick-deep-dive/SKILL.md': '# incoming core skill\n',
+    '.github/skills/sources/runtime-source-probe/SKILL.md': '# runtime source probe\n',
     'doc/README.md': '# Incoming corpus readme\n',
     'doc/_meta/corpus-state.yaml': STATE_TEMPLATE,
     'doc/_meta/corpus-changelog.md': '| Date | Change | Reason | Actor |\n|---|---|---|---|\n',
@@ -156,6 +167,28 @@ function runSyncFailure(source, target, ...args) {
   return `${result.stdout}${result.stderr}`;
 }
 
+function runInstalledCli(target, ...args) {
+  const result = spawnSync(process.execPath, [path.join(target, 'scripts/cli.mjs'), ...args], {
+    cwd: target,
+    encoding: 'utf8',
+    input: '',
+    maxBuffer: 8 * 1024 * 1024,
+  });
+  assert.equal(result.status, 0, `installed CLI failed\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`);
+  return `${result.stdout}${result.stderr}`;
+}
+
+function runInstalledCliFailure(target, ...args) {
+  const result = spawnSync(process.execPath, [path.join(target, 'scripts/cli.mjs'), ...args], {
+    cwd: target,
+    encoding: 'utf8',
+    input: '',
+    maxBuffer: 8 * 1024 * 1024,
+  });
+  assert.notEqual(result.status, 0, `installed CLI unexpectedly succeeded\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`);
+  return `${result.stdout}${result.stderr}`;
+}
+
 function fixture(name, files = {}) {
   const root = path.join(tmpRoot, name);
   fs.mkdirSync(root, { recursive: true });
@@ -191,22 +224,23 @@ const tests = [
       assert.equal(pkg.version, packVersion, 'package.json and PACK_VERSION differ');
       assert.equal(stateVersion, packVersion, 'fresh corpus-state template and PACK_VERSION differ');
       assert.equal(migrationTemplate, state, 'migration scaffold and fresh corpus-state model differ');
-      assert.match(read(repoRoot, 'PACK_VERSION'), /^1\.2\.0\r?\nreleased: 2026-08-26\r?\nnotes: .+/);
+      assert.match(read(repoRoot, 'PACK_VERSION'), /^1\.1\.0\r?\nreleased: 2026-08-27\r?\nnotes: .+/);
 
       const upgradeCore = read(repoRoot, 'scripts/lib/upgrade-core.mjs');
       assert.doesNotMatch(upgradeCore, /function\s+(?:stampState|buildReport)\b/);
-      const migrationSkill = read(repoRoot, '.github/skills/governance/pack-upgrade/SKILL.md');
+      const migrationSkillDir = '.github/skills/governance/pack-upgrade';
+      const migrationSkill = [
+        'SKILL.md',
+        'procedure-operator-sync.md',
+        'procedure-migration.md',
+        'procedure-finalization.md',
+      ].map((name) => read(repoRoot, `${migrationSkillDir}/${name}`)).join('\n');
       assert.match(migrationSkill, /schemas\/corpus-state\.yaml\.template/);
-      assert.match(migrationSkill, /previous_pack_version: unknown/);
+      assert.match(migrationSkill, /previous_pack_version: <from_version>/);
       assert.match(migrationSkill, /recompute-corpus-state\.mjs --apply --json/);
-      assert.match(migrationSkill, /type: meta/);
-      assert.match(migrationSkill, /Step 8b — Final validation gate/);
       assert.match(migrationSkill, /<from_slug>-to-<to_slug>/);
-      assert.match(migrationSkill, /durable checkpoint/);
       assert.match(migrationSkill, /validation_status: pending/);
-      assert.match(migrationSkill, /last durable write/);
-      assert.match(migrationSkill, /strictly\s+read-only/);
-      assert.match(migrationSkill, /do not append another/);
+      assert.match(migrationSkill, /read-only validator/i);
       const corpusAgent = read(repoRoot, '.github/agents/corpus.agent.md');
       assert.match(corpusAgent, /Pack-upgrade preflight exception/);
       assert.match(corpusAgent, /schemas\/corpus-state\.yaml\.template/);
@@ -230,10 +264,7 @@ const tests = [
         assert.doesNotMatch(installation, /Every run writes a .*pack-.* report/i);
       }
 
-      const operatorGuides = [
-        'doc/_agents/pack-upgrade.md',
-        'examples/demo-corpus/doc/_agents/pack-upgrade.md',
-      ];
+      const operatorGuides = ['doc/_agents/pack-upgrade.md'];
       assert.ok(fs.existsSync(path.join(repoRoot, operatorGuides[0])), 'canonical operator guide is missing');
       for (const rel of operatorGuides) {
         if (!fs.existsSync(path.join(repoRoot, rel))) continue;
@@ -370,9 +401,118 @@ const tests = [
       assert.match(read(target, 'doc/_meta/corpus-state.yaml'), /pack_version: '1\.2\.0'/);
       assert.equal(read(target, 'schemas/corpus-state.yaml.template'), read(target, 'doc/_meta/corpus-state.yaml'));
       assert.equal(read(target, '.github/agents/corpus.agent.md'), INCOMING_AGENT);
+      assert.equal(fs.existsSync(path.join(target, '.github/templates/software-factory/roles/role-capabilities.yaml')), false);
+      assert.equal(fs.existsSync(path.join(target, '.github/skills/sources/runtime-source-probe/SKILL.md')), false);
+      const installState = JSON.parse(read(target, '.corpus-pack/install-state.json'));
+      assert.deepEqual(installState.activeProfiles, ['core']);
+      assert.equal(installState.packVersion, '1.2.0');
+      assert.equal(installState.source.version, '1.2.0');
+      assert.match(installState.source.treeSha256, /^[a-f0-9]{64}$/);
+      assert.equal(installState.managedFiles['AGENTS.md'].profile, 'core');
+      const bundleManifest = JSON.parse(read(target, '.corpus-pack/manifest.json'));
+      assert.match(bundleManifest.profiles.sources.sha256, /^[a-f0-9]{64}$/);
+      assert.match(bundleManifest.profiles.factory.sha256, /^[a-f0-9]{64}$/);
       assert.deepEqual(durableReports(target), []);
       assert.match(output, /Version: <missing> → 1\.2\.0/);
       assert.match(output, /Next step: open the Corpus agent and start the corpus\./);
+    },
+  },
+  {
+    name: 'fresh-install-preserves-conflicts-and-stages-incoming-even-with-force',
+    run() {
+      const target = fixture('fresh-conflict-target', {
+        'AGENTS.md': '# Project-owned agent instructions\n',
+        '.github/copilot-instructions.md': '# Project-owned Copilot instructions\n',
+        '.github/skills/actionable/brick-deep-dive/SKILL.md': '# Project-owned skill\n',
+        'scripts/tool.mjs': 'export const projectTool = true;\n',
+      });
+      const output = runSync(source, target, '--apply', '--force');
+
+      assert.equal(read(target, 'AGENTS.md'), '# Project-owned agent instructions\n');
+      assert.equal(read(target, '.github/copilot-instructions.md'), '# Project-owned Copilot instructions\n');
+      assert.equal(read(target, '.github/skills/actionable/brick-deep-dive/SKILL.md'), '# Project-owned skill\n');
+      assert.equal(read(target, 'scripts/tool.mjs'), 'export const projectTool = true;\n');
+      assert.equal(read(target, '.corpus-pack/incoming/1.2.0/AGENTS.md'), '# Incoming operating guide\n');
+      assert.equal(read(target, '.corpus-pack/incoming/1.2.0/.github/copilot-instructions.md'), '# Incoming Copilot instructions\n');
+      assert.equal(read(target, '.corpus-pack/incoming/1.2.0/.github/skills/actionable/brick-deep-dive/SKILL.md'), '# incoming core skill\n');
+      assert.equal(read(target, '.corpus-pack/incoming/1.2.0/scripts/tool.mjs'), 'export const version = "1.2.0";\n');
+      const state = JSON.parse(read(target, '.corpus-pack/install-state.json'));
+      assert.deepEqual(state.conflicts, [
+        '.github/copilot-instructions.md',
+        '.github/skills/actionable/brick-deep-dive/SKILL.md',
+        'AGENTS.md',
+        'scripts/tool.mjs',
+      ]);
+      assert.deepEqual(state.pendingProfiles, ['core']);
+      assert.equal(state.managedFiles['AGENTS.md'], undefined);
+      assert.match(output, /Protected conflicts preserved: 4/);
+
+      // A second non-forced sync must not turn the first-run conflict into a
+      // pack-owned overwrite merely because PACK_VERSION now exists.
+      runSync(source, target, '--apply');
+      assert.equal(read(target, 'AGENTS.md'), '# Project-owned agent instructions\n');
+      assert.equal(read(target, '.github/copilot-instructions.md'), '# Project-owned Copilot instructions\n');
+      assert.equal(read(target, '.github/skills/actionable/brick-deep-dive/SKILL.md'), '# Project-owned skill\n');
+      assert.equal(read(target, 'scripts/tool.mjs'), 'export const projectTool = true;\n');
+    },
+  },
+  {
+    name: 'fresh-install-refuses-preexisting-reserved-metadata-before-writing',
+    run() {
+      const target = fixture('reserved-metadata-target', {
+        '.corpus-pack/manifest.json': '{"projectOwned":true}\n',
+        'sentinel.txt': 'untouched\n',
+      });
+      const before = snapshot(target);
+      const output = runSyncFailure(source, target, '--apply');
+      assertExactSnapshot(target, before);
+      assert.match(output, /reserved pack metadata already exists/i);
+    },
+  },
+  {
+    name: 'offline-profile-enable-is-dry-run-first-and-preserves-conflicts',
+    run() {
+      const target = fixture('offline-profile-target', {
+        '.github/templates/software-factory/roles/role-capabilities.yaml': 'project-owned factory policy\n',
+      });
+      runSync(source, target, '--apply');
+      const before = snapshot(target);
+      const preview = runInstalledCli(target, 'profile', 'enable', 'factory');
+      assertExactSnapshot(target, before);
+      assert.match(preview, /DRY-RUN/);
+      assert.match(preview, /Conflicts preserved: 1/);
+
+      const output = runInstalledCli(target, 'profile', 'enable', 'factory', '--apply');
+      assert.equal(read(target, '.github/templates/software-factory/roles/role-capabilities.yaml'), 'project-owned factory policy\n');
+      assert.equal(read(target, '.corpus-pack/incoming/1.2.0/.github/templates/software-factory/roles/role-capabilities.yaml'), INCOMING_ROLE_POLICY);
+      assert.equal(read(target, '.github/templates/software-factory/delivery/factory-policy.workflow.yml'), INCOMING_FACTORY_WORKFLOW);
+      let state = JSON.parse(read(target, '.corpus-pack/install-state.json'));
+      assert.deepEqual(state.activeProfiles, ['core']);
+      assert.deepEqual(state.pendingProfiles, ['factory']);
+      assert.match(output, /pending review/);
+      assert.match(runInstalledCli(target, 'profile', 'status'), /factory: pending review · available offline/);
+
+      fs.copyFileSync(
+        path.join(target, '.corpus-pack/incoming/1.2.0/.github/templates/software-factory/roles/role-capabilities.yaml'),
+        path.join(target, '.github/templates/software-factory/roles/role-capabilities.yaml'),
+      );
+      const resolved = runInstalledCli(target, 'profile', 'enable', 'factory', '--apply');
+      state = JSON.parse(read(target, '.corpus-pack/install-state.json'));
+      assert.deepEqual(state.activeProfiles, ['core', 'factory']);
+      assert.deepEqual(state.pendingProfiles, []);
+      assert.match(resolved, /enabled from the local offline bundle/);
+      assert.match(runInstalledCli(target, 'profile', 'status'), /factory: active · available offline/);
+    },
+  },
+  {
+    name: 'offline-profile-enable-rejects-a-tampered-bundle',
+    run() {
+      const target = fixture('tampered-bundle-target');
+      runSync(source, target, '--apply');
+      fs.appendFileSync(path.join(target, '.corpus-pack/bundles/sources.bundle.json.gz'), 'tampered');
+      const output = runInstalledCliFailure(target, 'profile', 'enable', 'sources', '--apply');
+      assert.match(output, /digest mismatch/i);
+      assert.equal(fs.existsSync(path.join(target, '.github/skills/sources/runtime-source-probe/SKILL.md')), false);
     },
   },
   {
@@ -404,6 +544,35 @@ const tests = [
       assert.match(output, /Version: <missing> → 1\.2\.0/);
       assert.match(output, /Deferred to Corpus migration: 1/);
       assert.match(output, /Next step: open the Corpus agent and run the pack migration\./);
+    },
+  },
+  {
+    name: 'real-core-install-can-run-the-shipped-validator',
+    run() {
+      const target = fixture('real-core-validator-target');
+      const install = spawnSync(process.execPath, [path.join(repoRoot, 'scripts/cli.mjs'), 'sync', '--apply'], {
+        cwd: target,
+        encoding: 'utf8',
+        input: '',
+        maxBuffer: 16 * 1024 * 1024,
+      });
+      assert.equal(install.status, 0, `real core install failed\n${install.stdout}\n${install.stderr}`);
+      const state = JSON.parse(read(target, '.corpus-pack/install-state.json'));
+      assert.deepEqual(state.activeProfiles, ['core']);
+      assert.ok(fs.existsSync(path.join(target, 'scripts/check-runtime-sources.mjs')), 'validator runtime dependency was not installed in core');
+      for (const rel of ['doc/project/apis', 'doc/project/batchs', 'doc/project/features', 'doc/prod']) {
+        assert.equal(fs.existsSync(path.join(target, rel)), false, `${rel} should remain lazy on a fresh core install`);
+      }
+      assert.ok(fs.existsSync(path.join(target, '.github/templates/corpus-sections/apis/README.md')), 'offline section templates must be installed in core');
+
+      const validation = spawnSync(process.execPath, [path.join(target, 'scripts/validate-corpus.mjs')], {
+        cwd: target,
+        encoding: 'utf8',
+        input: '',
+        maxBuffer: 16 * 1024 * 1024,
+      });
+      assert.equal(validation.status, 0, `installed core validator failed\n${validation.stdout}\n${validation.stderr}`);
+      assert.doesNotMatch(`${validation.stdout}${validation.stderr}`, /ERR_MODULE_NOT_FOUND/);
     },
   },
 ];

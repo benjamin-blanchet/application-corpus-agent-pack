@@ -29,8 +29,10 @@ Rules:
 - **Scope is boundary-crossing only** — exposed/called APIs, produced/consumed
   events, shared datastores, external systems, file exchanges. Internal calls,
   UI and internal batches are out of scope.
-- `boundary.yaml` is **code-derived** (P3/P5 output), reconciled against runtime
-  `doc/prod/SERVICE_FLOWS.md`. Code wins.
+- `boundary.yaml` is the **implementation contract** derived at P3/P5 from a
+  named code revision. `doc/prod/SERVICE_FLOWS.md` records environment- and
+  revision-scoped runtime observations; reconcile deployment/configuration
+  drift without erasing either claim.
 - Every channel is **normalized** so one app's `outbound` joins another app's
   `inbound` — that join is how the ecosystem graph recomposes.
 - The derived views (`BOUNDARY.md`, `ECOSYSTEM.md`) are regenerated, never

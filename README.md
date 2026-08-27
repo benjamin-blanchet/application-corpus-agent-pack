@@ -1,136 +1,205 @@
 # Application Corpus Agent Pack
 
-> Your AI agents re-discover the codebase on every session. This pack gives them a knowledge base to read instead.
+> Install a reusable agent base in an application repository, then let the
+> `Corpus` agent turn that base into application-specific knowledge.
 
 [![Open Knowledge Format v0.1 compliant](https://img.shields.io/badge/OKF-v0.1%20compliant-2ea44f)](https://github.com/GoogleCloudPlatform/knowledge-catalog/tree/main/okf)
 &nbsp;[![Built on Agent Skills](https://img.shields.io/badge/Agent%20Skills-open%20standard-blue)](https://agentskills.io)
 &nbsp;[![MCP](https://img.shields.io/badge/MCP-Model%20Context%20Protocol-blue)](https://modelcontextprotocol.io)
 
-Copy the pack into any repository, run the `Corpus` agent, and it retro-documents the application into a **corpus**: a versioned markdown knowledge base — features, APIs, data model, integrations, architecture diagrams — that lives in `doc/` next to the code and stays true as the code changes.
+The pack supplies agents, skills, validators and local templates. After
+installation, the `Corpus` agent analyzes the target application and writes a
+versioned Markdown corpus under `doc/`: features, APIs, data, integrations,
+architecture, runtime knowledge and decision history.
 
-It capitalizes on **two things at once**:
-
-- **the code**, walked file by file as the spine and the highest-ranked source of truth;
-- **every source your team already has** — Jira, Confluence, Dynatrace,
-  CloudWatch, databases, GitHub, CI/CD, dashboards and peer corpora — reached
-  through whichever declared read-only transport is usable for this run: MCP,
-  API, CLI, SQL, clone or export. MCP is an adapter, not the source itself.
-
-Everything converges into one knowledge base, and every claim carries its source and confidence. When a source contradicts the code, the code wins and the contradiction is logged.
-
-Stack-agnostic (Java, PHP, Angular, Node.js, Python, .NET, monolith or multi-repo). No SaaS, no index to host: the corpus is plain markdown your team owns.
-
-![Corpus dashboard — coverage, pipeline progress and maturity at a glance](https://raw.githubusercontent.com/benjamin-blanchet/application-corpus-agent-pack/main/docs/screenshots/overview.png)
+The pack is stack-neutral and has no hosted index. Normal use after
+installation can remain fully offline.
 
 ## Quick start
 
-From the root of the repository you want to document:
+From the application repository, preview first:
 
 ```bash
-npx github:benjamin-blanchet/application-corpus-agent-pack sync --apply
+npx github:benjamin-blanchet/application-corpus-agent-pack#v1.1.0 sync --profile core
 ```
 
-Open the repo in an IDE with GitHub Copilot custom agents, select the **`Corpus`** agent, and say:
+Review the plan, especially conflicts with existing agent instructions, then
+apply it:
+
+```bash
+npx github:benjamin-blanchet/application-corpus-agent-pack#v1.1.0 sync --profile core --apply
+```
+
+`core` is the default, so `--profile core` may be omitted. The installer never
+claims a pre-existing file merely because its path is managed by the pack. It
+preserves conflicts and places the proposed incoming version under
+`.corpus-pack/incoming/<version>/` for review.
+
+Select the `Corpus` agent and say:
 
 ```text
 init the corpus
 ```
 
-The agent answers with a state report — adoption stage, status of each analysis pass, source coverage, next bounded action — then starts documenting. Drop `--apply` for a dry-run.
+The first response verifies existing state and proposes the next bounded
+action. The full analysis is resumable across sessions.
 
-Works the same on every Copilot surface: the VS Code picker, the agents tab on github.com, `/agent` in the Copilot desktop app, the Copilot CLI. Skip the selection and just state your intent — `copilot-instructions.md` routes you to the right role. → [Installation & upgrade](https://github.com/benjamin-blanchet/application-corpus-agent-pack/blob/main/docs/installation.md)
+## Pack versus constructed corpus
 
-## The problem it solves
+These are two different objects:
 
-| Without a corpus | With a corpus |
-|---|---|
-| Every agent session re-explores the repo, burning tokens and guessing | Agents read a pre-built map and get to work |
-| Documentation drifts from the code within weeks | The corpus is rebuilt **from the code**, which always wins over docs |
-| What you know is scattered across the repo, Jira, Confluence, APM dashboards, databases and people's heads | Logical source contracts and runtime adapters feed one corpus, each claim tagged with its origin and confidence |
-| Cross-application flows are tribal knowledge | Each app declares its boundary; boundaries recompose into an ecosystem graph |
-| Agent output dies with the session | The corpus is a versioned team asset that deepens run after run |
+| Object | What it contains | Expected state |
+|---|---|---|
+| Pack source / fresh installation | Generic, application-independent agents, skills, templates and safety gates | It does not yet know how to build, run or accept your application. |
+| Constructed corpus | Knowledge and local contracts produced from this application's code, sources and operator decisions | It can progressively unlock application-specific workflows. |
 
-## What it produces
+The generic pack must not pretend it can run an unknown application. Its job is
+to provide the safe machinery from which a real corpus is built.
 
-- **An exhaustive, evidence-backed map of the application** — features, APIs, batches, integrations, persistence, messaging — produced by a deterministic **9-pass pipeline (P1 → P9)** where each pass blocks the next. → [Pipeline](https://github.com/benjamin-blanchet/application-corpus-agent-pack/blob/main/docs/pipeline.md)
-- **Architecture diagrams generated from code** — modules, layers, C4 context, sequence flows, messaging topology, ER — inline mermaid, never imported from a drifting wiki.
-- **A ranked source-of-truth model** — 8 levels, code first. Production, Jira, Confluence and dashboards *enrich*; when they disagree with code, code wins, and the contradiction is logged. → [Corpus model](https://github.com/benjamin-blanchet/application-corpus-agent-pack/blob/main/docs/corpus-model.md)
-- **Knowledge captured from every declared source** — what production does
-  (APM/logs), what data looks like, why it was built that way (tickets/docs/PRs)
-  and what neighbours expose. Durable contracts state requirements and safe
-  transports; each run probes its actual local capabilities and records explicit
-  partial coverage — **no silent fallback and no persisted “available now”**.
-  Every claim carries `source:` and `confidence:`. → [Sources & runtime access](https://github.com/benjamin-blanchet/application-corpus-agent-pack/blob/main/docs/sources-and-mcp.md)
-- **A spec-to-draft-PR software factory** — deterministic scheduling and gate
-  invalidation, bounded role capabilities, independent review/correction,
-  mandatory corpus closeout, SHA-bound acceptance, replayable Playwright
-  evidence and draft-only delivery. Acceptance campaigns stay blocked until you
-  wire an isolated executor — the pack refuses to run candidate code it cannot
-  contain, and says so rather than passing. → [Software factory V3](https://github.com/benjamin-blanchet/application-corpus-agent-pack/blob/main/docs/software-factory.md)
-- **A cross-application view** — a machine-readable boundary contract per app, recomposed into an inbound/outbound ecosystem graph that surfaces orphan events and contract drift. → [Ecosystem](https://github.com/benjamin-blanchet/application-corpus-agent-pack/blob/main/docs/ecosystem.md)
-- **Hard quality gates** — `node scripts/validate-corpus.mjs` fails the build on out-of-order passes, missing diagrams, undocumented features or premature adoption claims. Nothing is "done" on the agent's word alone.
-- **Portable output** — every corpus is an [Open Knowledge Format v0.1](https://github.com/benjamin-blanchet/application-corpus-agent-pack/blob/main/docs/standards.md#open-knowledge-format-okf-v01) bundle, readable by any OKF-aware agent without SDK or integration.
+## Profiles
 
-## How it works
+Only `core` is active by default. The other profiles are optional and can be
+enabled later without downloading the pack again.
 
-1. **Install** — one `npx` command copies the pack into your repo (agents, skills, scripts, corpus skeleton).
-2. **Declare sources** — the wizard records logical needs, mappings, policies
-   and acceptable transports. The current run probes its own adapters before
-   use; that observation is not global corpus state. → [Sources & runtime access](https://github.com/benjamin-blanchet/application-corpus-agent-pack/blob/main/docs/sources-and-mcp.md)
-3. **Kickstart** — the `Corpus` agent runs the P1 → P9 pipeline over the whole repository, interviewing you per feature where the code is ambiguous, and cross-checks what the connected sources say.
-4. **Enrich** — focused runs deepen the corpus along a persistent roadmap: production reality, batch health, Jira trajectory, code/prod reconciliation. → [Continuous enrichment](https://github.com/benjamin-blanchet/application-corpus-agent-pack/blob/main/docs/continuous-enrichment.md)
-5. **Adopt** — once validation and the corpus gate pass, analysts, developers,
-   reviewers, acceptance and reliability roles work from the corpus. For a
-   change, the Factory Controller coordinates them through to draft-PR Delivery.
-   → [Agents & workflow](https://github.com/benjamin-blanchet/application-corpus-agent-pack/blob/main/docs/agents-and-workflow.md)
+| Profile | Contents | Use it when |
+|---|---|---|
+| `core` | Corpus agent, P1→P9 code analysis, governance, validation, navigation and local templates | You want to build or maintain the application corpus. |
+| `sources` | Source onboarding and adapters for Jira, Confluence, observability, databases, APIs and peer corpora | You want to enrich the code-derived map with external evidence. |
+| `factory` | Functional analysis, planning, implementation, review, acceptance and draft delivery roles | You want the corpus-driven software factory. |
 
-## See it
-
-`scripts/build-corpus-site.mjs` renders any corpus into a single self-contained HTML dashboard. The views below come from a fictional [demo corpus](https://github.com/benjamin-blanchet/application-corpus-agent-pack/tree/main/examples/demo-corpus).
-
-**Inbound / outbound — the application's place in the information system**, rendered from integration data, not hand-drawn:
-
-![Inbound/outbound context view](https://raw.githubusercontent.com/benjamin-blanchet/application-corpus-agent-pack/main/docs/screenshots/inbound-outbound.png)
-
-**Features** — each documented feature with status, criticality and summary:
-
-![Features view](https://raw.githubusercontent.com/benjamin-blanchet/application-corpus-agent-pack/main/docs/screenshots/features.png)
+Install a profile directly during a connected sync:
 
 ```bash
-node scripts/build-corpus-site.mjs --doc examples/demo-corpus/doc --out examples/demo-corpus/index.html
+npx github:benjamin-blanchet/application-corpus-agent-pack#v1.1.0 sync --profile sources --apply
+npx github:benjamin-blanchet/application-corpus-agent-pack#v1.1.0 sync --profile factory --apply
 ```
 
-## What makes it different
+Profile dependencies are applied automatically; `core` always remains active.
 
-Most code-documentation tools stop at the repository and produce a one-shot dump. This pack contributes:
+## Offline after installation
 
-- An **enforced truth ranking** — not a convention, a validator gate plus a reconciliation ledger.
-- A **fully specified pipeline** with mandatory diagrams and hard gates, not a prompt pattern.
-- A **persistent, governed corpus** designed to be maintained over months by a team.
-- A **code spine enriched through transport-neutral source contracts**, with
-  runtime access kept ephemeral and every result reconciled back against code.
-- **Token cost treated as a design constraint of the pack itself** — measured progressive disclosure (−34% on the always-on bootstrap surface) plus `corpus-load`, a deterministic retriever that serves the best corpus slices fitting a token budget. → [Token-cost discipline](https://github.com/benjamin-blanchet/application-corpus-agent-pack/blob/main/docs/token-cost.md)
-- **OKF conformance with a premium layer on top** — a generic agent reads the standard markdown; a pack-aware agent reads the confidence metadata, boundary contract and ecosystem graph riding above it.
+The first installation stores the optional profiles locally:
+
+```text
+.corpus-pack/
+├── install-state.json
+├── manifest.json
+└── bundles/
+    ├── sources.bundle.json.gz
+    └── factory.bundle.json.gz
+```
+
+List or enable them with the installed local CLI:
+
+```bash
+node scripts/cli.mjs profile list
+node scripts/cli.mjs profile status
+node scripts/cli.mjs profile enable sources       # preview
+node scripts/cli.mjs profile enable sources --apply
+node scripts/cli.mjs profile enable factory --apply
+```
+
+These commands read verified local bundles and do not fetch the pack
+repository. Network access is needed only when an operator explicitly requests
+a newer pack version or when an application source itself requires network
+access.
+
+An activation with unresolved file conflicts stays `pending review`, not
+partly active. Merge or accept the proposed files under
+`.corpus-pack/incoming/<version>/`, then rerun the activation.
+
+## Evidence model
+
+Code is the structural spine of the corpus, not a universal answer to every
+question. Every disputed or time-sensitive claim is scoped:
+
+- `implementation`: code, migrations, configuration and tests at a named
+  revision;
+- `runtime`: deployed revision, effective configuration and observation in a
+  named environment;
+- `intent`: approved specification, criteria and explicit decisions;
+- `history`: dated tickets, PRs, commits, decisions, interviews and docs.
+
+This lets the corpus say, without contradiction, that production currently
+runs behavior X at SHA `abc`, while the next revision implements behavior Y.
+See [Corpus model](docs/corpus-model.md).
+
+## What a constructed corpus provides
+
+- A deterministic nine-pass analysis from repository inventory through
+  feature deep dives and reconciliation.
+- Evidence-backed architecture, feature, API, persistence and integration
+  knowledge.
+- Explicit source coverage and confidence instead of silent fallbacks.
+- A persistent roadmap, graph and run ledger for continuous enrichment.
+- Deterministic validation and a self-contained HTML dashboard.
+- Portable Open Knowledge Format Markdown owned by the team.
+
+Detailed procedures live in skills and are loaded only when needed. Permanent
+instructions stay short, and `scripts/corpus-load.mjs` retrieves targeted
+corpus slices for a task.
+
+## Software factory and acceptance
+
+The optional `factory` profile starts blocked at acceptance until the
+constructed corpus declares a real isolated executor. This is correct for the
+generic pack: it cannot safely guess how to run arbitrary candidate code.
+
+A project may provide a protected module such as:
+
+```text
+.corpus-pack/local/executors/company-sandbox.mjs
+```
+
+and select it with the repository variable `FACTORY_EXECUTOR_PROVIDER` or the
+documented `--executor-provider` option. The module exports:
+
+```js
+export const apiVersion = 1;
+export async function executeAcceptance(request) { /* delegate externally */ }
+```
+
+It must delegate to a real isolated sandbox/broker and return the closed
+structured contract containing `schema_version`, `provider`, `binding`,
+`boundary`, `attestation`, `observation`, `results`, `lifecycle` and `adapter`.
+No demonstration or permissive executor is shipped. Without an attested
+provider, acceptance, release readiness and draft delivery remain blocked.
+See [Software factory](docs/software-factory.md).
+
+## Safety and upgrades
+
+- Always run sync without `--apply` first.
+- Pin releases (`#v1.1.0`) for reproducible installation.
+- Existing project files are preserved unless their prior pack ownership is
+  proven by `.corpus-pack/install-state.json` and the operator accepts any
+  local drift.
+- Existing corpus knowledge is not replaced by pack upgrades.
+- Local conflicts are reviewable under `.corpus-pack/incoming/`; recoverable
+  backups are retained for accepted replacements.
+- Use `governance/pack-upgrade` after an installed pack version changes.
+
+See [Installation and upgrade](docs/installation.md).
 
 ## Documentation
 
 | Guide | Contents |
 |---|---|
-| [Installation & upgrade](https://github.com/benjamin-blanchet/application-corpus-agent-pack/blob/main/docs/installation.md) | Install, in-place upgrade, safety rules, manual/offline install, Copilot surfaces, multi-repo workspaces, what gets copied |
-| [Analysis pipeline (P1 → P9)](https://github.com/benjamin-blanchet/application-corpus-agent-pack/blob/main/docs/pipeline.md) | The 9 passes, per-brick interviews, mandatory diagrams, readiness gate, validation |
-| [Corpus model](https://github.com/benjamin-blanchet/application-corpus-agent-pack/blob/main/docs/corpus-model.md) | Source-of-truth ranking, corpus tree, design principles |
-| [Continuous enrichment](https://github.com/benjamin-blanchet/application-corpus-agent-pack/blob/main/docs/continuous-enrichment.md) | Roadmap, graph, run ledger, enrichment recipes, subagents, governance |
-| [Agents & workflow](https://github.com/benjamin-blanchet/application-corpus-agent-pack/blob/main/docs/agents-and-workflow.md) | Human-facing roles, corpus-first development loop and skill families |
-| [Software factory V3](https://github.com/benjamin-blanchet/application-corpus-agent-pack/blob/main/docs/software-factory.md) | Event-derived control plane, roles/capabilities, environment, acceptance evidence and draft-PR delivery |
-| [Sources & runtime access](https://github.com/benjamin-blanchet/application-corpus-agent-pack/blob/main/docs/sources-and-mcp.md) | Durable source contracts, ephemeral runtime probes, historical coverage, guardrails |
-| [Ecosystem](https://github.com/benjamin-blanchet/application-corpus-agent-pack/blob/main/docs/ecosystem.md) | Peer corpora, boundary contract, cross-application graph |
-| [Standards & references](https://github.com/benjamin-blanchet/application-corpus-agent-pack/blob/main/docs/standards.md) | OKF v0.1, Agent Skills, agent-engineering references |
-| [Token-cost discipline](https://github.com/benjamin-blanchet/application-corpus-agent-pack/blob/main/docs/token-cost.md) | What the pack does, what you do, how to measure |
+| [Installation and upgrade](docs/installation.md) | Profiles, preview/apply safety, offline activation and migration. |
+| [Analysis pipeline](docs/pipeline.md) | P1→P9, diagrams, interviews and gates. |
+| [Corpus model](docs/corpus-model.md) | Corpus structure and scoped evidence authority. |
+| [Sources and runtime access](docs/sources-and-mcp.md) | Durable contracts, ephemeral probes and transports. |
+| [Continuous enrichment](docs/continuous-enrichment.md) | Roadmap, graph, runs and governance. |
+| [Agents and workflow](docs/agents-and-workflow.md) | Human-facing roles and lifecycle. |
+| [Software factory](docs/software-factory.md) | Control plane, executor boundary, acceptance and draft delivery. |
+| [Ecosystem](docs/ecosystem.md) | Peer corpora and cross-application graph. |
+| [Standards](docs/standards.md) | OKF, Agent Skills and references. |
 
-Local operating guides shipped into your repo: [`AGENTS.md`](AGENTS.md) and [`KICKSTART.md`](KICKSTART.md).
+Local operating guides: [AGENTS.md](AGENTS.md) and [KICKSTART.md](KICKSTART.md).
 
 ## License
 
-MIT — see [LICENSE.md](LICENSE.md). Free to use, copy, modify and redistribute, including commercially; keep the copyright notice.
+MIT — see [LICENSE.md](LICENSE.md).
 
-**Content note:** the pack ships generic templates, agents and skills only — no secrets, no proprietary application knowledge. That knowledge is added **locally** once the pack is copied into a target repository. Keep any enriched corpus out of shared or public copies of the pack.
+The pack contains generic machinery only. Application knowledge is produced
+locally in the target repository and should follow that repository's access
+and publication rules.

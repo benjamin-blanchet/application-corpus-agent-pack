@@ -21,7 +21,7 @@ Confluence is documentation. Documentation drifts. The corpus must capture Confl
 - Specs: `doc/spec/`
 - Connected source references: `doc/mcp/`
 
-## Source priority reminder
+## Scoped source-authority reminder
 
 From `foundations/core-rules`:
 
@@ -36,7 +36,10 @@ From `foundations/core-rules`:
 8. Tribal knowledge
 ```
 
-When code (rank 1) and Confluence (rank 7) disagree about how the application **behaves today**, code wins. The Confluence claim is preserved in the corpus as historical context, not as truth.
+When code and Confluence differ, classify the claim first. Code at a named
+revision anchors `implementation`; Confluence may provide `intent` or
+`history`. Neither proves `runtime` without deployed-revision, configuration
+and observation evidence. Preserve both scoped claims when both are valid.
 
 ## Required behavior
 

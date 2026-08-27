@@ -108,11 +108,14 @@ integrated. Secret and mutation support additionally require isolated brokers.
 A signed declarative receipt or GitHub Environment approval alone is not a
 sandbox.
 
-Once such an external executor exists, the acceptance workflow can run the
-declared build/start/health/revision/reset/stop lifecycle (with honest N/A only
-for non-server runtimes) and dispatch Playwright or the command adapter. The
-shipped workflow currently returns a blocking execution-boundary finding and
-still exercises the protected staging/report failure path. Adapter output first lands in a quarantine that
+When a protected external executor provider is configured, the acceptance
+workflow delegates the complete declared lifecycle and campaign to it. The
+provider runs those operations inside its broker and returns the resulting
+observation, lifecycle and adapter record; the controller does not spawn the
+candidate directly. The workflow returns a blocking execution-boundary finding
+when no provider is configured; a valid provider must export `apiVersion = 1` and
+`executeAcceptance(request)` and return a response bound to the frozen run and
+attested isolated boundary. Adapter output first lands in a quarantine that
 is never uploaded. The protected stager copies only referenced, inspectable,
 secret-scanned files into a fresh directory, writes an exact recursive
 path/digest/size inventory, and the first upload is exactly that minimized

@@ -9,10 +9,10 @@ this file is the short "what to type, what to expect" guide.
 
 Build a deep, evidence-backed application corpus from a repository that had
 no agentic structure, then maintain it through continuous enrichment. Code
-is the source of truth; Jira, Confluence, Dynatrace and operator interviews
-enrich it but never replace it.
+is the structural spine; runtime observations, specifications and history are
+evaluated in their own claim scope, revision and environment.
 
-Detail of source priority and pipeline: see `foundations/core-rules` and
+Detail of scoped source authority and pipeline: see `foundations/core-rules` and
 [doc/_agents/operator-onboarding.md](doc/_agents/operator-onboarding.md).
 
 ## Trigger prompts
@@ -35,7 +35,8 @@ Or the explicit form, when you want to be precise:
 Initialize the application corpus for this repository. Verify state from
 doc/_meta/corpus-state.yaml and doc/_meta/code-pipeline-state.yaml first,
 then run the deep code analysis pipeline P1 → P9, plus Jira/Confluence/
-Dynatrace lanes where available. Treat code as the source of truth. Do not
+Dynatrace lanes where available. Build the structural map from code and scope
+runtime/intent/history claims explicitly. Do not
 modify application source code.
 ```
 
@@ -75,7 +76,8 @@ operator-rollout playbook → [doc/_agents/operator-onboarding.md](doc/_agents/o
 
 - Do not modify application source code.
 - Detect the stack from evidence; never assume Java/Node/Python/etc.
-- Code is the source of truth; Confluence is rank 7 of 8.
+- Code anchors implementation; deployed revision and observation anchor
+  runtime; approved specs anchor intent; dated records anchor history.
 - Use `confidence: unknown` rather than guessing.
 - Record unresolved points in `doc/_meta/open-questions.md` (only after
   `governance/blocking-question-loop` if the operator could answer).
@@ -93,11 +95,11 @@ node scripts/validate-corpus.mjs
 P0 issues block the next pass; P1 issues block declaring a pass `covered`;
 P2 issues go to `doc/_meta/update-candidates.md`.
 
-## Cache discipline
+## Context discipline
 
-The pack's bootstrap is measured by `scripts/estimate-token-cost.mjs`. To
-keep the prompt cache warm across a kickstart, pre-stage MCP servers per
-phase and never edit `AGENTS.md` / personas mid-session — full guidance in
+Keep permanent instructions short, load detailed skills only for the current
+procedure, retrieve targeted corpus slices with `corpus-load`, and attach only
+the source adapters needed for the active phase. Full guidance:
 [doc/_meta/agent-cache-discipline.md](doc/_meta/agent-cache-discipline.md).
 
 ## Adoption-guide prompt

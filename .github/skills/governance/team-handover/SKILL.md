@@ -83,7 +83,9 @@ All files are written with `status: active` only after the gate passes.
 
 1. Verify the gate. Stop if it fails.
 2. Summarize what the corpus reliably knows, by sector. Cite the catalogs and feature folders that back each claim.
-3. Separate confirmed facts (rank 1–3 sources), probable findings (rank 4–6), suspected findings (rank 7+) and unknowns. Use the source priority ranking from `foundations/core-rules`.
+3. Separate confirmed, probable, suspected and unknown findings. Require
+   evidence appropriate to each claim's implementation/runtime/intent/history
+   scope per `foundations/core-rules`.
 4. Highlight the most useful corpus entry points for the team:
    - the architecture diagrams produced by P2/P5;
    - the feature folders documented by P4;
@@ -116,7 +118,7 @@ The adoption guide must be honest. Do not oversell the corpus.
 
 A good adoption guide says clearly:
 
-- what is reliable (rank 1–3 evidence backed);
+- what is reliable (direct evidence appropriate to its claim scope);
 - what is incomplete (where coverage is `partial`);
 - what is still speculative (Confluence-only or interview-only claims);
 - what the team should do next;

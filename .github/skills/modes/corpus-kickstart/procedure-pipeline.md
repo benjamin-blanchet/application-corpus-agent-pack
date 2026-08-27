@@ -20,7 +20,7 @@ immediately after, with or without this signal.
 | P6 | `pipeline/p6-code-style-naming` | Actual conventions per layer, lint vs. code reconciled |
 | P7 | `pipeline/p7-structural-issues` | Coupling, parallel impls, dead code, smells; HIGH/CRITICAL → risk files |
 | P8 | `pipeline/p8-code-maturity` | 12-dimension scorecard with evidence-citation |
-| P9 | `pipeline/p9-code-reconciliation-gate` | Resolve every contradiction (apply source priority ranking from `foundations/core-rules`); flip `code_analysis_status: covered` |
+| P9 | `pipeline/p9-code-reconciliation-gate` | Reconcile contradictions by claim scope, revision and environment; flip `code_analysis_status: covered` |
 
 ## Rules
 

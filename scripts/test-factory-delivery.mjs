@@ -667,13 +667,17 @@ function configureAcceptanceLifecycleScenario(scenario, { failingRole = null, in
   return git(scenario.repo, ['rev-parse', 'HEAD']);
 }
 
-function runAcceptanceLifecycleScenario(scenario, label, subject, { env: extraEnvironment = {} } = {}) {
+function runAcceptanceLifecycleScenario(scenario, label, subject, {
+  env: extraEnvironment = {},
+  controllerRoot = null,
+  executorProvider = null,
+} = {}) {
   const output = temporary(`factory-acceptance-${label}-`);
   const evidenceRoot = path.join(output, 'evidence');
   const observationFile = path.join(output, 'observation.json');
   const lifecycleFile = path.join(output, 'lifecycle.json');
   fs.mkdirSync(evidenceRoot);
-  const result = runNode('scripts/factory-acceptance.mjs', [
+  const acceptanceArgs = [
     '--root', scenario.repo,
     '--plan', `${scenario.packageRelative}/acceptance-plan.yaml`,
     '--environment', `${scenario.packageRelative}/environment.yaml`,
@@ -689,7 +693,10 @@ function runAcceptanceLifecycleScenario(scenario, label, subject, { env: extraEn
     '--lifecycle-out', lifecycleFile,
     '--evidence-root', evidenceRoot,
     '--json',
-  ], {
+  ];
+  if (controllerRoot) acceptanceArgs.push('--controller-root', controllerRoot);
+  if (executorProvider) acceptanceArgs.push('--executor-provider', executorProvider);
+  const result = runNode('scripts/factory-acceptance.mjs', acceptanceArgs, {
     env: {
       FACTORY_BASE_URL: 'http://127.0.0.1:65535',
       FACTORY_DATASET_ID: 'dataset-v1',
@@ -717,6 +724,103 @@ function runAcceptanceLifecycleScenario(scenario, label, subject, { env: extraEn
     operationLog,
     environmentLog,
   };
+}
+
+function buildAttestedExecutorController() {
+  const controller = fs.realpathSync(temporary('factory-attested-executor-controller-'));
+  const providerFile = path.join(controller, 'executor-provider.mjs');
+  fs.writeFileSync(providerFile, `import fs from 'node:fs';
+import path from 'node:path';
+
+export const apiVersion = 1;
+
+export async function executeAcceptance(request) {
+  fs.mkdirSync(request.outputs.evidence_root, { recursive: true });
+  fs.writeFileSync(path.join(request.outputs.evidence_root, 'CASE-001.txt'), 'attested external execution\\n', 'utf8');
+  const operation = (id, stdout) => ({
+    id,
+    argv: ['node', 'scripts/fixtures/factory-delivery/lifecycle-probe.mjs', id.replace('fixture-', '')],
+    cwd: '.',
+    timeout_seconds: 30,
+    side_effect: 'none',
+    outcome: 'pass',
+    stdout: stdout + '\\n',
+    stderr: '',
+  });
+  const operations = [
+    operation('fixture-health', 'health'),
+    operation('fixture-revision', request.subject_sha),
+    operation('fixture-schema', 'schema'),
+    operation('fixture-dataset', 'dataset'),
+    operation('fixture-credential', 'credential'),
+  ];
+  return {
+    schema_version: 1,
+    provider: { id: 'fixture-attested-executor', version: '1.0.0' },
+    binding: {
+      run_id: request.run_id,
+      subject_sha: request.subject_sha,
+      plan_sha256: request.inputs.plan.sha256,
+      environment_sha256: request.inputs.environment.sha256,
+      ci_sha256: request.inputs.ci.sha256,
+    },
+    boundary: {
+      process_isolation: 'enforced',
+      filesystem_isolation: 'enforced',
+      egress_enforcement: 'enforced',
+      secret_broker: 'not_required',
+      mutation_broker: 'not_required',
+    },
+    attestation: {
+      kind: 'fixture_host_attestation',
+      reference: 'fixture://attestation/' + request.run_id,
+      digest_sha256: 'sha256:' + 'a'.repeat(64),
+    },
+    observation: {
+      schema_version: 1,
+      observed_at: new Date().toISOString(),
+      run_id: request.run_id,
+      profile: request.profile,
+      subject_sha: request.subject_sha,
+      deployed_revision: request.subject_sha,
+      instance_id: 'external-' + request.run_id,
+      build_or_image: 'external-build-' + request.subject_sha.slice(0, 12),
+      schema_version_value: 'schema-v1',
+      dataset_id: 'dataset-v1',
+      dataset_version: 'dataset-version-v1',
+      auth_actor_type: 'external-executor-fixture',
+      environment_contract_digest: request.inputs.environment.sha256,
+      ci_contract_digest: request.inputs.ci.sha256,
+      checks: operations.map((entry) => ({ id: entry.id, kind: entry.id.replace('fixture-', ''), required: true, outcome: 'pass', message: 'attested by external executor' })),
+      operations,
+      status: 'ready',
+    },
+    results: {
+      schema_version: 1,
+      run_id: request.run_id,
+      candidate_sha: request.subject_sha,
+      plan_digest: request.inputs.plan.sha256,
+      environment_digest: request.inputs.environment.sha256,
+      observation_run_id: request.run_id,
+      overall_status: 'passed',
+      toolchain: { adapter: 'command', adapter_version: 'fixture-external-v1', browser: 'not_applicable', browser_version: 'not_applicable' },
+      cases: [{
+        id: 'CASE-001',
+        title: 'CASE-001 fixture behaviour',
+        outcome: 'passed',
+        attempts: 1,
+        user_visible_error: false,
+        oracle_results: [{ id: 'fixture-oracle', outcome: 'passed', recorded: true }],
+        evidence: [{ id: 'fixture-state-artifact', requirement_id: 'fixture-state', type: 'log', checkpoint: 'fixture-state', path: 'CASE-001.txt' }],
+      }],
+      mutations: [],
+    },
+    lifecycle: [{ role: 'external_broker', operation_id: null, outcome: 'pass', exit_code: 0 }],
+    adapter: { adapter: 'command', exit_code: 0, stdout: '', stderr: '' },
+  };
+}
+`, 'utf8');
+  return { controller, provider: 'executor-provider.mjs' };
 }
 
 test('the stack-neutral fixture contracts validate together', () => {
@@ -1290,6 +1394,23 @@ test('the installable acceptance lifecycle blocks before any candidate process w
   assert.equal(passing.results.overall_status, 'blocked');
   assert.ok(passing.results.cases.every((testCase) => testCase.outcome === 'blocked' && testCase.attempts === 0));
   assert.equal(JSON.stringify({ observation: passing.observation, lifecycle: passing.lifecycle, results: passing.results }).includes('synthetic-test-credential'), false);
+
+  const external = buildAttestedExecutorController();
+  const attested = runAcceptanceLifecycleScenario(scenario, 'attested', passingSha, {
+    controllerRoot: external.controller,
+    executorProvider: external.provider,
+  });
+  assert.equal(attested.result.status, 0, attested.result.stderr || attested.result.stdout);
+  assert.equal(attested.payload.summary.status, 'passed');
+  assert.equal(attested.payload.summary.executor, 'fixture-attested-executor');
+  assert.deepEqual(attested.payload.findings, []);
+  assert.deepEqual(attested.operationLog, []);
+  assert.deepEqual(attested.environmentLog, []);
+  assert.equal(attested.observation.status, 'ready');
+  assert.equal(attested.observation.subject_sha, passingSha);
+  assert.equal(attested.results.overall_status, 'passed');
+  assert.equal(attested.lifecycle.boundary.status, 'attested');
+  assert.equal(attested.lifecycle.boundary.provider.id, 'fixture-attested-executor');
   return;
   assert.equal(passing.result.status, 0, passing.result.stderr || passing.result.stdout);
   assert.equal(passing.payload.summary.status, 'passed');

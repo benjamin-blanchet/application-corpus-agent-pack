@@ -2108,7 +2108,7 @@ function renderApplication() {
       </article>
     </section>`;
 
-  // ---- Built-in standards — token-cost discipline + 2026 agentic best practices ----
+  // ---- Built-in standards — context discipline + agentic best practices ----
   // Detects shipped pack artefacts (e.g. agent-cache-discipline.md) and
   // surfaces the pack version. Hardcoded chips reflect what the pack
   // genuinely does — they are honest pitches, not marketing claims.
@@ -2117,7 +2117,7 @@ function renderApplication() {
   const lastUpgrade = cs.last_pack_upgrade;
   const standardsChips = [
     cacheDiscipline ? { icon: '⌗', label: 'Cache-friendly reads', sub: 'doc/_meta/agent-cache-discipline.md', tone: 'good' } : null,
-    { icon: '✦', label: 'Token-efficient bootstrap', sub: 'progressive disclosure, slim personas', tone: 'good' },
+    { icon: '✦', label: 'Progressive disclosure', sub: 'slim personas, on-demand procedures', tone: 'good' },
     { icon: '◰', label: 'Sub-agent delegation', sub: 'specialized roles, bounded scope', tone: 'good' },
     { icon: '⟿', label: 'MCP-first source discovery', sub: 'Jira / Confluence / Dynatrace / GitHub', tone: 'good' },
     { icon: '⌖', label: 'Evidence-anchored claims', sub: 'every fact traces to a source', tone: 'good' },
@@ -6871,13 +6871,13 @@ body:not(.mermaid-loaded) .mermaid::before { content: '⏳ Mermaid loading…  (
           <span class="card-meta">${sourcesArr.filter((s) => srcTone(s) === 'good').length}/${sourcesArr.length} historically covered · <a href="#" data-tab-goto="meta" data-sub-goto="sub-sources">anchoring →</a></span>
         </div>
         <div class="card-body">
-          <p class="ov-cov-intro muted">Registered source contracts and historical evidence. Rank 1 (code) is the ground truth; lower ranks need reconciliation. Current runtime usability is intentionally absent.</p>
+          <p class="ov-cov-intro muted">Registered source contracts and historical evidence. Authority depends on claim scope, revision and environment. Current runtime usability is intentionally absent.</p>
           <div class="ov-src-grid">
             ${sourcesArr.slice(0, 12).map((s) => {
               const tone = srcTone(s);
               const rank = sourceRankLabel[String(s.category || '').toLowerCase()] ?? sourceRankLabel[String(s.id || '').toLowerCase()] ?? 6;
               return `<div class="ov-src ov-src-${tone}">
-                <div class="ov-src-rank" title="Source priority rank (1=code, 5=human)">R${rank}</div>
+                <div class="ov-src-rank" title="Source category marker for navigation; not an authority rank">S${rank}</div>
                 <div class="ov-src-main">
                   <div class="ov-src-name">${esc(s.name || s.id || '—')}</div>
                   <div class="ov-src-meta"><span class="ov-src-cat">${esc(s.category || '—')} · contract ${esc(s.lifecycle || 'unknown')}</span><span class="ov-src-status ov-src-status-${tone}">history ${esc(sourceCoverageById.get(s.id)?.status || 'not_started')}</span></div>

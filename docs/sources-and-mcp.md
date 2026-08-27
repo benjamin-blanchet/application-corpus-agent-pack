@@ -2,7 +2,10 @@
 
 ← [Back to README](../README.md)
 
-The code is the spine of the corpus; every other source enriches it and is reconciled back against code (see the ranking in [Corpus model](corpus-model.md#core-principle-code-is-the-source-of-truth)).
+Code is the structural spine of the corpus. Other sources are reconciled by
+claim scope: implementation, runtime, intent or history, with revision and
+environment attached where relevant. See
+[Corpus model](corpus-model.md#core-principle-authority-follows-claim-scope).
 
 ## Three separate source truths
 

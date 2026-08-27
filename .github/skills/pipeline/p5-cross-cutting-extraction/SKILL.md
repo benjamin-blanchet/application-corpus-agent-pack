@@ -2,6 +2,8 @@
 name: p5-cross-cutting-extraction
 category: pipeline
 description: "Aggregate everything that crosses feature boundaries: the **API surface**, the **domain model**, the **integration map**, the **messaging topology**, the **persistence schema** and the **shared infrastructure**."
+references:
+  - procedure-diagrams-and-gate.md
 ---
 # Cross-Cutting Extraction (Pass 5 / 9)
 
@@ -58,7 +60,8 @@ systems, file exchanges) — not internal calls. Inbound API edges are seeded in
 P3; P5 completes them and adds outbound calls, events, datastores and external
 systems. Regenerate `BOUNDARY.md` from the YAML; reconcile `by-api.md`,
 `INTEGRATION_MAP.md`, the diagrams and (when runtime evidence exists)
-`doc/prod/SERVICE_FLOWS.md` against it — code wins.
+`doc/prod/SERVICE_FLOWS.md` against it by claim scope. The contract describes
+implementation; observed flows describe a named deployment and environment.
 
 ## Catalog 1 — API surface
 
@@ -207,130 +210,8 @@ doc/_meta/cross-cutting-state.yaml
 doc/_meta/code-pipeline-state.yaml        # P5 status
 ```
 
-## Mandatory diagrams
+## Completion procedure
 
-P5 must produce **at least five diagrams**, all generated from code/migration/config evidence (rank 1–2 only). Inline Mermaid in their `.md` files, with frontmatter `type: diagram, source: code` and a legend pointing back at the YAML/MD section that produced them.
-
-### Diagram 1 — Integration context (`diagrams/integration-context.md`)
-
-C4-context-like view: this application as a single block in the centre, every neighbour system from `INTEGRATION_MAP.md` around it, edges labelled with protocol + direction.
-
-```mermaid
-flowchart LR
-  app((MyApp))
-  upstream[Upstream CRM]
-  print[Print service]
-  azure[(Azure Blob)]
-  oracle[(Oracle APPDB)]
-  upstream -- "Kafka: DocumentMessageUpstreamV2" --> app
-  upstream -- "JMS: MSG queue (legacy)" --> app
-  app -- "HTTP/JMS" --> print
-  app -- "Blob upload" --> azure
-  app <--> oracle
-```
-
-### Diagram 2 — Integration flow detail (`diagrams/integration-flow.md`)
-
-Sequence diagrams (one per major flow) for the canonical integrations. Examples: archiving (Kafka path), duplicate send, mass-download generation. Use `sequenceDiagram`. Cite the entry point file under each diagram.
-
-### Diagram 3 — Messaging topology (`diagrams/messaging-topology.md`)
-
-For every broker mentioned in `MESSAGING.md`, a `flowchart LR` with producers on the left, topic/queue in the middle, consumers on the right. Mark DLQs and retry counts on the edges. One sub-diagram per broker.
-
-### Diagram 4 — Domain ER (`diagrams/domain-er.md`)
-
-A `erDiagram` showing the entities from `ENTITIES.md` and their FK relations from migration evidence. Group by bounded context if any are detected. Annotate with cardinalities. If the model is too large for one diagram, split per bounded context — one ER per context.
-
-### Diagram 5 — Persistence map (`diagrams/persistence.md`)
-
-A `flowchart TB` showing: DB engines → schemas/databases → tables (grouped). Add caches, read replicas, search engines as side blocks. Annotate connection pool sizes from config when present.
-
-### Diagram presentation rules
-
-Same rules as P2:
-
-- Inline Mermaid only.
-- Frontmatter `type: diagram, source: code`, never `confluence`.
-- Legend below each diagram referencing the YAML/MD section it derives from.
-- A diagram out of sync with `cross-cutting-state.yaml` is a P9 reconciliation issue.
-- If a Confluence page contains a diagram for the same scope, link it under "External references" — do not import its shapes.
-
-### `cross-cutting-state.yaml` schema
-
-```yaml
-api_surface:
-  endpoints_total: <int>
-  endpoints_documented: <int>
-  endpoints_missing_consumer_info: <int>
-domain_model:
-  entities_total: <int>
-  tables_total: <int>
-  entity_without_table: []           # discrepancies
-  table_without_entity: []
-integration_map:
-  integrations_total: <int>
-  inbound: <int>
-  outbound: <int>
-  contracts_resolved: <int>
-  contracts_unknown: <int>
-messaging:
-  topics_queues_total: <int>
-  producers_referenced: <int>
-  consumers_referenced: <int>
-  dlq_configured: <int>
-  ordering_documented: <int>
-persistence:
-  databases: []
-  migrations_total: <int>
-  migration_tool: ""
-cross_cutting:
-  auth_stack: ""
-  observability_stack: ""
-  feature_flags_system: ""
-```
-
-## Coverage targets (gate for P5 → covered)
-
-| Metric | Target | Hard gate |
-|---|---|---|
-| Every entry point from P3 with API kind appears in CATALOG | 100% | yes |
-| Every entity class + every migration table covered in ENTITIES | 100% | yes |
-| Every external client / topic / queue listed in INTEGRATION_MAP or MESSAGING | 100% | yes |
-| Every cross-cutting concern section written or marked "not present" with evidence | 100% | yes |
-| All discrepancies (entity without table, etc.) recorded for P9 | 100% | yes |
-| Integration context diagram present (`diagrams/integration-context.md`) | yes | yes |
-| Integration flow diagrams present (`diagrams/integration-flow.md`, ≥ 1 sequence diagram) | yes | yes |
-| Messaging topology diagram present (`diagrams/messaging-topology.md`) when MESSAGING has any topic/queue | yes | yes |
-| Domain ER diagram present (`diagrams/domain-er.md`) when entities exist | yes | yes |
-| Persistence map diagram present (`diagrams/persistence.md`) | yes | yes |
-
-## Blocking questions
-
-Use `governance/blocking-question-loop` for:
-
-- A topic/queue with no consumer in repo → ask whether the consumer is in another repo.
-- An entity with no table → ask if it is in-memory only or persisted via NoSQL.
-- A configured external host not used in code → ask if it is dead config or used at runtime by an admin tool.
-- An auth provider URL with no obvious integration code → ask if SSO is handled by infra.
-
-## Status update
-
-```yaml
-pipeline:
-  p5_cross_cutting_extraction:
-    status: covered|partial|blocked
-    last_run: "..."
-    catalogs_completed: ["api","domain","integration","messaging","persistence","cross_cutting"]
-    discrepancies_recorded: <int>
-    blocks_next_pass: true|false
-```
-
-## Anti-patterns
-
-Do not:
-
-- copy a feature's local API list into the global CATALOG without verifying nothing else is missing;
-- treat ENTITIES as "the JPA entities" only — physical tables count too;
-- skip MESSAGING because the app "doesn't really use Kafka much";
-- write CROSS_CUTTING from memory instead of from config files;
-- proceed to P6 with discrepancies unrecorded.
+Load `procedure-diagrams-and-gate.md` after all six catalogs are populated. It
+owns mandatory diagrams, the state schema, coverage gates, blocking questions
+and the final P5 status update.
