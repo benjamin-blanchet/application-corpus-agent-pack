@@ -111,7 +111,8 @@ digest; deleted files are checked for absence. Handoff outputs are independently
 hashed: direct bytes for a file, or a recursively sorted file inventory for a
 directory. The result digest also covers outputs, verification evidence and
 blockers. Append and full-package validation recompute these proofs and reject
-tampering, symlinks, path escapes or stale output trees.
+symlinks, path escapes, stale output trees and any declared file whose bytes
+have drifted since the result was reported.
 
 The convention contract is created before `wave_reserved`, binds the approved
 plan and exact source revision, and uses regular committed examples inside the
@@ -126,6 +127,58 @@ state of earlier work, but it must not invent missing intermediate attempts or
 reviews. Approvals and runtime observations cannot postdate the event that
 records them. When an automatic attempt budget is exhausted, only an explicit,
 plan- and diff-bound operator event grants one additional attempt.
+
+## What these proofs do not establish
+
+Four limits, stated here because a guarantee people believe in is more
+dangerous than one they know they lack. None of them is a defect to be worked
+around; each is the honest edge of what the control plane can establish on its
+own, and each is where a human still has to look.
+
+**The event chain is tamper-evident, not authenticated.** `events.v3.jsonl` is
+chained with plain SHA-256 and nothing signs it. Anyone who can write to the
+repository can rewrite the log, recompute every digest in it, regenerate
+`state.v3.json` and produce a package that validates. The chain catches an
+accidental edit, a truncated write, a rebase that dropped an event — it does not
+establish who wrote what, and it is not evidence against someone who controls
+the tree. The authenticated anchors in this system are elsewhere: the Ed25519
+review and authorization receipts, and the GitHub Actions run attestations.
+Where a claim must hold against an adversary rather than an accident, it rests
+on those, never on the log alone.
+
+**Workspace observation is bounded to a lot, and in live mode it is attested
+rather than recomputed.** A lot result carries a workspace delta; the controller
+checks that the delta binds its `lot_started` snapshot, that the baseline was
+clean, that the exclusions are the closed controller policy, and it refuses
+paths outside the lot's reservation. That is a real gate, and it is the reason
+an unreserved write fails at lot return. But in `live` mode the snapshot is the
+worker's own: the controller re-derives the delta from the repository only in
+`retrospective_attestation` mode. Between lots, and after the last lot is
+integrated, nothing observes the tree at all — the one repository-state check in
+the reducer is conditioned on a valid `candidate` gate, so it applies only after
+the candidate is frozen. A module added once the lots have closed sits outside
+every digest and produces no finding.
+
+**The acceptance chain is deliberately blocked, and has never run green end to
+end.** `factory-acceptance.mjs` pushes an execution-boundary finding
+unconditionally, before any adapter is selected, so every campaign exits
+blocked. That is not a defect: the installable pack has no attestable isolated
+process, filesystem and egress executor, and a signed receipt cannot turn an
+ordinary child process into one, so the runner fails closed instead of
+pretending. The consequence is worth being explicit about — the acceptance,
+release and draft-PR workflows cannot complete until an external isolated broker
+is integrated, and the per-campaign scoped acceptance credentials described in
+the environment contract are a contract, not an implementation. The adapter
+execution code beneath that boundary is unreachable today; the day the boundary
+is lifted, it becomes candidate code running in a privileged context, and that
+is the review to do first.
+
+**Gate invalidation is declarative.** `artifact_change_observed` records what an
+operator or an agent *states* about a change; nothing in the pipeline derives
+those classes from an observed Git delta. The control plane therefore proves the
+integrity of a perimeter that a human draws. Drawing it wrong is not a condition
+it can detect, and reviewing what falls outside it stays a human
+responsibility.
 
 ## Application adoption contract
 

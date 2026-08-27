@@ -64,7 +64,9 @@ Works the same on every Copilot surface: the VS Code picker, the agents tab on g
 - **A spec-to-draft-PR software factory** — deterministic scheduling and gate
   invalidation, bounded role capabilities, independent review/correction,
   mandatory corpus closeout, SHA-bound acceptance, replayable Playwright
-  evidence and draft-only delivery. → [Software factory V3](https://github.com/benjamin-blanchet/application-corpus-agent-pack/blob/main/docs/software-factory.md)
+  evidence and draft-only delivery. Acceptance campaigns stay blocked until you
+  wire an isolated executor — the pack refuses to run candidate code it cannot
+  contain, and says so rather than passing. → [Software factory V3](https://github.com/benjamin-blanchet/application-corpus-agent-pack/blob/main/docs/software-factory.md)
 - **A cross-application view** — a machine-readable boundary contract per app, recomposed into an inbound/outbound ecosystem graph that surfaces orphan events and contract drift. → [Ecosystem](https://github.com/benjamin-blanchet/application-corpus-agent-pack/blob/main/docs/ecosystem.md)
 - **Hard quality gates** — `node scripts/validate-corpus.mjs` fails the build on out-of-order passes, missing diagrams, undocumented features or premature adoption claims. Nothing is "done" on the agent's word alone.
 - **Portable output** — every corpus is an [Open Knowledge Format v0.1](https://github.com/benjamin-blanchet/application-corpus-agent-pack/blob/main/docs/standards.md#open-knowledge-format-okf-v01) bundle, readable by any OKF-aware agent without SDK or integration.
