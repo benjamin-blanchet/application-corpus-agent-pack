@@ -4,36 +4,54 @@
 
 ## Human-facing agent set
 
-The deployable pack intentionally keeps the agent set small. These are the agents humans are expected to select directly:
+The deployable pack separates semantic work from coordination and external
+delivery. Humans may select the domain roles directly; the Factory Controller
+routes factory work through bounded handoffs.
 
 | Agent | Role |
 |---|---|
 | **Corpus** | Owns continuous corpus enrichment: roadmap, graph, runs, kickstart, deep code analysis pipeline (P1 → P9), exploration, reconciliation, quality checks, knowledge capture and adoption guide material. |
 | **Functional Analyst** | Turns needs, tickets and source material into specs and impact analyses. |
+| **Planner** | Turns an approved spec into the human TIP, dependency DAG and bounded V3 work packages without implementing them. |
 | **Developer** | Implements validated specs using the corpus (especially P4 feature folders) as context. |
 | **Reliability Analyst** | Investigates production incidents and captures operational knowledge. |
+| **Factory Controller** | Owns typed events, derived state, scheduling, path reservations and handoffs — never spec/code/review/corpus/acceptance content. |
+| **Code Reviewer** | Reviews one exact lot or integrated changeset in fresh context and returns structured findings without fixing it. |
+| **Acceptance** | Executes the approved campaign on one frozen candidate and generates normalized results/evidence. |
+| **Delivery** | Creates or updates one authorised draft PR from an existing remote branch; never pushes, approves, merges or deploys. |
 
-Repository orientation, code analysis passes, adoption guide material, roadmap maintenance and production discovery are technical **skills** used by these agents — not separate agents.
+Repository orientation, planning, code-analysis passes, roadmap maintenance and
+production discovery remain technical **skills**, not extra state-owning agents.
 
 ## Development lifecycle
 
-For significant development work, the pack enforces a corpus-first loop:
+For significant development work, the pack enforces a spec-to-draft-PR loop:
 
 ```text
-read relevant corpus -> create/validate spec -> implement -> test -> update/reconcile corpus
+read corpus -> approved spec -> approved plan -> bounded implementation/review
+-> verified integration -> corpus closeout -> frozen candidate
+-> acceptance/evidence -> release review -> draft PR -> human merge
 ```
 
-The `Developer` agent should not start from a raw ticket alone. It must ground itself in the corpus (especially the P4 feature folders), use or create a spec package, implement from repository evidence, then update and reconcile the corpus at the end.
+The `Developer` does not start from a raw ticket or own global workflow state.
+It receives an approved, capability-bounded work package grounded in the corpus,
+matches the repository's existing stack/conventions and returns a result to the
+Controller for independent review. Corpus closeout and acceptance are separate
+roles/gates. See [Software factory V3](software-factory.md).
 
 ## Authoring and development skills
 
-The `Developer`, `Functional Analyst` and `Reliability Analyst` agents draw from two skill families:
+The `Developer`, `Planner`, `Functional Analyst` and `Reliability Analyst`
+agents draw from two skill families:
 
 | Family | Purpose | Skills |
 |---|---|---|
 | `authoring/` | Produce and validate corpus artifacts (specs, feature folders, incident analyses, Jira tickets, knowledge capture, reconciliation). | `spec-from-need`, `spec-writing`, `spec-completeness-check`, `implement-spec`, `implementation-guard`, `feature-folder-creation`, `incident-investigation`, `analyze-incident`, `jira-ticket-writing`, `jira-bug` / `jira-story` / `jira-task` templates, `knowledge-capture`, `modification-tracking`, `reconciliation`, `scope-deepening` |
-| `development/` | Corpus-loop guardrails around code changes (triage, risk, verify, PR-readiness, closeout). | `change-triage`, `risk-analysis-checklist`, `verify-by-change-type`, `pr-readiness`, `corpus-closeout-delegation` |
+| `development/` | Executable software-factory contracts around a change. | `change-triage`, `model-routing`, `factory-control-plane`, `capability-contract`, `technical-intervention-plan`, `subagent-implementation-orchestration`, `existing-code-integration`, `pre-commit-review`, `environment-discovery`, `acceptance-evidence`, `factory-release-readiness`, `draft-pr-delivery`, `corpus-closeout-delegation` |
 
 ## Spec path contract
 
-Specs follow the path contract `doc/spec/<version>/<jira>/`, where `<version>` is derived from the Jira `fixVersion` field. The `Functional Analyst` and `Developer` agents enforce this layout when creating or validating spec packages.
+Specs follow the path contract `doc/spec/<version>/<jira>/`, where `<version>`
+is derived from the Jira `fixVersion` field. Functional Analyst creates and
+reconciles the package; Developer only validates the approved package it
+receives and never writes it.

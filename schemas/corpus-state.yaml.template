@@ -1,5 +1,5 @@
 corpus:
-  pack_version: '1.1.0'
+  pack_version: '1.2.0'
   last_pack_upgrade: null
   maturity_level: 0
   phase: pack_copied
@@ -32,6 +32,10 @@ corpus:
   information_source_registry_status: not_started
   custom_sources_count: 0
   last_source_registry_review: null
+  source_contract_file: doc/_meta/information-sources.yaml
+  source_contract_version: 2
+  source_coverage_file: doc/_meta/source-coverage.yaml
+  source_coverage_version: 1
   discovery_coverage_file: doc/_meta/discovery-coverage.md
   discovery_coverage_status: not_started
   repository_coverage_status: not_started
@@ -46,11 +50,6 @@ corpus:
   active_interaction_session: null
   mcp_source_wizard_file: doc/_meta/mcp-source-wizard.md
   mcp_source_wizard_status: not_started
-  mcp_readiness_file: doc/_meta/mcp-readiness.md
-  mcp_readiness_status: not_started
-  jira_mcp_status: unknown
-  confluence_mcp_status: unknown
-  dynatrace_mcp_status: unknown
   code_pipeline_state_file: doc/_meta/code-pipeline-state.yaml
   code_analysis_status: not_started
   code_analysis_pipeline_version: 1
@@ -135,6 +134,7 @@ coverage:
     run_ledger: skeleton
   sources:
     information_source_registry: empty
+    historical_source_coverage: empty
     custom_source_profiles: empty
 corpus_inventory:
   features: {}

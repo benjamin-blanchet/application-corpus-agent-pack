@@ -16,7 +16,7 @@ title: "Production Discovery Snapshot — YYYY-MM-DD"
 
 ## Executive summary
 
-## Source availability
+## Source contract, runtime observation and historical coverage
 
 | Source | Environment | Time window | Status | Notes |
 |---|---|---|---|---|

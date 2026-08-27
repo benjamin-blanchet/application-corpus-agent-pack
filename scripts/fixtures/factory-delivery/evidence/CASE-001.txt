@@ -1,0 +1,1 @@
+CASE-001 fixture-state observed; identifiers are synthetic.

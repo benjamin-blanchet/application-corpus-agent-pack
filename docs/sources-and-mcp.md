@@ -1,34 +1,47 @@
-# Sources & MCP
+# Sources & Runtime Access
 
 ← [Back to README](../README.md)
 
 The code is the spine of the corpus; every other source enriches it and is reconciled back against code (see the ranking in [Corpus model](corpus-model.md#core-principle-code-is-the-source-of-truth)).
 
-## MCP readiness — no silent fallback
+## Three separate source truths
 
-Early in kickstart, `sources/mcp-source-wizard` asks about standard MCP, custom MCP and non-MCP evidence sources, and updates:
-
-```text
-doc/_meta/mcp-source-wizard.md
-```
-
-Before Jira, Confluence, Dynatrace or custom MCP evidence is consumed, the `Corpus` agent uses `sources/mcp-readiness-check` and updates:
+Early in kickstart, `sources/mcp-source-wizard` asks about standard MCP, custom MCP and non-MCP evidence sources. Confirmed declarations are registered in:
 
 ```text
-doc/mcp/MCP_READINESS.md
-doc/_meta/mcp-readiness.md
+doc/_meta/information-sources.yaml
 ```
 
-This prevents silent fallback when the MCP tools are not actually reachable from the current session — such a source is recorded as blocked, never quietly imagined.
+The pack keeps three concepts separate:
 
-Where a server comes from depends on the surface, and the readiness check asks for the right remediation on each:
+- `doc/_meta/information-sources.yaml` contains durable, transport-neutral source contracts: intent, policy, mappings and bounded probe definitions;
+- `sources/runtime-source-probe` observes what the current runtime can actually use, but emits no global current-state file;
+- `doc/_meta/source-coverage.yaml` records historical evidence and freshness, with `doc/_meta/discovery-coverage.md` as its human-readable coverage view.
 
-| Surface | Where MCP comes from |
+This prevents silent fallback without fossilizing a transient IDE state. A failed runtime attempt can block the current run, but it does not erase valid evidence collected earlier.
+
+Where a server comes from depends on the surface, and the runtime probe asks for the right remediation on each:
+
+| Surface | Where a runtime capability comes from |
 |---|---|
 | VS Code, JetBrains, Eclipse, Xcode, Visual Studio | the IDE attaches the servers to the session |
 | Copilot cloud agent (github.com), Copilot app, Copilot CLI | the agent profile's `mcp-servers` frontmatter, or org-level provisioning |
 
-The pack ships no server configuration — your sources are yours — but the status recorded is the same on every surface, and it is established by a read-only smoke test rather than by assumption.
+The pack ships no server configuration — your sources are yours. Each runtime observation is established by a bounded read-only probe and is meaningful only at its timestamp.
+
+Transport selection is durable policy: every source declares `alternative` or
+`complementary` semantics, priorities, explicit fallbacks and consent needs.
+The observation proves required tools plus the applied limit and observed count.
+`--allow-partial` can acknowledge only an explicitly selected optional source;
+it never bypasses a required source.
+
+Print a probe plan with:
+
+```bash
+node scripts/check-runtime-sources.mjs --source jira --json
+```
+
+The resulting observation conforms to `schemas/runtime-source-observation.schema.yaml`; the checker accepts its JSON serialization on stdin or from a temporary file. It may be attached to a dated run record, but never stored as a global "available now" property.
 
 Bounded query catalogs (`doc/mcp/atlassian-query-catalog.md`, `doc/mcp/dynatrace-query-catalog.md`) keep the agent's queries scoped and repeatable.
 

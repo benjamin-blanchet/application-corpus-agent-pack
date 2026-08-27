@@ -28,7 +28,9 @@ It is designed for two audiences:
 | Work on a change/spec | [spec/template/README.md](./spec/template/README.md) |
 | Use connected sources/tools | [mcp/INDEX.md](./mcp/INDEX.md) |
 | Inventory MCP/custom sources | [_meta/mcp-source-wizard.md](./_meta/mcp-source-wizard.md) |
-| Check MCP readiness | [mcp/MCP_READINESS.md](./mcp/MCP_READINESS.md) and [_meta/mcp-readiness.md](./_meta/mcp-readiness.md) |
+| Review durable source contracts | [_meta/information-sources.yaml](./_meta/information-sources.yaml) |
+| Review historical source coverage | [_meta/source-coverage.yaml](./_meta/source-coverage.yaml) |
+| Check this runtime's source capabilities | `node scripts/check-runtime-sources.mjs --json` and `/sources/runtime-source-probe` |
 | Continue roadmap-driven enrichment | [_roadmap/ROADMAP_STATE.md](./_roadmap/ROADMAP_STATE.md), [_roadmap/CORPUS_ROADMAP.md](./_roadmap/CORPUS_ROADMAP.md), [_runs/RUN_LEDGER.md](./_runs/RUN_LEDGER.md) |
 | Inspect the knowledge graph | [_graph/README.md](./_graph/README.md) |
 | Review current corpus state | [_meta/corpus-state.yaml](./_meta/corpus-state.yaml) |
@@ -91,17 +93,21 @@ Use `/continuous/roadmap-graph` to maintain the roadmap and graph, `/continuous/
 
 When VS Code exposes `agent` / `runSubagent`, broad corpus runs use `/actionable/subagent-coverage-orchestration` by default. Internal subagents cover features, runtime/API/batch, data/integration, reliability and the corpus control plane. The main `Corpus` agent remains the only writer.
 
-## MCP readiness
+## Source contracts, runtime probes and coverage
 
-Use `/sources/mcp-source-wizard` early to inventory Jira, Confluence, Dynatrace, Git hosting, custom MCP servers and non-MCP evidence sources.
+Use `/sources/mcp-source-wizard` early to inventory Jira, Confluence, Dynatrace, Git hosting, custom MCP servers and non-MCP evidence sources, then register durable declarations in `doc/_meta/information-sources.yaml`.
 
-Use `/sources/mcp-readiness-check` before consuming Jira, Confluence, Dynatrace or custom MCP sources. The agent must verify that MCP servers are running and that tools are attached to the current IDE agent/session, then update `doc/_meta/mcp-readiness.md`.
+Use `/sources/runtime-source-probe` before consuming a connected source. It validates a bounded read-only observation for this run and never writes global availability state.
 
-If a source is expected but unavailable, the agent must say so clearly and mark dependent discovery as blocked or partial. It must not silently continue with repository-only evidence.
+If a required source is unusable in this runtime, the agent must say so clearly
+and block the run. Partial continuation requires a structured operator waiver;
+the runtime checker provides no un-attested bypass. Existing historical
+coverage remains intact; its evidence and freshness live in
+`doc/_meta/source-coverage.yaml`.
 
 ## Discovery coverage
 
-Use `/governance/discovery-coverage-contract` during kickstart. `doc/_meta/discovery-coverage.md` records source-tree coverage, Jira samples, Confluence searches, Dynatrace production checks and custom source coverage. This file is the proof of what the agent actually consumed.
+Use `/governance/discovery-coverage-contract` during kickstart. `doc/_meta/source-coverage.yaml` records source-tree coverage, Jira samples, Confluence searches, Dynatrace production checks and custom source evidence; `doc/_meta/discovery-coverage.md` is the reconciled human view.
 
 ## Blocking questions
 

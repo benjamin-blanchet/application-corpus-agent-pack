@@ -25,6 +25,6 @@ Record verified queries only. Do not invent project keys, fields, service names 
 
 ## Common pitfalls
 
-- Check source availability before relying on it.
+- Read the durable source contract and probe this runtime before relying on the transport.
 - Record query limits and unsupported fields.
 - Save reusable query patterns in this file after validation.

@@ -76,7 +76,7 @@ actually needs them, not here.
 | Full mode + runtime topology view requested | also `procedure-runtime-architecture.md` |
 | Signal warrants window-to-window comparison | also `procedure-temporal-escalation.md` (and consider escalating to `exploration/production-temporal-correlation`) |
 
-`sources/mcp-readiness-check` must run before any Dynatrace MCP query. If
+`sources/runtime-source-probe` must run before any Dynatrace MCP query. If
 Dynatrace is expected but not attached, stop Dynatrace-backed discovery
 and report the exact setup gap.
 

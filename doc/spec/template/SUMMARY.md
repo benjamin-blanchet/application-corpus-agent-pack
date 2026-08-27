@@ -10,7 +10,7 @@ last_validated:
 
 <!--
 Stakeholder-readable summary. No internal jargon, no implementation details.
-Used in the PR description (Step 11) and as the Jira-ready snippet.
+Used in the PR description (Step 15) and as the Jira-ready snippet.
 
 Trivial: 1 paragraph + 1 acceptance criterion.
 Small/Standard/Large: full structure below.

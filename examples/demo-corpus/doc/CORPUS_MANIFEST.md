@@ -163,7 +163,7 @@ CI/CD discovery must separate live delivery paths from historical residue. Old J
 
 ## Generic information sources
 
-The pack supports more than predefined tools. Register SQL log databases, APIs, file exports, dashboards, CI/CD data, manual evidence and internal tools in `doc/_meta/information-sources.yaml`. Use `/sources/information-source-onboarding` before using a new source for durable corpus claims.
+The pack supports more than predefined tools. Durable contracts live in `doc/_meta/information-sources.yaml`, historical evidence in `doc/_meta/source-coverage.yaml`, and runtime capability is observed per run.
 
 ## Safe operation guardrails
 

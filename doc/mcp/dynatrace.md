@@ -10,20 +10,21 @@ description: "Unknown until configured for the target team."
 
 # Dynatrace / APM
 
-## Availability
+## Runtime access
 
-Unknown until configured for the target team.
-
-Before Dynatrace consumption, run `sources/mcp-readiness-check` and update `doc/_meta/mcp-readiness.md`.
-
+Before Dynatrace consumption, read its durable contract in
+`doc/_meta/information-sources.yaml`, then run `sources/runtime-source-probe`.
 The agent must verify:
 
 - Dynatrace MCP server is running in the IDE context;
-- Dynatrace tools are attached to the current agent/session;
+- Dynatrace capabilities are visible in this runtime observation;
 - authentication allows read-only smoke tests;
 - app/service/entity/environment mapping is known or discoverable.
 
-If the MCP tools are not attached, do not treat Dynatrace as nonexistent. Record `not_attached_to_agent` and ask the operator to attach the tools or explicitly accept no production discovery.
+If the capability is not visible in this run, do not treat Dynatrace as
+nonexistent. Report `not_visible`, ask the operator for the capability or
+explicitly accept no production discovery, and do not erase historical
+production evidence.
 
 ## Local conventions
 
@@ -36,7 +37,7 @@ Use [dynatrace-query-catalog.md](./dynatrace-query-catalog.md) as the serious-ki
 
 ## Common pitfalls
 
-- Check source availability before relying on it.
+- Probe this runtime's source capability before relying on it.
 - Record query limits and unsupported fields.
 - Save reusable query patterns in this file after validation.
 
@@ -45,7 +46,10 @@ Use [dynatrace-query-catalog.md](./dynatrace-query-catalog.md) as the serious-ki
 
 Use this section to record verified Dynatrace conventions needed for the initial production discovery / rapport d'étonnement.
 
-Do not run Dynatrace-backed production discovery unless readiness is `available` or the operator explicitly approves a partial/unverified pass. Do not infer production health from repository code.
+Do not run Dynatrace-backed production discovery unless the point-in-time
+runtime observation is `usable`. If this source is required, absence blocks the
+run; partial continuation needs a structured operator waiver. Do not infer
+production health from repository code.
 
 | Discovery need | Verified query / lookup pattern | Required filters | Notes |
 |---|---|---|---|

@@ -59,7 +59,7 @@ Subagents return coverage reports. The main `Corpus` agent remains the only writ
 
 **Kickstart visibility.** During initialization, `Corpus` maintains `doc/_meta/kickstart-progress.md`, `doc/_meta/code-pipeline-state.yaml`, `doc/_meta/interaction-history/` and `doc/_meta/code-interview/`. The `governance/corpus-interaction-history` skill makes the process visible: current phase, generated artifacts, open inputs, next action, friction points and prompt improvements.
 
-**Status footer.** `foundations/corpus-status-footer` ends every `Corpus` response with a scan-friendly state summary: adoption stage and maturity level, completeness by sector, **the 9 pipeline passes line-by-line**, MCP/source readiness, generated files, blocking inputs and the next bounded action.
+**Status footer.** `foundations/corpus-status-footer` ends every `Corpus` response with a scan-friendly state summary: adoption stage and maturity level, completeness by sector, **the 9 pipeline passes line-by-line**, durable source coverage plus any current-run probe impact, generated files, blocking inputs and the next bounded action.
 
 **Discovery coverage.** `governance/discovery-coverage-contract` records how much evidence was actually collected in `doc/_meta/discovery-coverage.md`. It defines minimum coverage targets for repository source, Jira, Confluence, Dynatrace and custom sources. Available sources should be used to the maximum reasonable read-only extent; unavailable sources must be marked blocked or partial with reasons.
 

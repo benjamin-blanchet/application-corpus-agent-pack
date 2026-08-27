@@ -1,9 +1,9 @@
 ---
 type: mcp-reference
-status: draft
-confidence: unknown
-source: pack
-last_validated:
+status: active
+confidence: confirmed
+source: mixed
+last_validated: 2026-05-30
 title: "Atlassian / Jira / Confluence"
 description: "For serious kickstarts, use [atlassian-query-catalog.md](./atlassian-query-catalog.md) as the bounded Jira/Confluence query checklist."
 ---
@@ -16,12 +16,12 @@ For serious kickstarts, use [atlassian-query-catalog.md](./atlassian-query-catal
 
 Unknown until configured for the target team.
 
-Before Jira or Confluence consumption, run `sources/mcp-readiness-check` and update `doc/_meta/mcp-readiness.md`.
+Before Jira or Confluence consumption, read the durable source contract and run `sources/runtime-source-probe`; keep the result in the current run only.
 
 The agent must verify:
 
 - Atlassian MCP server is running in the IDE context;
-- Jira and/or Confluence tools are attached to the current agent/session;
+- Jira and/or Confluence capabilities are visible in this runtime observation;
 - authentication allows read-only smoke tests;
 - Jira project keys or Confluence spaces are known or discoverable.
 
@@ -31,13 +31,13 @@ If the MCP tools are not attached, do not treat Jira/Confluence as nonexistent. 
 
 | Item | Value | Source | Confidence |
 |---|---|---|---|
-| Jira project keys | unknown | | unknown |
-| Boards / filters | unknown | | unknown |
-| Issue types | unknown | | unknown |
+| Jira project keys | DEMO | `doc/project/activity/PROJECT_TRAJECTORY.md` | confirmed |
+| Boards / filters | fictional bounded demo query | demo source run `demo-2026-05-30` | confirmed |
+| Issue types | synthetic demo sample | `doc/project/activity/PROJECT_TRAJECTORY.md` | confirmed |
 | Release/version fields | unknown | | unknown |
 | Components/labels conventions | unknown | | unknown |
 | Confluence spaces | unknown | | unknown |
-| App aliases / acronyms | unknown | | unknown |
+| App aliases / acronyms | Demo Order Service | `doc/_meta/app-profile.yaml` | confirmed |
 | Related Jira projects | unknown | | unknown |
 | Related Confluence spaces | unknown | | unknown |
 
@@ -75,7 +75,7 @@ For serious kickstarts, also run `exploration/atlassian-project-trajectory` when
 
 ## Common pitfalls
 
-- Check source availability before relying on it.
+- Probe this runtime's capability before relying on the transport.
 - Check MCP server/tool attachment before declaring the source unavailable.
 - Ticket text is not automatically ground truth.
 - Jira status/category conventions vary by team.

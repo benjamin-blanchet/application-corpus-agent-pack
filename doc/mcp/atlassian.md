@@ -12,20 +12,21 @@ description: "For serious kickstarts, use [atlassian-query-catalog.md](./atlassi
 
 For serious kickstarts, use [atlassian-query-catalog.md](./atlassian-query-catalog.md) as the bounded Jira/Confluence query checklist. Record executed JQL/search terms, counts, fields and pages read in `doc/_meta/discovery-coverage.md`.
 
-## Availability
+## Runtime access
 
-Unknown until configured for the target team.
-
-Before Jira or Confluence consumption, run `sources/mcp-readiness-check` and update `doc/_meta/mcp-readiness.md`.
-
-The agent must verify:
+Jira and Confluence are separate logical sources in
+`doc/_meta/information-sources.yaml`, even when they share an Atlassian MCP
+transport. Before use, run `sources/runtime-source-probe` and verify:
 
 - Atlassian MCP server is running in the IDE context;
-- Jira and/or Confluence tools are attached to the current agent/session;
+- Jira and/or Confluence capabilities are visible in this runtime observation;
 - authentication allows read-only smoke tests;
 - Jira project keys or Confluence spaces are known or discoverable.
 
-If the MCP tools are not attached, do not treat Jira/Confluence as nonexistent. Record `not_attached_to_agent` and ask the operator to attach the tools or explicitly accept a partial repository-only pass.
+If the tools are not visible in this run, do not treat Jira or Confluence as
+nonexistent. Report `not_visible`, ask the operator for the capability or
+explicitly accept a partial repository-only pass, and leave historical
+coverage unchanged.
 
 ## Local conventions
 
@@ -75,7 +76,7 @@ For serious kickstarts, also run `exploration/atlassian-project-trajectory` when
 
 ## Common pitfalls
 
-- Check source availability before relying on it.
+- Probe this runtime's capability before relying on the transport.
 - Check MCP server/tool attachment before declaring the source unavailable.
 - Ticket text is not automatically ground truth.
 - Jira status/category conventions vary by team.

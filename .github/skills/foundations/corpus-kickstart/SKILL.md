@@ -26,12 +26,12 @@ doc/_meta/app-profile.yaml
 doc/_meta/repository-map.yaml
 doc/_meta/source-inventory.md
 doc/_meta/information-sources.yaml
+doc/_meta/source-coverage.yaml
 doc/_meta/coverage-matrix.md
 doc/_meta/discovery-coverage.md
 doc/_meta/blocking-questions.md
 doc/_meta/open-questions.md
 doc/_meta/mcp-source-wizard.md
-doc/_meta/mcp-readiness.md
 doc/_meta/kickstart-progress.md
 doc/_meta/kickstart-report.md
 doc/_meta/code-pipeline-state.yaml
@@ -67,8 +67,8 @@ doc/prod/snapshots/YYYY-MM-DD-production-discovery.md           # when productio
 5. Initialize `doc/_meta/code-pipeline-state.yaml` with all 9 passes set to `not_started`.
 6. Detect repository role: primary, secondary, library or unknown.
 7. Run `sources/mcp-source-wizard` to inventory standard MCP, custom MCP and non-MCP sources before choosing discovery paths.
-8. Before Jira, Confluence, Dynatrace or custom MCP consumption, run `sources/mcp-readiness-check` and update `doc/_meta/mcp-readiness.md`.
-9. Register available information sources using `sources/information-source-onboarding`, including MCP, custom SQL/API/file sources.
+8. Register durable information-source contracts using `sources/information-source-onboarding`, including MCP, custom SQL/API/file sources, and initialize `doc/_meta/source-coverage.yaml`.
+9. Before Jira, Confluence, Dynatrace or another connected source is consumed, run `sources/runtime-source-probe`; keep its observation in the current run only.
 10. Apply `governance/safe-operation-guardrails`: kickstart is read-only outside `doc/` and `.github/` pack files.
 11. **Run the deep code analysis pipeline P1 → P9 in order, via `exploration/code-exploration`.** This is the first vector of corpus knowledge and is mandatory for any primary application repository. Do not start the next step until P9 marks `code_analysis_status: covered`.
     - P1 `pipeline/p1-code-tree-inventory`
@@ -81,12 +81,12 @@ doc/prod/snapshots/YYYY-MM-DD-production-discovery.md           # when productio
     - P8 `pipeline/p8-code-maturity`
     - P9 `pipeline/p9-code-reconciliation-gate`
 12. Initialize / refresh indexes from the catalogs produced by P3–P5 (no speculative entries).
-13. If Jira is available, cover the Jira contract from `governance/discovery-coverage-contract` in full. If Confluence is available, walk the relevant page tree, not only search snippets.
-14. If Dynatrace/APM, a log database, an API, an export or another production source is available, run `exploration/production-discovery` and produce an initial production snapshot / fresh-eyes report. If Dynatrace is available, run `exploration/dynatrace-runtime-architecture` as part of the same production lane: map runtime architecture, ecosystem, inbound/outbound flows, dependencies, logs, metrics and traces over bounded 24h/7d/30d windows when supported.
+13. If Jira is usable in this runtime, cover the Jira contract from `governance/discovery-coverage-contract` in full. If Confluence is usable, walk the relevant page tree, not only search snippets.
+14. If Dynatrace/APM, a log database, an API, an export or another production source is usable, run `exploration/production-discovery` and produce an initial production snapshot / fresh-eyes report. If Dynatrace is usable, run `exploration/dynatrace-runtime-architecture` as part of the same production lane: map runtime architecture, ecosystem, inbound/outbound flows, dependencies, logs, metrics and traces over bounded 24h/7d/30d windows when supported.
 15. If CI/CD files, local Git history, PR/check data or workflow-run evidence are available, run `exploration/ci-cd-activity-discovery`: classify active/legacy/stale/unknown pipelines and scan recent commits to identify active bricks.
-16. If Jira/Confluence/Dynatrace or custom MCP sources are expected but not available to the current IDE agent session, report this clearly and do not silently fall back.
-17. If project or production source access is unavailable, use `governance/blocking-question-loop` before parking the issue: ask the operator for missing source names, keys, spaces, entity mapping or IDE tool attachment.
-18. If production source access remains unavailable, record this explicitly in `open-questions.md`, `blocking-questions.md`, `mcp-readiness.md`, `discovery-coverage.md`, `coverage-matrix.md`, `kickstart-progress.md` and `kickstart-report.md`.
+16. If required sources are unusable in this runtime, report the point-in-time observation clearly and do not silently fall back or rewrite their durable contract.
+17. If project or production source access is unusable, use `governance/blocking-question-loop` before parking the issue: ask the operator for missing source names, keys, spaces, entity mapping or runtime capability.
+18. If production source access remains unusable, record the run impact in `open-questions.md`, `blocking-questions.md`, `source-coverage.yaml`, `discovery-coverage.md`, `coverage-matrix.md`, `kickstart-progress.md` and `kickstart-report.md`. Preserve prior successful evidence.
 19. Record unknowns rather than blocking the run only after asking when the operator could answer.
 20. Set adoption state to `operator_kickstart_started` when the kickstart begins.
 21. **Maturity level rules:**
@@ -121,15 +121,16 @@ The footer must reflect `doc/_meta/discovery-coverage.md` and `doc/_meta/code-pi
 
 The footer must also reflect `doc/_meta/actionable-readiness.md` and `doc/_roadmap/ROADMAP_STATE.md`: whether the corpus is only a structural baseline, partially actionable, actionable for a priority scope, and what the active roadmap node is.
 
-Before MCP-backed phases, include an MCP readiness checkpoint:
+Before connected-source phases, include a runtime source checkpoint:
 
 ```text
-MCP readiness checkpoint
-- Jira:
-- Confluence:
-- Dynatrace:
-- Required IDE action:
-- Discovery impact:
+Runtime source checkpoint
+- Source / transport:
+- Observed at:
+- State and bounded probe:
+- Required operator action:
+- Current-run impact:
+- Historical coverage retained:
 ```
 
 ## Quality bar

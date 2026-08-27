@@ -17,26 +17,41 @@ npx github:benjamin-blanchet/application-corpus-agent-pack sync --apply
 `npx` fetches the pack and copies it into the current repository — no zip, no manual paste. The **same command installs and upgrades**: on an already-equipped repo it behaves as an in-place upgrade. Pin a version once releases are tagged:
 
 ```bash
-npx github:benjamin-blanchet/application-corpus-agent-pack#v1.1.0 sync --apply
+npx github:benjamin-blanchet/application-corpus-agent-pack#v1.2.0 sync --apply
 ```
 
 ## Upgrade safety
 
-- Existing files under `doc/` (your corpus) are **never** overwritten, even
-  with `--force`. Missing pack scaffolds may be added; on upgrade, a missing
+- Existing application corpus files under `doc/` are **never** overwritten,
+  even with `--force`. The reusable executable `doc/spec/template/**` scaffold
+  and pack regression ledger `doc/_meta/factory-learning.yaml` are versioned
+  pack artefacts and are refreshed. Divergent previous bytes are first copied
+  to `.corpus-pack-backups/<from>-to-<to>/`, an inactive recovery surface.
+  Missing pack scaffolds may be added; on upgrade, a missing
   `doc/_meta/corpus-state.yaml` is deferred to the Corpus migration. The sync
   still refreshes `schemas/corpus-state.yaml.template`, so that migration can
   reconstruct the state without guessing its previous version.
 - A locally-modified agent under `.github/agents/` is never overwritten without confirmation (you are prompted per file; non-interactive runs preserve it and surface it in the console summary).
-- Pack-owned files (skills, prompt assets, helper scripts, schemas,
+- Pack-owned files (skills, prompt assets, helper scripts, schemas, executable
+  `.github/templates/software-factory/**`, the two `doc/` exceptions above,
   `AGENTS.md`, `KICKSTART.md`, `.github/copilot-instructions.md`) are refreshed
   to the new version — do not edit them. Put repository-specific Copilot
   instructions in `.github/instructions/*.instructions.md`, which the pack
   never ships or touches.
+- `sync` backs up, then retires, three exact obsolete pack surfaces: the MCP readiness skill
+  and the V1 template files `technical-plan.yaml` / `factory-state.yaml`. The subsequent Corpus
+  migration reconciles durable source facts and removes the two legacy
+  persistent readiness documents. The exact retired bytes remain available
+  under `.corpus-pack-backups/<from>-to-<to>/`; local skills removed for any other reason
+  are only reported, never deleted automatically.
 - `sync` prints a copy summary but writes no durable migration history. After
   an upgrade, invoke the Corpus agent: `governance/pack-upgrade` owns the
   version stamp, schema repair, changelog row, and `doc/_meta/pack-upgrade-*.md`
   report, including its final post-report validation.
+- File replacements are atomic, but the complete multi-file sync is not a
+  transaction. If it fails or is interrupted, re-run the same pinned sync;
+  its operations and backups are idempotent. Do not start Corpus migration
+  until sync completes successfully.
 - The migration report is created first as an `in-progress` checkpoint. A
   later `continue` resumes an interrupted transition from that report, keeps
   the original `from_version`, and never duplicates its changelog row.
@@ -45,18 +60,21 @@ Once the pack is in place, the consumer repo can self-upgrade later without `npx
 
 ```bash
 node scripts/update-pack.mjs --from-github --apply          # latest
-node scripts/update-pack.mjs --from-github=v1.1.0 --apply   # pinned
+node scripts/update-pack.mjs --from-github=v1.2.0 --apply   # pinned
 ```
 
 <details>
 <summary>Fresh offline install (no Node)</summary>
 
 This fallback is for a fresh repository only, never for upgrading an existing
-corpus. Copy `.github/`, `doc/`, `scripts/`, `schemas/`, `AGENTS.md`,
-`KICKSTART.md` and `PACK_VERSION` into the target (everything except
-`README.md`, `LICENSE.md`, `docs/`, `examples/` and Git/Node metadata). For an
-upgrade, use the safe `sync` engine so local additions and corpus content are
-classified and preserved.
+corpus. Do **not** copy `.github/` wholesale: active `.github/workflows/**` in
+this repository are maintainer CI, not consumer scaffolds. Copy only
+`.github/agents/`, `.github/skills/`, `.github/prompts/`,
+`.github/templates/` and `.github/copilot-instructions.md`; copy `scripts/`,
+`schemas/`, `AGENTS.md`, `KICKSTART.md` and `PACK_VERSION`. Under `doc/`, omit
+every repository-development package under `doc/spec/` and retain only
+`doc/spec/template/`. For an upgrade, use the safe `sync` engine so local
+additions and corpus content are classified and preserved.
 
 </details>
 
@@ -86,7 +104,11 @@ The adoption guide material is honest about roadmap coverage, reliable knowledge
 
 ## Selecting a role on each Copilot surface
 
-The pack ships four human-facing roles. Every current surface lets you select one explicitly:
+The pack ships nine human-facing roles. Every current surface lets you select one explicitly:
+
+`corpus`, `functional-analyst`, `planner`, `developer`,
+`reliability-analyst`, `acceptance`, `factory-controller`, `code-reviewer` and
+`delivery`.
 
 | Surface | How to select the role |
 |---|---|
@@ -98,7 +120,11 @@ The pack ships four human-facing roles. Every current surface lets you select on
 
 If you skip the selection and simply state your intent ("init the corpus", "impact analysis on X"), `copilot-instructions.md` routes you to the right role anyway — but the write boundary is then a contract the model holds rather than a tool-level restriction, so prefer selecting the agent.
 
-The three read-only roles (`functional-analyst`, `corpus`, `reliability-analyst`) never touch source code, so non-developers can use them safely — in the Copilot app, run sessions in Interactive or Plan mode, not Autopilot.
+Only `developer` may modify application source, and only after the explicit
+implementation gate. Every other role has a narrower artifact, review,
+control-plane, acceptance or draft-delivery surface; none can widen that
+surface through a prompt. In the Copilot app, non-developers should still use
+Interactive or Plan mode rather than Autopilot.
 
 Details and the re-anchoring footer: [doc/_agents/copilot-surfaces.md](../doc/_agents/copilot-surfaces.md).
 
@@ -111,11 +137,11 @@ The captured architecture is then used to scope work per repo role, link cross-r
 ## What gets copied
 
 ```text
-.github/agents/       human-facing custom agents (Corpus, Developer, Functional Analyst, Reliability Analyst)
-.github/skills/       reusable technical skills, grouped by intent (foundations, pipeline, actionable, continuous, exploration, governance, sources, authoring, development)
+.github/agents/       nine human-facing roles plus internal corpus subagents
+.github/skills/       reusable skills (foundations, modes, pipeline, actionable, continuous, exploration, governance, sources, authoring, development)
 .github/prompts/      optional prompt files, including subagent-assisted coverage
-.github/templates/    corpus templates and reusable documentation patterns
-scripts/              deterministic corpus utilities (validation, peer sync, ecosystem recomposition)
+.github/templates/    corpus and software-factory templates
+scripts/              deterministic corpus, factory, validation and delivery utilities
 schemas/              canonical path manifest and machine-readable schemas the validator enforces
 doc/                  application knowledge corpus skeleton
 AGENTS.md             local operating guide for humans and agents

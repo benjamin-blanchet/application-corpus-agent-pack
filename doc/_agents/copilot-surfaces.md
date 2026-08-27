@@ -4,13 +4,14 @@ audience: operator
 status: stable
 source: pack
 title: "Copilot surfaces — where the pack runs and how roles are entered"
-description: "The pack ships four human-facing roles (`corpus`, `functional-analyst`,"
+description: "How nine bounded human-facing roles are selected across Copilot surfaces."
 ---
 
 # Copilot surfaces — where the pack runs and how roles are entered
 
-The pack ships four human-facing roles (`corpus`, `functional-analyst`,
-`reliability-analyst`, `developer`). The mechanism that selects a role
+The pack ships nine human-facing roles (`corpus`, `functional-analyst`,
+`planner`, `reliability-analyst`, `developer`, `acceptance`, `factory-controller`,
+`code-reviewer`, `delivery`). The mechanism that selects a role
 differs by surface — every current surface offers explicit selection, and
 intent-based routing remains the fallback when no agent was selected.
 
@@ -27,13 +28,12 @@ intent-based routing remains the fallback when no agent was selected.
 Skills (`.github/skills/`), `AGENTS.md`, `copilot-instructions.md` and path
 instructions are honored on every surface. Only the *role entry* differs.
 
-An agent's `tools:` list filters the tools available to it — that is what
-makes the write boundary mechanical rather than declarative, so `corpus`
-cannot edit source code even if asked. GitHub does not document that
-enforcement surface by surface, so **do not assume it** on a surface where
-no agent was explicitly selected: there the write boundary is a contract the
-model holds, reinforced by the re-anchoring footer (below) and the
-`foundations/` discipline skills.
+An agent's `tools:` list removes broad tools where the surface supports that
+filter. It is one layer, not a path sandbox: fine write claims and side effects
+remain enforced by factory capability validation, the controller and CI.
+GitHub does not document tool enforcement surface by surface, so **do not
+assume it** where no agent was explicitly selected; there the boundary is also
+a contract reinforced by the re-anchoring footer and `foundations/` skills.
 
 ## Agent file contract
 
@@ -50,7 +50,7 @@ What the pack sets, and why:
 | `name` | display name (`Corpus`, `Developer`, …) | what a human sees in the picker |
 | `target` | unset | defaults to *both* `vscode` and `github-copilot`; the roles are meant to be selectable everywhere |
 | `tools` | dual vocabulary — see below | one file has to work on IDE and cloud surfaces |
-| `user-invocable` | `false` on the five `corpus-brick-*` / `corpus-control-plane-*` subagents | they are invoked by `corpus`, never chosen by a human; without this they would clutter every picker |
+| `user-invocable` | `false` on internal `corpus-brick-*` / `corpus-control-plane-*` subagents | they are invoked by `corpus`, never chosen by a human; without this they would clutter every picker |
 
 ### Why `tools:` lists two vocabularies
 
@@ -73,9 +73,9 @@ In an IDE, MCP servers are attached to the session by the IDE. On the cloud
 agent they are not: a custom agent can declare its own servers through the
 `mcp-servers` frontmatter object (ignored by VS Code and other IDEs), or the
 org can provision them. The pack ships **no** server configuration — sources
-are per-organization — but `sources/mcp-readiness-check` treats a missing
-server the same way on every surface: record it as `not_attached_to_agent`
-and never silently fall back to repository-only evidence.
+are per-organization. `sources/runtime-source-probe` records a missing
+capability only as a point-in-time run observation, and never silently falls
+back to repository-only evidence.
 
 > Surface capabilities move fast. This map reflects the GitHub Copilot
 > documentation as of August 2026 — re-check
@@ -105,7 +105,8 @@ loop.
    role, restate your intent or start a new session.
 
 `developer` edits source code and is meant for implementing a validated spec;
-it is the one role that is not read-only.
+all other roles are source-read-only. Factory Controller writes only typed
+control files through its CLI, and Delivery changes only provider PR metadata.
 
 ## Why the footer
 

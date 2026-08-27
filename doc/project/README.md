@@ -24,6 +24,7 @@ This directory contains stable application knowledge extracted from the reposito
 | `domain/` | Business entities, concepts and lifecycle states. |
 | `technical/` | Cross-cutting technical notes. |
 | `cicd/` | CI/CD pipelines, active delivery path, legacy/stale automation and recent repository activity. |
+| `runtime/` | Build/start/health/stop/reset/revision contracts for local or non-production acceptance. |
 | `roles/` | User, system and permission roles. |
 
 Do not assume these categories map to a specific framework. Adapt them to the repository reality.

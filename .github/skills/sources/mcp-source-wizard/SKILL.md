@@ -10,12 +10,12 @@ description: "Discover expected MCP and MCP-like information sources early in co
 
 Discover expected MCP and MCP-like information sources early in corpus kickstart, before the agent narrows its work to local repository evidence.
 
-This wizard asks the operator a short, structured set of questions about Jira, Confluence, Dynatrace and custom MCP servers. It produces a source candidate list, then routes each candidate to MCP readiness, information source onboarding or open questions.
+This wizard asks the operator a short, structured set of questions about Jira, Confluence, Dynatrace and custom sources. It produces a candidate list, then routes each candidate to durable source onboarding, a point-in-time runtime probe or open questions.
 
 ## Relationship to other skills
 
-- Use this skill before `sources/mcp-readiness-check`.
-- Use `sources/mcp-readiness-check` to verify whether declared MCP sources are actually available to the current IDE agent/session.
+- Use this skill before `sources/runtime-source-probe` when source inventory is incomplete.
+- Use `sources/runtime-source-probe` to observe whether a declared transport is usable in this run; never persist that result globally.
 - Use `sources/information-source-onboarding` to register sources that should become durable evidence providers.
 - Use `governance/discovery-coverage-contract` to define how much evidence must be collected from every available source.
 - Use `governance/safe-operation-guardrails` before any query or command that might have side effects or broad data access.
@@ -81,8 +81,8 @@ Update or create:
 
 ```text
 doc/_meta/mcp-source-wizard.md
-doc/_meta/mcp-readiness.md
 doc/_meta/information-sources.yaml
+doc/_meta/source-coverage.yaml
 doc/_meta/open-questions.md
 doc/_meta/kickstart-progress.md
 doc/mcp/custom-sources.md
@@ -93,18 +93,20 @@ doc/_indexes/by-source.md
 
 Record discovered sources using this shape:
 
-| Source | Type | Category | Expected use | Known mapping | IDE MCP status | Next action |
+| Source | Candidate transport | Category | Expected use | Known mapping | Contract state | Next action |
 |---|---|---|---|---|---|---|
-| Jira | standard MCP | project-activity | kickstart | project key unknown | readiness pending | ask project key and check tools |
-| Internal logs MCP | custom MCP | production-logs | production discovery | service name unknown | readiness pending | register source and smoke test |
+| Jira | standard MCP | project-activity | kickstart | project key unknown | candidate | register contract and ask project key |
+| Internal logs | custom MCP | production-logs | production discovery | service name unknown | candidate | register contract and define safe probe |
 
 ## Decision rules
 
-- If a source exists but access is not attached to the agent, mark it `expected_not_ready`, not absent.
-- If a source exists but mapping is unknown, mark `mapping_needed`.
+- If a source exists but this runtime cannot access it, keep the durable contract and report a `not_visible` runtime observation, not an absent source.
+- If a source exists but durable mapping is unknown, keep
+  `mapping_state: unknown`; a runtime attempt blocked on it reports
+  `mapping_missing`.
 - If a source is important for the requested kickstart, pause or ask for explicit approval before continuing without it.
 - If a source is useful but not required immediately, register it as a candidate and continue with clear reduced scope.
-- If a source is available and safe to read, apply the discovery coverage contract rather than taking only a tiny sample.
+- If a source is usable and safe to read in this run, apply the discovery coverage contract rather than taking only a tiny sample.
 - Never ask for credentials in chat. Ask for the IDE/tooling to be configured instead.
 
 ## Required response after wizard
@@ -118,7 +120,7 @@ MCP source inventory
 - Non-MCP sources to register:
 - Sources required before continuing:
 - Sources that can wait:
-- Next readiness checks:
+- Next runtime probes:
 ```
 
 Then update the `Corpus status` footer.
@@ -155,4 +157,5 @@ Do not:
 - treat custom MCP sources as generic prose without registering them;
 - continue with local-only discovery when the operator said important MCP sources exist;
 - ask for secrets or tokens;
-- run a query before the source has a safe access mode and readiness status.
+- run a query before the source has a safe access mode and a valid point-in-time
+  runtime observation.

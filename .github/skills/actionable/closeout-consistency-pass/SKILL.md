@@ -28,7 +28,7 @@ Use after:
 1. `doc/_meta/corpus-state.yaml`
 2. `doc/_meta/discovery-coverage.md`
 3. `doc/_meta/information-sources.yaml`
-4. `doc/_meta/mcp-readiness.md`
+4. `doc/_meta/source-coverage.yaml`
 5. `doc/_meta/mcp-source-wizard.md`
 6. `doc/_meta/deep-analysis-plan.md`
 7. `doc/_meta/open-questions.md`
@@ -43,7 +43,7 @@ Use after:
 2. **Local prod indexes**: update `known-bugs/INDEX.md`, `structural-risks/INDEX.md`, `watchlist/INDEX.md`, `root-cause-playbooks/INDEX.md`.
 3. **Production routing**: route production snapshot facts to `COMPONENT_MAP.md`, `INFRA_STATE.md`, `BASELINES.md`, `BATCH_HEALTH.md`, watchlist and playbooks where applicable.
 4. **Project activity**: if `project_activity_discovery_status` is covered, ensure a dated discovery file exists under `doc/project/activity/`.
-5. **Source registry**: if Jira/Confluence/Dynatrace were used, update `information-sources.yaml`, `mcp-readiness.md` and `mcp-source-wizard.md`.
+5. **Sources**: if Jira/Confluence/Dynatrace were used, reconcile durable contracts in `information-sources.yaml`, historical evidence in `source-coverage.yaml`, the human coverage view and source wizard candidates. Never persist current runtime capability.
 6. **Coverage details**: if an overall lane is `covered`, its detailed target table must not still be `not_started`.
 7. **Question sync**: resolved open questions must not remain active blocking questions.
 8. **State sync**: `corpus-state.yaml` must reflect actual files, not aspirations.

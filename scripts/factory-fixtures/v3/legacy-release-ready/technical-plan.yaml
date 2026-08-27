@@ -1,0 +1,21 @@
+version: 1
+spec: SPECIFICATION.md
+mode: balanced
+acceptance_criteria: [AC-001]
+lots:
+  - id: LOT-1
+    objective: Legacy implementation
+    acceptance_criteria: [AC-001]
+    allowed_paths: [src]
+    forbidden_paths: [src/secrets]
+    dependencies: []
+    contracts:
+      inputs: [spec]
+      outputs: [code]
+      invariants: [preserve-api]
+      non_goals: [refactor]
+    risk: medium
+    complexity: bounded
+    model_role: bounded_implementation
+    verification: [unit]
+    max_attempts: 2

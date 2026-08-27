@@ -145,7 +145,7 @@ When this skill runs as a reconciliation pass over an existing `NEXT_BEST_ACTION
 ## Anti-patterns
 
 - Always recommend adoption material.
-- Recommend a deep run without checking source availability.
+- Recommend a deep run without checking durable source contracts, historical coverage and the capabilities needed in this runtime.
 - Show a huge roadmap when a short next action is enough.
 - Ignore the operator's current line of thought.
 - Write "all gates passed" or "ready for team onboarding" without verifying both `corpus-state.yaml` flags and the `actionable-readiness.md` label above.

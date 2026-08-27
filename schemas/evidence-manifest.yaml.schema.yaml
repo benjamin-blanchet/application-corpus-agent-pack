@@ -1,0 +1,59 @@
+# Schema for generated delivery evidence. This file is generated from results;
+# it is never an author-written assertion of success.
+file_pattern: doc/spec/*/*/acceptance/runs/*/evidence-manifest.yaml
+written_by_skill: development/factory-evidence
+description: |
+  Immutable run provenance, environment fingerprint, case outcomes, mutation
+  cleanup, and content hashes for every evidence artifact.
+must_not_be_markdown: true
+root:
+  required_keys: [schema_version, run_id, generated_at, spec_package, subject, environment, toolchain, acceptance, publication, criteria_waivers, cases, mutations, artifacts, generation_findings, summary, verdict]
+  conditional_key: capability_receipt is required and preserved when the protected run used network, secrets or data mutation
+case:
+  required_keys: [id, criteria, outcome, attempts, user_visible_error, oracle_results, evidence_ids, evidence_bindings]
+  optional_keys: [reason, waiver]
+  enums:
+    outcome: [passed, failed, blocked, skipped, waived]
+mutation:
+  required_keys: [id, outcome, cleanup, cleanup_evidence_ids]
+  optional_keys: [authorization, cleanup_execution]
+  enums:
+    outcome: [applied, not_applied, failed]
+    cleanup: [passed, failed, pending, not_required]
+  conditional: cleanup_required in the plan requires cleanup_execution bound to the exact declared CI operation digest, timestamps and exit code
+capability_receipt:
+  required_keys: [provider, repository, workflow_ref, provider_run_id, receipt_sha256, grants]
+cleanup_execution:
+  required_keys: [operation_id, operation_digest, started_at, finished_at, exit_code, outcome]
+  enums:
+    outcome: [pass, fail]
+artifact:
+  required_keys: [id, path, media_type, pii_policy, sha256, bytes]
+  optional_keys: [pii_attestation_ref]
+  enums:
+    pii_policy: [content_scanned, masked_or_synthetic, blocked_unverified]
+  conditional: blocked_unverified always blocks delivery; media_type is derived from validated file bytes, never trusted from a filename or adapter header; masked_or_synthetic pixel evidence carries the plan-approved external pii_attestation_ref
+oracle_result:
+  required_keys: [id, outcome, recorded]
+  enums:
+    outcome: [passed, failed, blocked, skipped, waived]
+    recorded: [true, false]
+subject:
+  required_keys: [head_sha, tested_sha, source_tree_digest]
+  optional_keys: [base_sha]
+acceptance:
+  required_keys: [plan_path, plan_digest]
+publication:
+  required_keys: [mode]
+  enums:
+    mode: [ci_artifact, evidence_only_commit]
+  conditional: evidence_only_commit carries no publication SHA; the V3 evidence_committed event binds that Git revision without creating a self-reference
+ci_artifact_publication:
+  required_keys: [ci_run_id, artifact_id, artifact_url, retention_days, bundle_digest]
+evidence_binding:
+  required_keys: [requirement_id, artifact_id, type, checkpoint]
+waiver:
+  required_keys: [reason, approver_ref, approved_at]
+criterion_waiver:
+  required_keys: [criterion_id, reason, approver_ref, approved_at]
+verdict: [ready, blocked]

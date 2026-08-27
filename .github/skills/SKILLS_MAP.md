@@ -6,13 +6,13 @@ Skills are grouped by **intent**, not by chronological order of authorship. The 
 |---|---|
 | `foundations/` | Baseline rules and corpus-wide conventions every agent must respect. |
 | `exploration/` | Read-only discovery of evidence from code, Jira/Confluence, Dynatrace, CI/CD, project activity. |
-| `sources/` | Registration and readiness checks for MCP and non-MCP information sources. |
+| `sources/` | Durable source contracts, runtime access probes and historical coverage across MCP and non-MCP transports. |
 | `pipeline/` | Deep code analysis pipeline (P1 → P9). Each pass blocks the next. |
 | `actionable/` | Bricks inventory and readiness gates that turn the structural baseline into corpus the team can actually work from. |
 | `continuous/` | Persistent roadmap, runs, graph and next-best-actions for the post-kickstart enrichment loop. |
 | `authoring/` | Skills used when producing or evolving artefacts: specs, implementations, incident playbooks, knowledge capture. Shared across `developer`, `functional-analyst` and `reliability-analyst`. |
 | `governance/` | Corpus quality: validation, completeness audits, safe operation guardrails, adoption material gating, reconciliation. |
-| `development/` | Developer-workflow skills used by the `developer` agent: change triage, risk-analysis checklist, verification by change type, corpus closeout delegation, PR readiness. |
+| `development/` | The software factory: clarify, model routing, change triage, existing-code-first integration and refactor escalation, environment/CI contracts, deterministic control plane, bounded work packages, capabilities, review/correction, corpus closeout, SHA-bound acceptance/evidence and draft-PR delivery. |
 
 ## Pipeline ordering
 

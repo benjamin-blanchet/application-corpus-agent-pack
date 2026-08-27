@@ -1,17 +1,23 @@
 ---
 name: pr-readiness
 category: development
-description: "Produce a PR-ready artefact at the end of the developer lifecycle: a structured PR description that references the spec, the corpus updates, the verification outcome and the `Corpus` delegation result. The agent **produces** the description and the readiness checklist; the **ope…"
+description: "Assemble the release package and draft-PR operation after every factory gate is current. A separate Delivery role may create/update the draft with explicit authority; only a human can mark ready, approve or merge."
 ---
 # PR Readiness
 
 ## Purpose
 
-Produce a PR-ready artefact at the end of the developer lifecycle: a structured PR description that references the spec, the corpus updates, the verification outcome and the `Corpus` delegation result. The agent **produces** the description and the readiness checklist; the **operator opens** the PR via their platform (GitHub, GitLab, Bitbucket, Azure DevOps, etc.).
+Produce a release package at the end of the factory lifecycle: structured PR
+description, exact candidate/evidence provenance, replay command, current gate
+verdict and a validated draft-PR operation. A separate, capability-limited
+Delivery role may create or update the draft after explicit authority. The
+operator alone marks ready, approves and merges.
 
 ## When to use
 
-In **Step 11** of the developer lifecycle, after Step 10 (corpus closeout). All corpus writes (developer-owned and `Corpus`-delegated) must be done before this step.
+In **Step 15**, after corpus closeout, candidate freeze, acceptance/evidence
+and release review. All inputs must still match the digests reviewed by their
+gates.
 
 ## Why this step exists
 
@@ -35,8 +41,17 @@ Before producing the PR description, verify:
 - [ ] `AI_AGENT_GUIDE.md` still accurate (or an update-candidate filed if it isn't).
 - [ ] `doc/_meta/update-candidates.md` entries consumed by `Corpus` (status `consumed` or `parked` with reason).
 - [ ] Multi-repo sibling sync recommendation produced (when `multi_repo.status == declared`).
+- [ ] Full `candidate_sha` recorded; `tested_sha == candidate_sha` and the
+      attested evidence manifest agrees.
+- [ ] Every required case is passed or explicitly waived; no required failed,
+      blocked, skipped or flaky case is hidden by aggregation.
+- [ ] Lot, consolidated and release reviews cover the complete current
+      changeset; no blocking finding remains.
+- [ ] Event-derived state has no stale gate and matches its committed projection.
+- [ ] Remote head branch already exists; Delivery does not create or push it.
 
-If any item is unchecked, **do not produce the PR description**. Loop back to Step 10 (or earlier) to address it, then re-enter Step 11.
+If any item is unchecked, **do not hand off to Delivery**. Return to the
+invalidated bounded phase, then re-enter this step.
 
 ## PR description template
 
@@ -67,6 +82,11 @@ For each regression zone (Step 4.1):
 - Tests run: <unit / regression / integration / contract / e2e / manual> — <pass | fail | partial>
 - Performance: <budget vs. measured, or "no measurable impact expected — <evidence>">
 - Verifications skipped: <list with reason, or "none">
+- Candidate SHA: <full SHA>
+- Tested SHA: <full SHA, equal to candidate SHA>
+- Environment/build/schema/dataset: <identities>
+- Evidence manifest: <run/ref + digest>
+- Replay: `<one command>`
 
 ## Corpus updates
 
@@ -100,25 +120,38 @@ Suggested order:
 
 Adapt sections to the triage class: a `trivial` PR may omit "Regression coverage" and "Multi-repo sibling sync" if not applicable.
 
-## Branch and commit guidance
+## Branch and commit boundary
 
-The agent produces guidance but does not push or merge:
+Implementation roles produce guidance but do not commit, push or deliver:
 
 - **Branch name**: use the repo's existing convention if detectable from `doc/project/cicd/` or `doc/_meta/repository-map.yaml`. Otherwise propose `<type>/<ticket-or-topic>` (`feat/`, `fix/`, `refactor/`, `chore/`, `docs/`).
 - **Commit messages**: follow the repo's convention if detectable (Conventional Commits, Gitmoji, plain). The agent never amends or force-pushes published commits.
 
-## Required output
+## Required output and Delivery handoff
 
 The skill emits:
 
-1. A **PR readiness verdict**: `ready` or `blocked — <reasons>`.
-2. If `ready`: the **PR description** above, pre-filled.
-3. A **next-step prompt** for the operator: "Open the PR with the description above on <suggested branch>."
+1. A **delivery readiness verdict**: `ready_for_draft_pr` or
+   `blocked — <reasons>`.
+2. If ready: the PR description above, pre-filled from durable artefacts.
+3. A validated operation contract: provider, `draft: true`, approved base,
+   existing remote head, body path, required checks, `contents: read`,
+   `pull_requests: write`, and forbidden actions.
+4. An explicit handoff to `delivery`. It runs the full `factory-pr.mjs`
+   invocation without `--execute`, then repeats those exact arguments with
+   `--execute --authorization-receipt <external-file>` only with recorded
+   external-action authority. `create-draft` is the returned operation name,
+   not a subcommand.
 
 ## Rules
 
-- **The agent does not open the PR by default.** Opening a PR is an external side-effect action subject to `governance/safe-operation-guardrails`. The operator opens it unless they have explicitly authorized the agent to push and create PRs.
-- **No PR without corpus closeout.** Step 10 must be complete (developer writes + `Corpus` delegation finished or explicitly fallback-stated) before this step.
+- **Implementation agents do not open the PR.** Draft creation is an external
+  side effect owned only by `delivery`, subject to
+  `governance/safe-operation-guardrails`, a valid capability contract and
+  explicit operator authority. Delivery never pushes.
+- **No draft PR without current closeout, acceptance/evidence and release
+  review.** A stale basis blocks instead of producing a hopeful description.
 - **No PR while blocking questions block the change.** If `Corpus` parked a blocking question that prevents the change from being safe, the verdict is `blocked` and the description is not produced.
 - **The PR description references the spec, not the ticket alone.** The spec is the durable artefact; the ticket is the trigger.
 - **Surface the `Corpus` delegation outcome.** Reviewers need to see what the corpus now says vs. what it said before.
+- Draft creation never authorises approval, ready-for-review, merge or deploy.

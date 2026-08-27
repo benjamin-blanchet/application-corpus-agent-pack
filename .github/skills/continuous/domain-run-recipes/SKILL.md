@@ -31,7 +31,7 @@ Every recipe starts with:
 
 1. Select or create a roadmap node.
 2. Read existing linked corpus files.
-3. Run MCP/source readiness for required external sources.
+3. Read required source contracts and historical coverage, then run point-in-time probes for the transports this run needs.
 4. Use bounded read-only queries.
 5. Ask the operator when a high-value interpretation question appears.
 6. Consolidate into canonical corpus files.

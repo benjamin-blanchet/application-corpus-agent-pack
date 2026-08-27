@@ -1,16 +1,29 @@
 {
   "name": "application-corpus-agent-pack",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Copy-into-repo context engineering toolkit that turns an application repository into an agent-readable, code-true knowledge corpus.",
   "type": "module",
   "bin": {
     "corpus-pack": "scripts/cli.mjs"
   },
   "scripts": {
-    "test": "node scripts/test-pack.mjs && node scripts/test-upgrade.mjs && node scripts/test-recompute.mjs && node scripts/test-frontmatter.mjs && node --expose-gc scripts/benchmark-text-normalization.mjs",
+    "test": "node scripts/test-pack.mjs && node scripts/test-upgrade.mjs && node scripts/test-recompute.mjs && node scripts/test-frontmatter.mjs && node --expose-gc scripts/benchmark-text-normalization.mjs && node scripts/test-runtime-sources.mjs && node scripts/validate-factory.mjs --self-test && node scripts/test-factory-v3.mjs && node scripts/test-factory-delivery.mjs && node scripts/test-factory-learning.mjs",
     "sync": "node scripts/cli.mjs sync",
     "load": "node scripts/corpus-load.mjs",
     "validate": "node scripts/validate-corpus.mjs",
+    "validate-factory": "node scripts/validate-factory.mjs",
+    "validate-delivery": "node scripts/validate-delivery.mjs",
+    "check-runtime-sources": "node scripts/check-runtime-sources.mjs",
+    "factory-control": "node scripts/factory-control.mjs",
+    "factory-migrate": "node scripts/migrate-factory-v1-to-v3.mjs",
+    "factory-preflight": "node scripts/factory-preflight.mjs",
+    "factory-acceptance": "node scripts/factory-acceptance.mjs",
+    "factory-suite": "node scripts/test-factory-suite.mjs",
+    "factory-ci-check": "node scripts/factory-ci-check.mjs",
+    "factory-evidence": "node scripts/factory-evidence.mjs",
+    "factory-report": "node scripts/factory-report.mjs",
+    "factory-release": "node scripts/factory-release.mjs",
+    "factory-pr": "node scripts/factory-pr.mjs",
     "okf": "node scripts/build-okf-indexes.mjs",
     "dashboard": "node scripts/build-corpus-site.mjs",
     "update-pack": "node scripts/update-pack.mjs"

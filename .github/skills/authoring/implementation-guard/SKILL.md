@@ -1,13 +1,15 @@
 ---
 name: implementation-guard
 category: authoring
-description: "Prevent code changes that are not grounded in the corpus, a spec package and repository evidence."
+description: "Guard a Developer's reserved implementation against missing approved inputs, unobserved repository conventions and cross-owner writes. Developer returns closeout deltas; it never authors spec or corpus."
 ---
 # Implementation Guard
 
 ## Purpose
 
-Prevent code changes that are not grounded in the corpus, a spec package and repository evidence.
+Prevent code changes that are not grounded in the corpus, an approved spec and
+plan, and observed repository evidence, without giving Developer ownership of
+those durable inputs.
 
 ## Canonical paths
 
@@ -34,28 +36,38 @@ A development task must not proceed to code changes until these gates are satisf
    - relevant feature, architecture, operations, bug, risk or playbook files
 
 2. **Spec package present**
-   - Use an existing `doc/spec/...` package, or create a minimal one.
-   - If the business intent is ambiguous, route to `functional-analyst`.
-   - If the intent is clear but implementation detail is missing, complete `IMPACTS.md` and `TESTS.md` before coding.
+   - Receive an existing, approved `doc/spec/<version>/<jira>/` package.
+   - Receive an approved Planner work package.
+   - Before reservation, return a read-only, content-addressed
+     `lot_conventions_observed` handoff: sorted rule IDs plus committed example
+     paths. The Controller supplies the exact revision, byte hashes and sizes.
+   - Receive the Controller reservation only after that contract validates.
+   - Missing or ambiguous intent returns to `functional-analyst`; missing
+     decomposition returns to `planner`. Developer creates or completes
+     neither artefact.
 
 3. **Stack detected from evidence**
    - Do not infer stack from habit or previous projects.
    - Use actual repository files, imports, build scripts, routes, controllers, jobs, tests and deployment files.
+   - The implementation result must bind the preimplementation contract digest
+     and reattest the same rules against post-change example bytes.
 
-4. **Corpus update plan identified**
-   - Before coding, identify which corpus files may need updates after the change.
-   - At minimum, consider spec package, feature files, `OPERATIONS.md`, prod knowledge and indexes.
+4. **Closeout handoff targets identified**
+   - Before coding, identify which facts may affect the spec or durable corpus.
+   - Record them as prospective `spec_delta`/`corpus_delta` items, never as a
+     Developer write claim.
 
 ## Required behavior
 
-1. Read `doc/CORPUS_MAP.md` before creating or moving corpus content.
-2. Use `doc/CORPUS_MANIFEST.md` for conventions.
+1. Read `doc/CORPUS_MAP.md` to locate the smallest relevant corpus slice.
+2. Use `doc/CORPUS_MANIFEST.md` to interpret conventions; do not edit it.
 3. Do not assume the technology stack; detect it from repository evidence.
 4. Distinguish facts, hypotheses and unknowns.
-5. Use frontmatter metadata for important corpus files.
-6. Update indexes when canonical files are created or renamed.
-7. Record unresolved questions in `doc/_meta/open-questions.md`.
-8. Reconcile affected files instead of appending contradictions.
+5. Do not create, move or edit any `doc/**` file.
+6. Return spec facts/deviations/tests as `spec_delta` for Functional Analyst.
+7. Return durable knowledge and unresolved questions as `corpus_delta` for
+   Corpus, with evidence and confidence.
+8. Keep the closeout gate blocked until the owning roles reconcile the deltas.
 
 ## Stack-neutral detection hints
 
@@ -73,9 +85,10 @@ Look for package/build/config files and entry points such as:
 
 The final response for a development task must state:
 
-- which spec package was used or created;
+- which approved spec package and work package were used;
 - which corpus files were read;
 - what was implemented;
 - what tests were run or why they were not run;
-- which corpus files were updated;
-- which open questions or update candidates remain.
+- the structured `spec_delta` returned to Functional Analyst;
+- the structured `corpus_delta` returned to Corpus, including open questions;
+- confirmation that Developer wrote no `doc/**` path.

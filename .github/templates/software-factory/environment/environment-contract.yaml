@@ -1,0 +1,45 @@
+version: 1
+
+# Repository-level execution profiles. Values that vary per run come from the
+# runtime environment; credentials and tokens never belong in this file.
+profiles:
+  - id: local-acceptance
+    kind: local
+    runtime_type: server
+    automated: true
+    operations:
+      build: app-build
+      start: app-start
+      health: app-health
+      stop: app-stop
+      reset: app-reset
+      revision_probe: app-revision
+    endpoint:
+      base_url_from: FACTORY_BASE_URL
+      tls: strict
+    revision:
+      must_equal_subject_sha: true
+      source: probe
+    dependencies: []
+    auth:
+      mode: service_identity
+      actor_ref: acceptance-service
+      automated_compatible: true
+      # Local/unattested execution receives no protected credential. Add a
+      # preview/shared_nonprod profile plus a signed protected-run grant when
+      # authenticated or networked acceptance is required.
+      secret_refs: []
+    data:
+      isolation: per_run
+      dataset_id_from: FACTORY_DATASET_ID
+      dataset_version_from: FACTORY_DATASET_VERSION
+      seed_operation: null
+      cleanup_operation: null
+      cleanup_required: false
+    mutation_policy:
+      allowed: []
+      requires_human_approval: false
+    network:
+      policy: deny_by_default
+      destinations_ref: null
+      destinations: []

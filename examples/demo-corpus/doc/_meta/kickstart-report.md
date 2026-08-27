@@ -41,7 +41,7 @@ Unknown.
 
 | Item | Status | Notes |
 |---|---|---|
-| Observability source availability | unknown | Check `doc/mcp/dynatrace.md` and connected sources. |
+| Observability source contract / historical coverage | unknown | Check `information-sources.yaml`, `source-coverage.yaml` and probe the required runtime transport. |
 | Initial production snapshot | not started | Create `doc/prod/snapshots/YYYY-MM-DD-production-discovery.md` when source is available. |
 | Runtime topology mapping | unknown | Compare observed services/processes/jobs with repository components. |
 | Surprises / rapport d'étonnement | unknown | Capture only evidence-backed observations. |

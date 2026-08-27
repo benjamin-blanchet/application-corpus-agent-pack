@@ -54,7 +54,9 @@ description: "Use indexes for navigation, not for long-form knowledge."
 | Integration deep dive | `project/integrations/<system-or-flow>/README.md` |
 | Entity deep dive | `project/domain/<entity>.md` |
 | CI/CD pipelines and delivery automation | `project/cicd/PIPELINES.md` |
+| Factory CI contract | `project/cicd/FACTORY_CI.yaml` |
 | Recent repository activity and changed areas | `project/cicd/RECENT_ACTIVITY.md` |
+| Local/runtime startup contract | `project/runtime/ENVIRONMENTS.yaml` and `project/runtime/LOCAL_STARTUP.md` |
 | Known production bug | `prod/known-bugs/BUG-<id>-<slug>.md` |
 | Structural risk | `prod/structural-risks/RISK-<id>-<slug>.md` |
 | Incident analysis | `prod/incidents/YYYY-MM-DD-<slug>/ANALYSIS.md` |
@@ -97,7 +99,9 @@ Each index should point to canonical files rather than duplicating their content
 
 `doc/project/activity/` contains time-boxed discovery snapshots built from Jira, Git/source-control, PR and CI evidence. Use it to understand current project themes, delivery pressure, changed areas and adoption risks. It is not a people-performance dashboard.
 
-`doc/project/cicd/` contains CI/CD pipeline status, active-vs-legacy delivery path analysis and recent repository activity. Use it to avoid confusing old automation scripts with active delivery pipelines.
+`doc/project/cicd/` contains CI/CD pipeline status, active-vs-legacy delivery path analysis, the factory CI contract and recent repository activity. Use it to avoid confusing old automation scripts with active delivery pipelines.
+
+`doc/project/runtime/` contains the environment contract and local startup runbook required before acceptance can be executed. It records build/start/health/stop/reset/revision behavior for the actual stack, or structured not-applicable reasons when the repository is not a server application.
 
 ## Continuous enrichment
 
@@ -105,7 +109,7 @@ Each index should point to canonical files rather than duplicating their content
 
 ## Generic information sources
 
-The pack supports more than predefined tools. Register SQL log databases, APIs, file exports, dashboards, CI/CD data, manual evidence and internal tools in `doc/_meta/information-sources.yaml`. Use `/sources/information-source-onboarding` before using a new source for durable corpus claims.
+The pack supports more than predefined tools. Register durable, transport-neutral contracts for SQL log databases, APIs, file exports, dashboards, CI/CD data, manual evidence and internal tools in `doc/_meta/information-sources.yaml`; record historical evidence in `doc/_meta/source-coverage.yaml`. Use `/sources/information-source-onboarding` before a new source and `/sources/runtime-source-probe` immediately before access. Runtime capability is never global corpus state.
 
 ## Peer corpora (local workspace and remote git)
 

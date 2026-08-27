@@ -1,0 +1,72 @@
+version: 1
+subject_revision: pull_request_head
+
+pipeline:
+  active_config_ref: .github/workflows/factory-policy.yml
+  candidate_build_operation: pack-build
+  preview_mode: local
+  preview_operation: pack-test
+  build_identity_operation: pack-revision
+
+operations:
+  pack-test:
+    argv: [npm, test]
+    cwd: .
+    timeout_seconds: 1200
+    privilege: unprivileged
+    side_effect: none
+  pack-build:
+    argv: [npm, pack, --dry-run, --json]
+    cwd: .
+    timeout_seconds: 120
+    privilege: unprivileged
+    side_effect: build
+  pack-revision:
+    argv: [git, rev-parse, HEAD]
+    cwd: .
+    timeout_seconds: 30
+    privilege: unprivileged
+    side_effect: none
+  factory-delivery-validate:
+    argv: [node, scripts/validate-delivery.mjs, --lint-template, --allow-unadopted-workflows, --json]
+    cwd: .
+    timeout_seconds: 120
+    privilege: unprivileged
+    side_effect: none
+
+checks:
+  - id: factory-policy
+    provider_name: Factory policy / validate
+    operation: factory-delivery-validate
+    required: true
+    secret_access: none
+  - id: factory-application-ci
+    provider_name: Application CI / test
+    operation: pack-test
+    required: true
+    secret_access: none
+  - id: factory-delivery-validation
+    provider_name: Factory delivery / validate
+    operation: factory-delivery-validate
+    required: true
+    environment_profile: local-pack
+    secret_access: none
+
+artifacts:
+  retention_days: 30
+  required: [evidence-manifest, results-json, junit, acceptance-report]
+  conditional: [screenshots]
+
+flake_policy:
+  retry_count: 1
+  retry_pass_outcome: failed
+  retry_reason: flaky_retry
+  flaky_blocks_readiness: true
+
+security:
+  default_permissions: read
+  protected_job_requires_environment_approval: true
+  policy_definition_source: protected_base
+  controller_ref: protected_full_sha
+  candidate_checkout_credentials: none
+  actions_pinned_to_full_sha: true

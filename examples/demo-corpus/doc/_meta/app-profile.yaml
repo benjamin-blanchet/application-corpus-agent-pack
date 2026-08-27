@@ -1,3 +1,5 @@
+# DEMO profile: durable identity only. Source contracts and historical coverage
+# are separate; runtime capability is never stored here.
 application:
   name: Orders Service
   description: Fictional demo application — order intake, checkout and fulfillment for an e-commerce backend.

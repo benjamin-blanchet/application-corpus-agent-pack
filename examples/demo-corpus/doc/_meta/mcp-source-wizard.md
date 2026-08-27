@@ -4,15 +4,15 @@ status: draft
 confidence: unknown
 source: pack
 last_validated:
-title: "MCP Source Wizard"
-description: "Use this file early in corpus kickstart to inventory standard and custom MCP sources."
+title: "Source Wizard"
+description: "Use this file early in corpus kickstart to inventory connected and manual information sources."
 ---
 
-# MCP Source Wizard
+# Source Wizard
 
 Use this file early in corpus kickstart to inventory standard and custom MCP sources.
 
-This is not the readiness result. It is the source discovery questionnaire. Readiness is tracked in `doc/_meta/mcp-readiness.md`.
+This is a source discovery questionnaire, not runtime state. Register durable results in `doc/_meta/information-sources.yaml` and probe capabilities per run.
 
 ## Wizard Status
 
@@ -38,11 +38,11 @@ This is not the readiness result. It is the source discovery questionnaire. Read
 
 ## Source Candidates
 
-| Source | Type | Category | Expected use | Known mapping | IDE MCP status | Next action |
+| Source | Candidate transport | Category | Expected use | Known mapping | Contract state | Next action |
 |---|---|---|---|---|---|---|
-| Jira | standard MCP | project-activity | kickstart | unknown | readiness pending | verify server/tools and project key |
-| Confluence | standard MCP | documentation | kickstart | unknown | readiness pending | verify server/tools and spaces |
-| Dynatrace | standard MCP | metrics/traces | production discovery | unknown | readiness pending | verify server/tools and entity mapping |
+| Jira | Atlassian MCP | project-activity | kickstart | DEMO | declared | run an ephemeral bounded probe before use |
+| Confluence | Atlassian MCP | documentation | kickstart | unknown | candidate | register a durable contract before probing |
+| Dynatrace | Dynatrace MCP | metrics/traces | production discovery | demo-production | declared | run an ephemeral bounded probe before use |
 
 ## Custom MCP Candidates
 

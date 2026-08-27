@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "observed_at": "2026-01-01T00:00:00.000Z",
+  "run_id": "fixture-run-001",
+  "profile": "fixture-local",
+  "subject_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "deployed_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "instance_id": "fixture-instance",
+  "build_or_image": "fixture-build",
+  "schema_version_value": "fixture-schema-v1",
+  "dataset_id": "fixture-dataset",
+  "dataset_version": "fixture-dataset-v1",
+  "auth_actor_type": "service_identity",
+  "environment_contract_digest": "sha256:3980ac7c9e2b00ac5e262454bf4864526bac2431027667848251d3c36716fbe5",
+  "ci_contract_digest": "sha256:3b09bdf9e535b5acc99c53b4469c5c3b510d079d7d8ec4690faf2e05e5cda851",
+  "checks": [
+    { "id": "fixture-health", "kind": "health", "required": true, "outcome": "pass" },
+    { "id": "fixture-revision", "kind": "revision", "required": true, "outcome": "pass" },
+    { "id": "fixture-schema", "kind": "schema", "required": true, "outcome": "pass" },
+    { "id": "fixture-dataset", "kind": "dataset", "required": true, "outcome": "pass" },
+    { "id": "fixture-credential", "kind": "credential", "required": true, "outcome": "pass" }
+  ],
+  "operations": [
+    { "id": "fixture-health", "argv": ["node", "-e", "console.log('healthy')"], "cwd": ".", "timeout_seconds": 30, "side_effect": "none", "outcome": "pass", "stdout": "healthy\n", "stderr": "" },
+    { "id": "fixture-revision", "argv": ["node", "-e", "console.log('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')"], "cwd": ".", "timeout_seconds": 30, "side_effect": "none", "outcome": "pass", "stdout": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n", "stderr": "" },
+    { "id": "fixture-schema", "argv": ["node", "-e", "process.exit(0)"], "cwd": ".", "timeout_seconds": 30, "side_effect": "none", "outcome": "pass", "stdout": "", "stderr": "" },
+    { "id": "fixture-dataset", "argv": ["node", "-e", "process.exit(0)"], "cwd": ".", "timeout_seconds": 30, "side_effect": "none", "outcome": "pass", "stdout": "", "stderr": "" },
+    { "id": "fixture-credential", "argv": ["node", "-e", "process.exit(0)"], "cwd": ".", "timeout_seconds": 30, "side_effect": "none", "outcome": "pass", "stdout": "", "stderr": "" }
+  ],
+  "status": "ready"
+}

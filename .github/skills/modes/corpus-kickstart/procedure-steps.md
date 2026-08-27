@@ -73,12 +73,13 @@ The kickstart scope of P1→P9 and downstream lanes depends on `multi_repo.role`
 Library and secondary kickstarts honestly land at
 `code_analysis_status: partial`. That is correct — do not force `covered`.
 
-## Step 4 — MCP source wizard + readiness
+## Step 4 — Source contracts + runtime probes
 
 - Run `sources/mcp-source-wizard` early to inventory standard MCP, custom MCP and non-MCP sources.
-- Before consuming Jira, Confluence, Dynatrace or any custom MCP, run `sources/mcp-readiness-check` and update `doc/_meta/mcp-readiness.md`.
+- Register durable declarations in `doc/_meta/information-sources.yaml` and initialize historical rows in `doc/_meta/source-coverage.yaml`.
+- Before consuming Jira, Confluence, Dynatrace or any custom source, run `sources/runtime-source-probe`; keep the point-in-time result in this run only.
 - Register custom sources via `sources/information-source-onboarding`.
-- If an expected source is unavailable, use `governance/blocking-question-loop` before parking. Never silently fall back.
+- If a required source is unusable in this runtime, use `governance/blocking-question-loop` before parking. Never silently fall back or erase older evidence.
 
 ## Step 5 — Run the deep code analysis pipeline P1 → P9
 

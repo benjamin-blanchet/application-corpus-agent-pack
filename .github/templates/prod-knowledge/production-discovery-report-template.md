@@ -17,7 +17,7 @@ related_bugs: []
 
 Summarize the initial runtime state in a few factual bullets. Mention whether production observability is available, partial or unavailable.
 
-## Source availability
+## Source contract, runtime observation and historical coverage
 
 | Source | Environment | Time window | Status | Notes |
 |---|---|---|---|---|

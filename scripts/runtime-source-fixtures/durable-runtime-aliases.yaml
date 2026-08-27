@@ -1,0 +1,7 @@
+source:
+  currentAvailability: usable
+  current-source-capabilities: [jira]
+  transports:
+    - runtimeTransportState: connected
+    - runtimeAdapterObservation: present
+  aliases: {githubMcpStatus: connected, serverRunning: true}

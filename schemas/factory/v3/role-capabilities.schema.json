@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://application-corpus.dev/schemas/factory/v3/role-capabilities.schema.json",
+  "title": "Software Factory role capability policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "default", "event_actor_capabilities", "conditional_event_capabilities", "non_event_roles", "capabilities", "forbidden_for_all_agents"],
+  "properties": {
+    "version": { "const": 2 },
+    "default": { "const": "deny" },
+    "event_actor_capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["controller", "implementer", "migration", "reviewer", "acceptance", "delivery"],
+      "properties": {
+        "controller": { "$ref": "#/$defs/capabilitySet" },
+        "implementer": { "const": "plan_bound" },
+        "migration": { "const": "plan_bound" },
+        "reviewer": { "$ref": "#/$defs/capabilitySet" },
+        "acceptance": { "$ref": "#/$defs/capabilitySet" },
+        "delivery": { "$ref": "#/$defs/capabilitySet" }
+      }
+    },
+    "conditional_event_capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["acceptance"],
+      "properties": {
+        "acceptance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["network", "data_mutation"],
+          "properties": {
+            "network": { "$ref": "#/$defs/externalExecutorRequirement" },
+            "data_mutation": { "$ref": "#/$defs/externalExecutorRequirement" }
+          }
+        }
+      }
+    },
+    "non_event_roles": { "type": "array", "uniqueItems": true, "items": { "enum": ["planner", "corpus", "functional-analyst"] } },
+    "capabilities": { "const": {
+      "factory-controller": { "read": ["factory-plan", "factory-events", "factory-state", "work-results", "gate-evidence"], "write": ["factory-events", "derived-factory-state", "controller-lock"], "execute": ["factory-control", "deterministic-validation"], "network": "deny", "git_commit": "deny", "git_push": "deny", "open_pr": "deny", "data_mutation": "deny" },
+      "planner": { "read": ["approved-specification", "corpus", "repository"], "write": ["technical-plan"], "execute": ["read-only-discovery", "plan-validation"], "network": "declared-sources-read-only", "git_commit": "deny", "git_push": "deny", "open_pr": "deny", "data_mutation": "deny" },
+      "functional-analyst": { "read": ["approved-request", "corpus", "repository"], "write": ["specification-package"], "execute": ["impact-analysis", "specification-validation"], "network": "declared-sources-read-only", "git_commit": "deny", "git_push": "deny", "open_pr": "deny", "data_mutation": "deny" },
+      "implementer": { "read": ["work-package-read-paths"], "write": ["work-package-write-claims"], "execute": ["work-package-verification"], "network": "deny-unless-declared", "git_commit": "deny", "git_push": "deny", "open_pr": "deny", "data_mutation": "deny" },
+      "reviewer": { "read": ["approved-contract", "exact-diff", "verification-evidence"], "write": ["review-result-only"], "execute": ["read-only-review-checks"], "network": "deny", "git_commit": "deny", "git_push": "deny", "open_pr": "deny", "data_mutation": "deny" },
+      "corpus": { "read": ["repository", "corpus", "verified-change-results"], "write": ["corpus-owned-paths"], "execute": ["corpus-validation"], "network": "declared-sources-read-only", "git_commit": "deny", "git_push": "deny", "open_pr": "deny", "data_mutation": "deny" },
+      "acceptance": { "read": ["candidate", "acceptance-plan", "environment-contract"], "write": ["acceptance-results", "evidence-root"], "execute": ["declared-acceptance-operations"], "network": "external-attested-executor-required", "git_commit": "deny", "git_push": "deny", "open_pr": "deny", "data_mutation": "external-attested-executor-required" },
+      "delivery": { "read": ["release-package", "existing-remote-branch"], "write": ["draft-pr-metadata", "delivery-result"], "execute": ["factory-pr"], "network": "source-control-provider-only", "git_commit": "deny", "git_push": "deny", "open_pr": "draft-only", "data_mutation": "deny" }
+    } },
+    "forbidden_for_all_agents": { "const": ["approve_pr", "mark_pr_ready", "merge_pr", "force_push", "deploy", "change_branch_protection", "write_secrets"] }
+  },
+  "$defs": {
+    "externalExecutorRequirement": {
+      "const": { "control_plane": "deny", "prerequisite": "external_attested_executor" }
+    },
+    "capabilitySet": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "enum": ["read", "write", "execute", "network", "open_pr", "data_mutation"] }
+    }
+  }
+}

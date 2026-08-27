@@ -22,15 +22,27 @@ const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'corpus-pack-upgrade-tests
 const INCOMING_AGENT = '# incoming corpus agent\n';
 const LOCAL_AGENT = '# locally customized corpus agent\n';
 const STABLE_AGENT = '# stable agent\n';
-const STATE_TEMPLATE = "corpus:\n  pack_version: '1.1.0'\n  last_pack_upgrade: null\n";
+const STATE_TEMPLATE = "corpus:\n  pack_version: '1.2.0'\n  last_pack_upgrade: null\n";
+const INCOMING_ROLE_POLICY = 'version: 1\ndefault: deny\npolicy_revision: incoming\n';
+const LOCAL_ROLE_POLICY = 'version: 1\ndefault: deny\npolicy_revision: stale-local\n';
+const INCOMING_FACTORY_WORKFLOW = 'name: Factory policy v3\n';
+const LOCAL_FACTORY_WORKFLOW = 'name: Factory policy v1\n';
+const INCOMING_SPEC_TEMPLATE = '# Reusable V3 spec template\n';
+const LOCAL_SPEC_TEMPLATE = '# Reusable V1 spec template\n';
+const INCOMING_FACTORY_LEARNING = 'schema_version: 2\npromotions: []\n';
+const LOCAL_FACTORY_LEARNING = 'schema_version: 1\npromotions: []\n';
+const LEGACY_MCP_READINESS_SKILL = '# obsolete readiness skill\n';
+const LOCAL_EXTENSION_SKILL = '# local extension must survive\n';
 
 function sourceFixture() {
   return {
-    'PACK_VERSION': '1.1.0\nreleased: 2026-08-26\n',
+    'PACK_VERSION': '1.2.0\nreleased: 2026-08-26\n',
     'AGENTS.md': '# Incoming operating guide\n',
-    'scripts/tool.mjs': 'export const version = "1.1.0";\n',
+    'scripts/tool.mjs': 'export const version = "1.2.0";\n',
     'schemas/corpus-state.yaml.template': STATE_TEMPLATE,
     '.github/prompts/coverage.prompt.md': '# incoming prompt\n',
+    '.github/templates/software-factory/roles/role-capabilities.yaml': INCOMING_ROLE_POLICY,
+    '.github/templates/software-factory/delivery/factory-policy.workflow.yml': INCOMING_FACTORY_WORKFLOW,
     '.github/agents/corpus.agent.md': INCOMING_AGENT,
     '.github/agents/stable.agent.md': STABLE_AGENT,
     '.github/agents/new.agent.md': '# new agent\n',
@@ -38,8 +50,9 @@ function sourceFixture() {
     'doc/_meta/corpus-state.yaml': STATE_TEMPLATE,
     'doc/_meta/corpus-changelog.md': '| Date | Change | Reason | Actor |\n|---|---|---|---|\n',
     'doc/_meta/new-scaffold.md': '# New scaffold\n',
-    'doc/spec/template/README.md': '# Reusable spec template\n',
-    'doc/spec/1.1.0/pack-internal/README.md': '# Pack development spec\n',
+    'doc/_meta/factory-learning.yaml': INCOMING_FACTORY_LEARNING,
+    'doc/spec/template/README.md': INCOMING_SPEC_TEMPLATE,
+    'doc/spec/1.2.0/pack-internal/README.md': '# Pack development spec\n',
   };
 }
 
@@ -49,11 +62,19 @@ function existingFixture({ state = true } = {}) {
     'AGENTS.md': '# Local old operating guide\n',
     'scripts/tool.mjs': 'export const version = "1.0.0";\n',
     '.github/prompts/coverage.prompt.md': '# local old prompt\n',
+    '.github/skills/sources/mcp-readiness-check/SKILL.md': LEGACY_MCP_READINESS_SKILL,
+    '.github/skills/sources/local-extension/SKILL.md': LOCAL_EXTENSION_SKILL,
+    '.github/templates/software-factory/roles/role-capabilities.yaml': LOCAL_ROLE_POLICY,
+    '.github/templates/software-factory/delivery/factory-policy.workflow.yml': LOCAL_FACTORY_WORKFLOW,
     '.github/agents/corpus.agent.md': LOCAL_AGENT,
     '.github/agents/stable.agent.md': STABLE_AGENT,
     'doc/README.md': '# Local corpus readme\n',
     'doc/_meta/corpus-changelog.md': '| Date | Change | Reason | Actor |\n|---|---|---|---|\n| old | local | keep | team |\n',
+    'doc/_meta/factory-learning.yaml': LOCAL_FACTORY_LEARNING,
     'doc/project/features/demo/README.md': '# Local evidence\n',
+    'doc/spec/template/README.md': LOCAL_SPEC_TEMPLATE,
+    'doc/spec/template/factory-state.yaml': 'version: 1\nphase: planned\n',
+    'doc/spec/template/technical-plan.yaml': 'version: 1\nlots: []\n',
   };
   if (state) {
     files['doc/_meta/corpus-state.yaml'] = "corpus:\n  pack_version: '1.0.0'\n  custom_field: keep-me\n";
@@ -124,6 +145,17 @@ function runSync(source, target, ...args) {
   return `${result.stdout}${result.stderr}`;
 }
 
+function runSyncFailure(source, target, ...args) {
+  const result = spawnSync(process.execPath, [UPDATE_PACK, source, ...args], {
+    cwd: target,
+    encoding: 'utf8',
+    input: '',
+    maxBuffer: 8 * 1024 * 1024,
+  });
+  assert.notEqual(result.status, 0, `sync unexpectedly succeeded\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`);
+  return `${result.stdout}${result.stderr}`;
+}
+
 function fixture(name, files = {}) {
   const root = path.join(tmpRoot, name);
   fs.mkdirSync(root, { recursive: true });
@@ -133,6 +165,20 @@ function fixture(name, files = {}) {
 
 const source = fixture('source', sourceFixture());
 const tests = [
+  {
+    name: 'public-help-describes-the-versioned-doc-exceptions-and-backup',
+    run() {
+      const result = spawnSync(process.execPath, [path.join(repoRoot, 'scripts/cli.mjs'), '--help'], {
+        cwd: repoRoot,
+        encoding: 'utf8',
+      });
+      assert.equal(result.status, 0, result.stderr || result.stdout);
+      assert.match(result.stdout, /doc\/spec\/template/);
+      assert.match(result.stdout, /factory-learning\.yaml/);
+      assert.match(result.stdout, /\.corpus-pack-backups/);
+      assert.doesNotMatch(result.stdout, /existing files under doc\/ are never overwritten/i);
+    },
+  },
   {
     name: 'release-contract-is-coherent',
     run() {
@@ -145,7 +191,7 @@ const tests = [
       assert.equal(pkg.version, packVersion, 'package.json and PACK_VERSION differ');
       assert.equal(stateVersion, packVersion, 'fresh corpus-state template and PACK_VERSION differ');
       assert.equal(migrationTemplate, state, 'migration scaffold and fresh corpus-state model differ');
-      assert.match(read(repoRoot, 'PACK_VERSION'), /^1\.1\.0\r?\nreleased: 2026-08-26\r?\nnotes: .+/);
+      assert.match(read(repoRoot, 'PACK_VERSION'), /^1\.2\.0\r?\nreleased: 2026-08-26\r?\nnotes: .+/);
 
       const upgradeCore = read(repoRoot, 'scripts/lib/upgrade-core.mjs');
       assert.doesNotMatch(upgradeCore, /function\s+(?:stampState|buildReport)\b/);
@@ -206,9 +252,31 @@ const tests = [
       const output = runSync(source, target);
 
       assertExactSnapshot(target, before);
-      assert.match(output, /Version: 1\.0\.0 → 1\.1\.0/);
+      assert.match(output, /Version: 1\.0\.0 → 1\.2\.0/);
       assert.match(output, /Sync preview complete; no files were written\./);
       assert.doesNotMatch(output, /(?:Would write|Report written)/);
+    },
+  },
+  {
+    name: 'executable-factory-templates-are-replaced-with-the-runtime-on-upgrade',
+    run() {
+      const target = fixture('role-policy-target', existingFixture());
+      const output = runSync(source, target, '--apply');
+
+      assert.equal(read(target, '.github/templates/software-factory/roles/role-capabilities.yaml'), INCOMING_ROLE_POLICY);
+      assert.equal(read(target, '.github/templates/software-factory/delivery/factory-policy.workflow.yml'), INCOMING_FACTORY_WORKFLOW);
+      const backupRoot = '.corpus-pack-backups/1.0.0-to-1.2.0';
+      assert.equal(read(target, `${backupRoot}/.github/templates/software-factory/roles/role-capabilities.yaml`), LOCAL_ROLE_POLICY);
+      assert.equal(read(target, `${backupRoot}/.github/templates/software-factory/delivery/factory-policy.workflow.yml`), LOCAL_FACTORY_WORKFLOW);
+      assert.equal(read(target, `${backupRoot}/doc/spec/template/README.md`), LOCAL_SPEC_TEMPLATE);
+      assert.equal(read(target, `${backupRoot}/doc/_meta/factory-learning.yaml`), LOCAL_FACTORY_LEARNING);
+      assert.equal(read(target, `${backupRoot}/.github/skills/sources/mcp-readiness-check/SKILL.md`), LEGACY_MCP_READINESS_SKILL);
+      assert.equal(read(target, `${backupRoot}/doc/spec/template/factory-state.yaml`), 'version: 1\nphase: planned\n');
+      assert.equal(read(target, `${backupRoot}/doc/spec/template/technical-plan.yaml`), 'version: 1\nlots: []\n');
+      assert.equal(fs.existsSync(path.join(target, '.github/skills/sources/mcp-readiness-check/SKILL.md')), false);
+      assert.equal(read(target, '.github/skills/sources/local-extension/SKILL.md'), LOCAL_EXTENSION_SKILL);
+      assert.match(output, /role-capabilities\.yaml/);
+      assert.doesNotMatch(output, /role-capabilities\.yaml · template, missing locally/);
     },
   },
   {
@@ -216,23 +284,62 @@ const tests = [
     run() {
       const target = fixture('existing-target', existingFixture());
       const docBefore = snapshot(path.join(target, 'doc'));
+      docBefore.delete('_meta/factory-learning.yaml');
+      docBefore.delete('spec/template/README.md');
+      docBefore.delete('spec/template/factory-state.yaml');
+      docBefore.delete('spec/template/technical-plan.yaml');
       const output = runSync(source, target, '--apply');
 
       assertPreexistingBytes(path.join(target, 'doc'), docBefore);
-      assert.equal(read(target, 'PACK_VERSION').split(/\r?\n/)[0], '1.1.0');
+      assert.equal(read(target, 'PACK_VERSION').split(/\r?\n/)[0], '1.2.0');
       assert.equal(read(target, 'scripts/tool.mjs'), sourceFixture()['scripts/tool.mjs']);
       assert.equal(read(target, 'schemas/corpus-state.yaml.template'), STATE_TEMPLATE);
       assert.equal(read(target, '.github/prompts/coverage.prompt.md'), '# incoming prompt\n');
+      assert.equal(read(target, '.github/templates/software-factory/roles/role-capabilities.yaml'), INCOMING_ROLE_POLICY);
       assert.equal(read(target, '.github/agents/corpus.agent.md'), LOCAL_AGENT);
       assert.equal(read(target, '.github/agents/stable.agent.md'), STABLE_AGENT);
       assert.equal(read(target, '.github/agents/new.agent.md'), '# new agent\n');
       assert.equal(read(target, 'doc/_meta/new-scaffold.md'), '# New scaffold\n');
-      assert.equal(read(target, 'doc/spec/template/README.md'), '# Reusable spec template\n');
-      assert.equal(fs.existsSync(path.join(target, 'doc/spec/1.1.0/pack-internal/README.md')), false);
+      assert.equal(read(target, 'doc/spec/template/README.md'), INCOMING_SPEC_TEMPLATE);
+      assert.equal(fs.existsSync(path.join(target, 'doc/spec/template/factory-state.yaml')), false);
+      assert.equal(fs.existsSync(path.join(target, 'doc/spec/template/technical-plan.yaml')), false);
+      assert.equal(read(target, 'doc/_meta/factory-learning.yaml'), INCOMING_FACTORY_LEARNING);
+      assert.equal(read(target, '.github/templates/software-factory/delivery/factory-policy.workflow.yml'), INCOMING_FACTORY_WORKFLOW);
+      assert.equal(fs.existsSync(path.join(target, 'doc/spec/1.2.0/pack-internal/README.md')), false);
       assert.deepEqual(durableReports(target), []);
       assert.match(output, /locally-modified agent\(s\) preserved/);
+      assert.match(output, /Retire \(exact obsolete pack surfaces\): 3/);
       assert.match(output, /Locally-modified agents preserved: 1/);
       assert.match(output, /Next step: open the Corpus agent and run the pack migration\./);
+    },
+  },
+  {
+    name: 'copy-refuses-a-symlinked-target-parent-without-touching-the-external-file',
+    run() {
+      const target = fixture('copy-symlink-target', existingFixture());
+      const outside = fixture('copy-symlink-outside', { 'tool.mjs': 'external sentinel\n' });
+      fs.rmSync(path.join(target, 'scripts'), { recursive: true, force: true });
+      fs.symlinkSync(outside, path.join(target, 'scripts'), 'dir');
+
+      const output = runSyncFailure(source, target, '--apply');
+
+      assert.equal(read(outside, 'tool.mjs'), 'external sentinel\n');
+      assert.match(output, /symbolic link|symlink/i);
+    },
+  },
+  {
+    name: 'retirement-refuses-a-symlinked-parent-without-deleting-the-external-file',
+    run() {
+      const target = fixture('retire-symlink-target', existingFixture());
+      const outside = fixture('retire-symlink-outside', { 'SKILL.md': 'external sentinel\n' });
+      const legacy = path.join(target, '.github/skills/sources/mcp-readiness-check');
+      fs.rmSync(legacy, { recursive: true, force: true });
+      fs.symlinkSync(outside, legacy, 'dir');
+
+      const output = runSyncFailure(source, target, '--apply');
+
+      assert.equal(read(outside, 'SKILL.md'), 'external sentinel\n');
+      assert.match(output, /symbolic link|symlink/i);
     },
   },
   {
@@ -240,6 +347,10 @@ const tests = [
     run() {
       const target = fixture('force-target', existingFixture());
       const docBefore = snapshot(path.join(target, 'doc'));
+      docBefore.delete('_meta/factory-learning.yaml');
+      docBefore.delete('spec/template/README.md');
+      docBefore.delete('spec/template/factory-state.yaml');
+      docBefore.delete('spec/template/technical-plan.yaml');
       const output = runSync(source, target, '--apply', '--force');
 
       assertPreexistingBytes(path.join(target, 'doc'), docBefore);
@@ -255,12 +366,12 @@ const tests = [
       const target = fixture('fresh-target');
       const output = runSync(source, target, '--apply');
 
-      assert.equal(read(target, 'PACK_VERSION').split(/\r?\n/)[0], '1.1.0');
-      assert.match(read(target, 'doc/_meta/corpus-state.yaml'), /pack_version: '1\.1\.0'/);
+      assert.equal(read(target, 'PACK_VERSION').split(/\r?\n/)[0], '1.2.0');
+      assert.match(read(target, 'doc/_meta/corpus-state.yaml'), /pack_version: '1\.2\.0'/);
       assert.equal(read(target, 'schemas/corpus-state.yaml.template'), read(target, 'doc/_meta/corpus-state.yaml'));
       assert.equal(read(target, '.github/agents/corpus.agent.md'), INCOMING_AGENT);
       assert.deepEqual(durableReports(target), []);
-      assert.match(output, /Version: <missing> → 1\.1\.0/);
+      assert.match(output, /Version: <missing> → 1\.2\.0/);
       assert.match(output, /Next step: open the Corpus agent and start the corpus\./);
     },
   },
@@ -290,7 +401,7 @@ const tests = [
       assert.equal(fs.existsSync(path.join(target, 'doc/_meta/corpus-state.yaml')), false);
       assert.equal(read(target, 'schemas/corpus-state.yaml.template'), STATE_TEMPLATE);
       assert.match(output, /Pack upgrade · APPLY/);
-      assert.match(output, /Version: <missing> → 1\.1\.0/);
+      assert.match(output, /Version: <missing> → 1\.2\.0/);
       assert.match(output, /Deferred to Corpus migration: 1/);
       assert.match(output, /Next step: open the Corpus agent and run the pack migration\./);
     },

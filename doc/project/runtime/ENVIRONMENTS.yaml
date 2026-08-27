@@ -1,0 +1,41 @@
+version: 1
+profiles:
+  - id: local-pack
+    kind: local
+    runtime_type: cli
+    automated: true
+    operations:
+      build: pack-build
+      start:
+        not_applicable: true
+        reason: "This repository ships a CLI/documentation pack, not a long-running local server."
+      health:
+        not_applicable: true
+        reason: "Pack health is established by declared validation commands instead of an HTTP probe."
+      stop:
+        not_applicable: true
+        reason: "No persistent process is started by the pack validation workflow."
+      reset:
+        not_applicable: true
+        reason: "Validation uses temporary directories and does not require persistent environment reset."
+      revision_probe: pack-revision
+    endpoint:
+      not_applicable: true
+      reason: "This repository is a CLI and documentation pack with no network endpoint."
+    revision:
+      must_equal_subject_sha: true
+      source: probe
+    dependencies: []
+    auth:
+      not_applicable: true
+      reason: "Local pack validation does not authenticate to an application service."
+    data:
+      not_applicable: true
+      reason: "The pack test suite uses code fixtures and temporary files, not an application dataset."
+    mutation_policy:
+      allowed: []
+      requires_human_approval: false
+    network:
+      policy: deny_by_default
+      destinations_ref: null
+      destinations: []

@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "run_id": "fixture-run-001",
+  "candidate_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "plan_digest": "sha256:517805d71edac1711ebfb77566a83df56b8ba151d788a43e516b60f14b01f266",
+  "environment_digest": "sha256:3980ac7c9e2b00ac5e262454bf4864526bac2431027667848251d3c36716fbe5",
+  "observation_run_id": "fixture-run-001",
+  "overall_status": "passed",
+  "toolchain": {
+    "adapter": "playwright",
+    "adapter_version": "fixture-1",
+    "browser": "chromium",
+    "browser_version": "fixture-browser-1"
+  },
+  "capability_receipt": {
+    "provider": "fixture_ci",
+    "repository": "acme/fixture",
+    "workflow_ref": ".github/workflows/factory-acceptance.yml",
+    "provider_run_id": "fixture-provider-run-001",
+    "receipt_sha256": "9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a",
+    "grants": [
+      {
+        "capability": "network",
+        "authorization_ref": "auth/fixture-network",
+        "target": "fixture-local",
+        "run_id": "fixture-run-001",
+        "runner_trust": "protected",
+        "egress_allowlist": ["fixture.example.invalid"],
+        "secret_refs": ["FACTORY_FIXTURE_CREDENTIAL"],
+        "approved_by": "fixture-operator",
+        "approved_at": "2026-01-01T00:00:00.000Z"
+      },
+      {
+        "capability": "data_mutation",
+        "authorization_ref": "auth/fixture-mutation",
+        "target": "fixture-dataset",
+        "environment": "non_production",
+        "side_effects": ["create-fixture-record"],
+        "approved_by": "fixture-operator",
+        "approved_at": "2026-01-01T00:00:00.000Z"
+      }
+    ]
+  },
+  "cases": [
+    {
+      "id": "CASE-001",
+      "title": "CASE-001 fixture behaviour",
+      "outcome": "pass",
+      "attempts": 1,
+      "user_visible_error": false,
+      "oracle_results": [
+        { "id": "fixture-oracle", "outcome": "pass", "recorded": true }
+      ],
+      "evidence": [
+        { "id": "CASE-001-fixture-state", "requirement_id": "fixture-state", "type": "log", "checkpoint": "fixture-state", "path": "CASE-001.txt", "media_type": "text/plain" }
+      ]
+    }
+  ],
+  "mutations": [
+    {
+      "id": "fixture-record",
+      "outcome": "applied",
+      "cleanup": "passed",
+      "cleanup_evidence_ids": ["CASE-001-fixture-state"],
+      "authorization": {
+        "capability": "data_mutation",
+        "authorization_ref": "auth/fixture-mutation",
+        "target": "fixture-dataset",
+        "environment": "non_production",
+        "side_effects": ["create-fixture-record"],
+        "approved_by": "fixture-operator",
+        "approved_at": "2026-01-01T00:00:00.000Z",
+        "receipt_sha256": "9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a9a"
+      },
+      "cleanup_execution": {
+        "operation_id": "fixture-cleanup",
+        "operation_digest": "sha256:b396d9c4b57258a3f2bbcf9c1bef23dfc428c28daa08c917a38a10beeaa28700",
+        "started_at": "2026-01-01T00:00:01.000Z",
+        "finished_at": "2026-01-01T00:00:02.000Z",
+        "exit_code": 0,
+        "outcome": "pass"
+      }
+    }
+  ]
+}

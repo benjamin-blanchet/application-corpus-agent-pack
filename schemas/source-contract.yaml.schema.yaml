@@ -1,0 +1,43 @@
+# Contract for doc/_meta/information-sources.yaml.
+# Runtime availability is deliberately absent: it is an observation, not a
+# durable property of a source.
+
+file: doc/_meta/information-sources.yaml
+schema_version: 2
+written_by_skill: sources/information-source-onboarding
+description: Transport-neutral registry of durable source expectations, policy and safe probe definitions.
+
+root:
+  required_keys: [schema_version, sources]
+
+item:
+  inside_block: sources
+  required_fields: [id, name, category, lifecycle, requirement, mapping_state, mapping_refs, transport_semantics, transports, allowed_uses, restrictions, evidence_rules, freshness_max_days, operational_doc, owner]
+  optional_fields: [notes]
+  enums:
+    lifecycle: [candidate, declared, retired, not_applicable]
+    requirement: [required, optional]
+    mapping_state: [unknown, partial, known, not_applicable]
+    transport_semantics: [alternative, complementary]
+  forbidden_fields: [status, readiness, availability, available, connected, tools_attached_to_agent, server_running, authentication_status, permission_status, last_checked]
+  additional_fields: forbidden
+
+transport_item:
+  inside_block: transports
+  required_fields: [id, method, access_mode, required_tools, safe_probe, safe_limit, priority, fallback, consent]
+  enums:
+    method: [local-filesystem, mcp, sql, api, file-export, cli, manual, browser, clone]
+    access_mode: [read-only, write-with-approval]
+    consent: [not_required, operator_required]
+  additional_fields: forbidden
+
+rules:
+  - Source and transport ids are unique.
+  - Transport priorities are unique positive integers within one source.
+  - Alternative transports have exactly one primary (`fallback: false`) and explicitly mark every fallback.
+  - Complementary transports must all be usable and cannot be marked as fallbacks.
+  - A transport with `consent: operator_required` cannot be usable without a structured runtime attestation.
+  - Every durable source claim references a registered source id and evidence.
+  - Session visibility connectivity authentication and probe outcomes are never persisted here.
+  - CamelCase kebab compact and prefixed aliases of forbidden runtime fields are normalized and rejected by the durable-state scanner.
+  - Secrets tokens and credential-bearing connection strings are forbidden.

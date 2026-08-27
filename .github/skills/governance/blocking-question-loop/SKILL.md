@@ -76,7 +76,8 @@ doc/_meta/blocking-questions.md
 doc/_meta/open-questions.md
 doc/_meta/kickstart-progress.md
 doc/_meta/discovery-coverage.md
-doc/_meta/mcp-readiness.md
+doc/_meta/source-coverage.yaml
+doc/_meta/information-sources.yaml
 doc/_meta/mcp-source-wizard.md
 ```
 

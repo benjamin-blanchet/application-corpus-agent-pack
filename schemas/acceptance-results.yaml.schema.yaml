@@ -1,0 +1,38 @@
+# Schema for adapter-produced acceptance results. Results are generated, never
+# authored as assertions of success.
+file_pattern: doc/spec/*/*/acceptance/runs/*/results.json
+written_by_skill: development/factory-acceptance
+description: |
+  Binds one complete adapter campaign to the candidate, plan, environment
+  observation, exact test cases, evidence checkpoints, mutations and toolchain.
+must_not_be_markdown: true
+root:
+  required_keys: [schema_version, run_id, candidate_sha, plan_digest, environment_digest, observation_run_id, overall_status, toolchain, cases, mutations]
+  conditional_key: capability_receipt is controller-stamped and required whenever a protected network, secret or data-mutation grant is used
+enums:
+  overall_status: [passed, failed, blocked]
+case:
+  required_keys: [id, title, outcome, attempts, user_visible_error, oracle_results, evidence]
+oracle_result:
+  required_keys: [id, outcome, recorded]
+  enums:
+    outcome: [pass, fail, blocked, skipped]
+    recorded: [true, false]
+mutation:
+  required_keys: [id, outcome, cleanup, cleanup_evidence_ids]
+  optional_keys: [authorization, cleanup_execution]
+  conditional: cleanup_required in the plan requires one exact cleanup_execution bound to the declared CI operation digest, timestamps and exit code; cleanup=passed also requires at least one cleanup_evidence_id resolving to an artifact from the same run
+mutation_authorization:
+  required_keys: [capability, authorization_ref, target, environment, side_effects, approved_by, approved_at, receipt_sha256]
+  conditional: outcome=applied requires data_mutation, environment=non_production and an exact grant copied by the protected controller from the verified signed receipt
+capability_receipt:
+  required_keys: [provider, repository, workflow_ref, provider_run_id, receipt_sha256, grants]
+  trust: candidate-produced fields are discarded; the protected adapter stamps only a receipt verified before lifecycle or secret injection
+cleanup_execution:
+  required_keys: [operation_id, operation_digest, started_at, finished_at, exit_code, outcome]
+  enums:
+    outcome: [pass, fail]
+evidence_item:
+  required_keys: [id, path]
+  optional_keys: [requirement_id, type, checkpoint, media_type, media_pii_policy]
+  conditional: media_type is an untrusted adapter claim; media_pii_policy must equal the approved plan requirement and never grants approval by itself

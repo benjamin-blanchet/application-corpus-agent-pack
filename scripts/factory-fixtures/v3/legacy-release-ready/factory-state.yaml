@@ -1,0 +1,30 @@
+version: 1
+state: release_ready
+spec:
+  status: approved
+  approved_by: legacy-owner
+  approved_at: 2026-08-25T10:00:00Z
+technical_plan:
+  status: approved
+  approved_by: legacy-owner
+  approved_at: 2026-08-25T10:05:00Z
+execution_policy:
+  mode: balanced
+  catalogue_observed_at: 2026-08-25T10:06:00Z
+  advanced_model: old-expert
+  bounded_implementation_model: old-small
+  reviewer_model: old-reviewer
+gates:
+  implementation: passed
+  consolidated_review: passed
+  corpus_closeout: passed
+  acceptance: not_applicable
+  final_release_readiness: passed
+lots:
+  LOT-1:
+    status: completed
+    model_planned: bounded_implementation
+    model_requested: old-small
+    model_used: old-small
+tested_code_sha: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+evidence_commit_sha: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb

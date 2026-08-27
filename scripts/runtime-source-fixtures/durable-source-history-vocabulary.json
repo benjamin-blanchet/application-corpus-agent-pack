@@ -1,0 +1,16 @@
+{
+  "sourceCoverage": {
+    "status": "covered",
+    "freshness": "fresh",
+    "lastSuccessfulRun": "demo-2026-05-30",
+    "transportSemantics": "alternative",
+    "mappingState": "known",
+    "historicalAvailability": {
+      "narrative": "Historical coverage is evidence, not current runtime availability."
+    },
+    "runtimeProbePolicy": {
+      "safeProbe": "list-accessible-projects",
+      "safeLimit": 10
+    }
+  }
+}

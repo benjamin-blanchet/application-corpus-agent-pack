@@ -117,16 +117,17 @@ same corpus state — no drift between tabs.
 A rebuild failure is surfaced in the run recap (silent staleness is the
 failure mode this contract prevents).
 
-## MCP readiness
+## Source contracts and runtime access
 
-Before using Jira, Confluence, Dynatrace or any custom MCP, `Corpus` runs
-`sources/mcp-source-wizard` (if inventory is unclear), then makes MCP
-consumption explicit via an MCP readiness checkpoint. The operator must
-verify that servers are running and tools are attached.
+Before using Jira, Confluence, Dynatrace or any custom source, `Corpus` runs
+`sources/mcp-source-wizard` when inventory is unclear, reads the durable source
+contract, then uses `sources/runtime-source-probe` to make the point-in-time
+capability explicit.
 
-If an expected MCP source is unavailable, the agent records the exact
-status in `doc/_meta/mcp-readiness.md` and must not silently fall back to
-a weaker discovery path.
+If a required source is unusable, the agent reports the exact runtime
+observation and must not silently fall back to a weaker discovery path. The
+observation is not global corpus state; only evidence and historical coverage
+are capitalized in `doc/_meta/source-coverage.yaml`.
 
 For optimal token cost, **attach MCP servers in phases** — see
 `doc/_meta/agent-cache-discipline.md § MCP staging during kickstart`.

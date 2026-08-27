@@ -32,5 +32,5 @@ roadmap:
         - doc/_roadmap/CORPUS_ROADMAP.md
       next_questions: []
       next_actions:
-        - Build initial roadmap from code inventory, brick inventory and source availability.
+        - Build initial roadmap from code inventory, brick inventory, source contracts and historical coverage.
       children: []

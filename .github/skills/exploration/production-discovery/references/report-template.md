@@ -20,7 +20,7 @@ related_bugs: []
 
 ## Executive summary
 
-## Source availability
+## Source contract, runtime observation and historical coverage
 
 | Source | Environment | Time window | Status | Notes |
 |---|---|---|---|---|

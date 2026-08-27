@@ -1,0 +1,124 @@
+{
+  "version": 1,
+  "learning_baseline": {
+    "version": 1,
+    "required_promotions": [
+      {
+        "id": "FACTORY-LEARN-001",
+        "introduced_in": "1.2.0",
+        "initial_decision": "adopted",
+        "positive_fixtures": ["scheduler-independent-lots"],
+        "negative_fixtures": ["scheduler-dependent-lots-same-wave"]
+      },
+      {
+        "id": "FACTORY-LEARN-002",
+        "introduced_in": "1.2.0",
+        "initial_decision": "adopted",
+        "positive_fixtures": ["release-current-basis"],
+        "negative_fixtures": ["release-code-changed-after-ready"]
+      },
+      {
+        "id": "FACTORY-LEARN-003",
+        "introduced_in": "1.2.0",
+        "initial_decision": "adopted",
+        "positive_fixtures": ["delivery-draft-only"],
+        "negative_fixtures": ["acceptance-git-push-denied"]
+      },
+      {
+        "id": "FACTORY-LEARN-004",
+        "introduced_in": "1.2.0",
+        "initial_decision": "adopted",
+        "positive_fixtures": ["acceptance-all-cases-passed"],
+        "negative_fixtures": ["acceptance-error-after-mutation"]
+      },
+      {
+        "id": "FACTORY-LEARN-005",
+        "introduced_in": "1.2.0",
+        "initial_decision": "adopted",
+        "positive_fixtures": ["playwright-contract-replayable"],
+        "negative_fixtures": ["playwright-fixed-wait-and-shared-profile"]
+      },
+      {
+        "id": "FACTORY-LEARN-006",
+        "introduced_in": "1.2.0",
+        "initial_decision": "adopted",
+        "positive_fixtures": ["source-available-through-non-mcp-transport"],
+        "negative_fixtures": ["persistent-current-mcp-status"]
+      }
+    ]
+  },
+  "fixtures": [
+    {
+      "id": "scheduler-independent-lots",
+      "polarity": "positive",
+      "test_file": "scripts/test-factory-v3.mjs",
+      "test_name": "scheduler is pure and deterministic"
+    },
+    {
+      "id": "scheduler-dependent-lots-same-wave",
+      "polarity": "negative",
+      "test_file": "scripts/test-factory-v3.mjs",
+      "test_name": "[BF-006] a dependency and its consumer cannot run in the same wave"
+    },
+    {
+      "id": "release-current-basis",
+      "polarity": "positive",
+      "test_file": "scripts/test-factory-v3.mjs",
+      "test_name": "typed delivery plan/result records a draft PR without changing release provenance"
+    },
+    {
+      "id": "release-code-changed-after-ready",
+      "polarity": "negative",
+      "test_file": "scripts/test-factory-v3.mjs",
+      "test_name": "[BF-016] an implementation change invalidates reviews through release"
+    },
+    {
+      "id": "delivery-draft-only",
+      "polarity": "positive",
+      "test_file": "scripts/test-factory-delivery.mjs",
+      "test_name": "the delivery contract is draft-only and forbids every elevated repository action"
+    },
+    {
+      "id": "acceptance-git-push-denied",
+      "polarity": "negative",
+      "test_file": "scripts/test-factory-v3.mjs",
+      "test_name": "[BF-027] git_push is forbidden even for Delivery"
+    },
+    {
+      "id": "acceptance-all-cases-passed",
+      "polarity": "positive",
+      "test_file": "scripts/test-factory-v3.mjs",
+      "test_name": "acceptance becomes valid only when every case and oracle passed"
+    },
+    {
+      "id": "acceptance-error-after-mutation",
+      "polarity": "negative",
+      "test_file": "scripts/test-factory-v3.mjs",
+      "test_name": "[BF-028] a passing campaign cannot hide failed or user-visible-error cases"
+    },
+    {
+      "id": "playwright-contract-replayable",
+      "polarity": "positive",
+      "test_file": "scripts/test-factory-learning.mjs",
+      "test_name": "the shipped Playwright scaffold satisfies the static replay policy"
+    },
+    {
+      "id": "playwright-fixed-wait-and-shared-profile",
+      "polarity": "negative",
+      "test_file": "scripts/test-factory-learning.mjs",
+      "test_name": "the Playwright policy rejects fixed waits and persistent human profiles"
+    },
+    {
+      "id": "source-available-through-non-mcp-transport",
+      "polarity": "positive",
+      "test_file": "scripts/test-runtime-sources.mjs",
+      "test_name": "source-available-through-non-mcp-transport"
+    },
+    {
+      "id": "persistent-current-mcp-status",
+      "polarity": "negative",
+      "test_file": "scripts/test-runtime-sources.mjs",
+      "test_name": "persistent-current-mcp-status"
+    }
+  ]
+}

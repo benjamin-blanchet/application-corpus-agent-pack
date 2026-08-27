@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "observed_at": "2026-08-26T12:00:00+02:00",
+  "surface": "fixture-missing-tool-proof",
+  "run_id": "fixture-missing-tool-proof",
+  "observations": [
+    {
+      "source_id": "jira",
+      "transport_id": "atlassian-mcp",
+      "state": "usable",
+      "observed_tools": [],
+      "probe": {
+        "operation": "list-accessible-projects",
+        "outcome": "success",
+        "limitation": "",
+        "limit": 100,
+        "observed_count": 11
+      }
+    }
+  ]
+}

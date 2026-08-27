@@ -19,4 +19,5 @@ Use `exploration/ci-cd-activity-discovery` to distinguish active pipelines from 
 | File | Purpose |
 |---|---|
 | `PIPELINES.md` | CI/CD systems, jobs, triggers, active delivery path, legacy/stale candidates and risks. |
+| `FACTORY_CI.yaml` | Machine-readable operations, checks, artifact retention and safety policy used by software-factory delivery. |
 | `RECENT_ACTIVITY.md` | Recent commits, changed areas and active bricks suggested by repository activity. |

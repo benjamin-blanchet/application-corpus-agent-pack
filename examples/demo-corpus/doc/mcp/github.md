@@ -22,8 +22,8 @@ GitHub is used here in two distinct ways. Keep them separate:
 
 ## Availability
 
-Unknown until configured for the target team. Track the GitHub MCP status in
-`doc/_meta/mcp-readiness.md` (run `sources/mcp-readiness-check` first). Local
+Unknown until configured for the target team. Declare the GitHub transport in
+`doc/_meta/information-sources.yaml` and run `sources/runtime-source-probe`. Local
 Git history may still be available even when no GitHub/GitLab/Bitbucket/Azure
 DevOps MCP is attached.
 
@@ -122,7 +122,7 @@ Use contributor information only for collaboration, handover and ownership disco
 - Large generated files can pollute hotspot analysis.
 - Author names may differ across identities.
 - Commit volume is not value delivered.
-- Check source availability before relying on it.
+- Probe this runtime's capability before relying on a remote transport.
 - Save reusable query patterns in this file after validation.
 
 ### GitHub MCP pitfalls (record what this team hits)

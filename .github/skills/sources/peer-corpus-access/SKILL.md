@@ -49,7 +49,7 @@ Do **not** use this skill to *declare* a peer or change consent — that is
 2. `doc/_meta/corpus-state.yaml` — `multi_repo_status`, peer counts, last sync.
 3. `doc/mcp/github.md` — GitHub MCP tool catalog and verified per-team
    conventions (owner/org, default branch, path quirks).
-4. `doc/_meta/mcp-readiness.md` — current GitHub MCP availability status.
+4. `doc/_meta/information-sources.yaml` and `doc/_meta/source-coverage.yaml` — durable GitHub transport policy and historical evidence.
 
 If `corpus.multi_repo_status` is `not_started`, stop and route to
 `foundations/multi-repo-workspace-detection`. There is nothing to access yet.
@@ -76,7 +76,7 @@ The order reflects cost and freshness once `surface` is sparse-scoped:
 |---|---|---|---|
 | 1 | `workspace` | `source.type == path` and the path exists. | Operator owns the checkout. |
 | 2 | `git-sparse` | `source.type == git`, git + network available, clone permitted. **Default for git peers** — local dir, cheap incremental refresh, supports breadth and repeated reads. | SHA-gated diff (§ Retrieval & freshness). |
-| 3 | `github-mcp` | git clone impossible/forbidden, **or** a single cheap one-off lookup where setting up a cache isn't worth it. GitHub MCP must be `available`. | SHA-gated diff over changed files only. |
+| 3 | `github-mcp` | git clone impossible/forbidden, **or** a single cheap one-off lookup where setting up a cache isn't worth it. A runtime probe must report this transport `usable`. | SHA-gated diff over changed files only. |
 | — | unreachable | none of the above. | Record in `doc/_meta/blocking-questions.md`; mark dependent findings partial. |
 
 The choice interacts with the read strategy (§ Read strategies):
@@ -237,9 +237,9 @@ resolving many evidence paths) needs `localDir`.
   `source.url` if absent), `ref` (resolve via `get_repository` if unset — don't
   assume `main`), path `<corpus_path>/<subpath>`.
 - **Auth is the operator's environment.** The MCP carries its own token. Never
-  read, store, or echo it. `permission_blocked` / `not_attached_to_agent` from
-  `sources/mcp-readiness-check` means MCP is unusable this session — fall to
-  git-sparse.
+  read, store, or echo it. `permission_denied` / `not_visible` from
+  `sources/runtime-source-probe` means MCP is unusable in this run — fall to
+  git-sparse only when that transport is declared and allowed.
 
 ## Announcement
 
@@ -277,7 +277,7 @@ After accessing a peer in a run, update:
 - `doc/mcp/github.md` — per `sources/mcp-data-reading § Post-session
   capitalization`: verified owner/org, default branch, path quirks,
   `search_code`/compare limits discovered while reading the peer.
-- `doc/_meta/mcp-readiness.md` — GitHub row status.
+- `doc/_meta/source-coverage.yaml` — historical peer-source evidence and freshness after a successful read.
 - `doc/_meta/blocking-questions.md` — any peer that ended `unreachable` or
   could not be refreshed repeatedly.
 

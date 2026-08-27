@@ -15,7 +15,7 @@ The corpus is not a one-shot deliverable. Initial discovery should create the mo
 
 Use this skill:
 
-- during initial corpus discovery, after source availability is known;
+- during initial corpus discovery, after source contracts are registered and historical coverage is initialized;
 - whenever a run discovers a new feature, API, batch, integration, runtime service, signal, risk, question or trajectory theme;
 - when the operator asks to deepen, brainstorm or continue a subject;
 - at the end of every continuous run to update roadmap and graph state;

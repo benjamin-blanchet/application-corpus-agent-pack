@@ -134,8 +134,11 @@ Do not run package scripts blindly when they may deploy, publish, migrate, seed 
 ## Agent-specific application
 
 - `Corpus`: **never** edits application source code, in any mode. Write surface is strictly `doc/**`, `.github/agents/**`, `.github/skills/**` and pack-shipped `scripts/` files. Everything else in the repo (production code, configs, manifests, migrations, tests, CI/CD, IaC) is read-only. When a code change is needed, write it to `doc/_meta/update-candidates.md` — the follow-up is outside the corpus scope, the operator decides. See `AGENTS.md` § "Write boundaries — hard rule" and the corpus agent definition.
-- `Functional Analyst`: may create/update `doc/spec/`; must not change application source.
-- `Developer`: may edit application source only after corpus-first lifecycle and spec gate; must update/reconcile corpus after implementation.
+- `Functional Analyst`: may create/update its spec package and pre-candidate
+  acceptance plan; must not change application source or general corpus state.
+- `Developer`: may edit only Controller-reserved application source/test paths
+  after spec/plan gates; returns `spec_delta` and `corpus_delta` and never
+  writes `doc/**` directly.
 - `Reliability Analyst`: read-only by default; may produce incident analysis, playbooks, risks and watchlist entries; must not restart, deploy, purge, write DB state or close incidents.
 
 ### Corpus agent — hard prohibitions

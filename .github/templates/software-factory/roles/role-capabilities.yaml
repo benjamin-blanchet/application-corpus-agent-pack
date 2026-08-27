@@ -1,0 +1,102 @@
+version: 2
+default: deny
+event_actor_capabilities:
+  controller: [read, write, execute]
+  implementer: plan_bound
+  migration: plan_bound
+  reviewer: [read, execute]
+  acceptance: [read, execute]
+  delivery: [read, execute, network, open_pr]
+conditional_event_capabilities:
+  # Static eligibility metadata, never a per-run grant. The shipped Controller
+  # has no host verifier/executor integration, so both capabilities remain
+  # absent from the actor's effective capability set.
+  acceptance:
+    network:
+      control_plane: deny
+      prerequisite: external_attested_executor
+    data_mutation:
+      control_plane: deny
+      prerequisite: external_attested_executor
+non_event_roles: [planner, corpus, functional-analyst]
+capabilities:
+  factory-controller:
+    read: [factory-plan, factory-events, factory-state, work-results, gate-evidence]
+    write: [factory-events, derived-factory-state, controller-lock]
+    execute: [factory-control, deterministic-validation]
+    network: deny
+    git_commit: deny
+    git_push: deny
+    open_pr: deny
+    data_mutation: deny
+  planner:
+    read: [approved-specification, corpus, repository]
+    write: [technical-plan]
+    execute: [read-only-discovery, plan-validation]
+    network: declared-sources-read-only
+    git_commit: deny
+    git_push: deny
+    open_pr: deny
+    data_mutation: deny
+  functional-analyst:
+    read: [approved-request, corpus, repository]
+    write: [specification-package]
+    execute: [impact-analysis, specification-validation]
+    network: declared-sources-read-only
+    git_commit: deny
+    git_push: deny
+    open_pr: deny
+    data_mutation: deny
+  implementer:
+    read: [work-package-read-paths]
+    write: [work-package-write-claims]
+    execute: [work-package-verification]
+    network: deny-unless-declared
+    git_commit: deny
+    git_push: deny
+    open_pr: deny
+    data_mutation: deny
+  reviewer:
+    read: [approved-contract, exact-diff, verification-evidence]
+    write: [review-result-only]
+    execute: [read-only-review-checks]
+    network: deny
+    git_commit: deny
+    git_push: deny
+    open_pr: deny
+    data_mutation: deny
+  corpus:
+    read: [repository, corpus, verified-change-results]
+    write: [corpus-owned-paths]
+    execute: [corpus-validation]
+    network: declared-sources-read-only
+    git_commit: deny
+    git_push: deny
+    open_pr: deny
+    data_mutation: deny
+  acceptance:
+    read: [candidate, acceptance-plan, environment-contract]
+    write: [acceptance-results, evidence-root]
+    execute: [declared-acceptance-operations]
+    network: external-attested-executor-required
+    git_commit: deny
+    git_push: deny
+    open_pr: deny
+    data_mutation: external-attested-executor-required
+  delivery:
+    read: [release-package, existing-remote-branch]
+    write: [draft-pr-metadata, delivery-result]
+    execute: [factory-pr]
+    network: source-control-provider-only
+    git_commit: deny
+    git_push: deny
+    open_pr: draft-only
+    data_mutation: deny
+forbidden_for_all_agents:
+  - approve_pr
+  - mark_pr_ready
+  - merge_pr
+  - force_push
+  - deploy
+  - change_branch_protection
+  - write_secrets

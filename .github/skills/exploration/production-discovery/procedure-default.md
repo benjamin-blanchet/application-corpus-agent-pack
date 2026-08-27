@@ -69,4 +69,4 @@ When code is `not_started` or `started`, run **only** this section:
 6. Propose `pipeline/p1-code-tree-inventory` as the next bounded action.
 
 The inventory result still feeds `doc/prod/snapshots/YYYY-MM-DD-production-discovery.md`,
-restricted to "Source availability" and "Runtime topology observed" sections.
+restricted to "Source contract, runtime observation and historical coverage" and "Runtime topology observed" sections.

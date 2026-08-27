@@ -18,8 +18,10 @@ corpus:
   persistence_status: covered
   architecture_status: covered
   prod_status: partial
-  dynatrace_mcp_status: connected
-  jira_mcp_status: connected
+  source_contract_file: doc/_meta/information-sources.yaml
+  source_contract_version: 2
+  source_coverage_file: doc/_meta/source-coverage.yaml
+  source_coverage_version: 1
 adoption:
   maturity_stage: pre-adoption
 notes:

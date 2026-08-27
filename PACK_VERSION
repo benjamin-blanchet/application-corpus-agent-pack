@@ -1,3 +1,3 @@
-1.1.0
+1.2.0
 released: 2026-08-26
-notes: Hardens CRLF/BOM frontmatter and state reads, derived corpus-state inventories, located P4 evidence, and the sync-to-agent-migration boundary.
+notes: Adds Software Factory V3 with an event-derived control plane, bounded roles and models, transport-neutral source contracts, executable environment and acceptance evidence, independent review loops, and draft-only PR delivery.

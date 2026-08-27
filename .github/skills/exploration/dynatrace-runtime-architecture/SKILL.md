@@ -22,7 +22,7 @@ Use this skill when:
 - P5 integration/API/messaging/persistence catalogs need reconciliation against observed production behavior.
 - production signals need multi-slice correlation against code, deployments, batch windows or traffic shape.
 
-If Dynatrace is expected but not available to the current IDE agent/session, run `sources/mcp-readiness-check`, ask a blocking question and do not silently continue as if production discovery were optional.
+If Dynatrace is required but unusable in this runtime, run `sources/runtime-source-probe`, ask a blocking question and do not silently continue as if production discovery were optional.
 
 ## Code-first guard (mandatory pre-flight)
 
@@ -41,7 +41,7 @@ The guard is non-negotiable. Mapping a runtime topology without a code map produ
 
 ## Mandatory reads
 
-1. `doc/_meta/mcp-readiness.md`
+1. `doc/_meta/information-sources.yaml` and `doc/_meta/source-coverage.yaml`
 2. `doc/_meta/discovery-coverage.md`
 3. `doc/_meta/brick-inventory.yaml`
 4. `doc/project/architecture/diagrams/integration-context.md`
@@ -58,7 +58,7 @@ The guard is non-negotiable. Mapping a runtime topology without a code map produ
 ## Required behavior
 
 1. Announce a Dynatrace MCP checkpoint before querying.
-2. Verify that Dynatrace tools are attached to the current IDE agent/session.
+2. Run `sources/runtime-source-probe` and verify the required Dynatrace capabilities in this runtime.
 3. Map repository/application names to Dynatrace entities, tags, management zones and environments.
 4. Run bounded read-only queries only. Never mutate dashboards, tags, management zones, comments, deploy markers or settings.
 5. Use multiple windows when supported: 24h, 7d, 30d.

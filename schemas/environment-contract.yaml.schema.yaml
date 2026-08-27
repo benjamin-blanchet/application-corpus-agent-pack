@@ -1,0 +1,51 @@
+# Schema for repository-level software-factory execution environments.
+file: doc/project/runtime/ENVIRONMENTS.yaml
+template: .github/templates/software-factory/environment/environment-contract.yaml
+written_by_skill: development/environment-discovery
+description: |
+  Stack-neutral local, preview, and shared non-production profiles. Runtime
+  values come from environment variables; credentials are logical references.
+must_not_be_markdown: true
+root:
+  required_keys: [version, profiles]
+item:
+  inside_block: profiles
+  required_keys: [id, kind, runtime_type, automated, operations, endpoint, revision, auth, data, mutation_policy, network]
+  optional_keys: [dependencies]
+  forbidden_aliases:
+    url: endpoint
+    credentials: actor_ref
+    command: operations
+  enums:
+    kind: [local, preview, shared_nonprod]
+    runtime_type: [server, cli, library, remote_service]
+    automated: [true, false]
+profile_enums:
+  endpoint_tls: [strict, local_self_signed]
+  revision_source: [probe, image_label, build_manifest]
+  auth_mode: [service_identity, ephemeral_storage_state, interactive]
+  data_isolation: [per_run, namespaced, shared]
+  network_policy: [deny_by_default, allowlist]
+required_operation_roles: [build, start, health, stop, reset, revision_probe]
+operation_value: operation_id or {not_applicable: true, reason: <structured reason>}
+surface_not_applicable:
+  allowed_runtime_types: [cli, library]
+  endpoint: {not_applicable: true, reason: <structured reason>}
+  auth: {not_applicable: true, reason: <structured reason>}
+  data: {not_applicable: true, reason: <structured reason>}
+  forbidden_runtime_types: [server, remote_service]
+operation_side_effects:
+  build: build
+  start: start
+  health: none
+  stop: stop
+  reset: reset
+  revision_probe: none
+auth_required_keys: [mode, actor_ref, automated_compatible, secret_refs]
+auth_ephemeral_storage_state:
+  declared_input: secret_refs must include FACTORY_EPHEMERAL_STORAGE_STATE_JSON or FACTORY_EPHEMERAL_STORAGE_STATE
+  runtime_root: FACTORY_EPHEMERAL_STORAGE_ROOT is protocol-owned, absolute, private, disjoint from the repository, and never a durable credential
+  materialization: JSON input is controller-only and becomes a per-run 0700 directory plus 0600 state file after startup; JSON and state paths are never forwarded together
+data_required_keys: [isolation, dataset_id_from, dataset_version_from, seed_operation, cleanup_operation, cleanup_required]
+network_required_keys: [policy, destinations_ref, destinations]
+network_effective_enforcement: allowlist campaigns and every campaign receiving secret_refs require a signed protected-run provider receipt whose exact egress_allowlist equals destinations; local or unattested execution receives no secret

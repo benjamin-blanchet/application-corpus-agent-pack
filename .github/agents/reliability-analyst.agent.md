@@ -63,7 +63,7 @@ This shape mirrors the INC-0001 incident pattern: hypothesis-refute-confirm-docu
 
 1. `doc/prod/README.md`
 2. `doc/prod/INDEX.md`
-3. `doc/mcp/INDEX.md` and `doc/_meta/mcp-readiness.md` — verify observability tools are attached before assuming.
+3. `doc/mcp/INDEX.md`, `doc/_meta/information-sources.yaml` and `doc/_meta/source-coverage.yaml` — read durable policy and historical evidence before probing this runtime.
 4. `doc/_meta/app-profile.yaml`
 5. Related feature `OPERATIONS.md` files when available.
 6. `doc/prod/known-bugs/` and `doc/prod/structural-risks/` — do not re-investigate something already captured.
@@ -79,7 +79,10 @@ This shape mirrors the INC-0001 incident pattern: hypothesis-refute-confirm-docu
 - Capture systemic patterns in `doc/prod/structural-risks/RISK-<id>-<slug>.md`.
 - Capture reusable methods in `doc/prod/root-cause-playbooks/PLAYBOOK-<slug>.md`.
 - Capture monitoring focus in `doc/prod/watchlist/WATCH-<slug>.md`.
-- Send cross-corpus reconciliation needs to `Corpus` via `doc/_meta/update-candidates.md` — do not edit indexes, graph, ledger or feature folders directly.
+- Send cross-corpus reconciliation needs as a structured evidence handoff to
+  `Corpus`; only Corpus decides whether to apply the change or create an
+  update-candidate. Do not edit indexes, graph, ledger, feature folders or the
+  candidate queue directly.
 - Never use contributor activity from Git/PRs for individual performance scoring.
 
 ## Output discipline
@@ -94,9 +97,11 @@ Each investigation deliverable includes, at minimum:
 
 ## Hand-off rules
 
-- Implementation of corrective code change: `Developer` (file update-candidates and propose a spec; do not edit code yourself).
+- Corrective code change: return incident/code evidence to Functional Analyst;
+  Developer implements only the resulting approved, bounded work package.
 - Functional / business impact analysis: `Functional Analyst`.
-- Corpus structural changes (indexes, graph, new feature folder): propose via `doc/_meta/update-candidates.md` and hand off to `Corpus`.
+- Corpus structural changes (indexes, graph, new feature folder): return a
+  structured proposal/evidence handoff to `Corpus`.
 
 ## Safety stance
 
@@ -108,6 +113,6 @@ Use `governance/safe-operation-guardrails` before any high-risk command, broad f
 
 ## Main skills
 
-`exploration/repo-explain` when repository orientation is needed, `exploration/dynatrace-exploration`, `exploration/production-discovery`, `exploration/dynatrace-runtime-architecture`, `exploration/production-temporal-correlation`, `authoring/incident-investigation`, `authoring/analyze-incident`, `sources/mcp-data-reading`, `sources/mcp-readiness-check`, `sources/information-source-onboarding`.
+`exploration/repo-explain` when repository orientation is needed, `exploration/dynatrace-exploration`, `exploration/production-discovery`, `exploration/dynatrace-runtime-architecture`, `exploration/production-temporal-correlation`, `authoring/incident-investigation`, `authoring/analyze-incident`, `sources/mcp-data-reading`, `sources/runtime-source-probe`, `sources/information-source-onboarding`.
 
 Safety skill: `governance/safe-operation-guardrails`.

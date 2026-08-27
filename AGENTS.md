@@ -62,11 +62,18 @@ Confluence-only or Jira-only claims must use `confidence: probable` at most.
 |---|---|---|
 | `corpus` | continuous corpus enrichment, kickstart, adoption material | [.github/agents/corpus.agent.md](.github/agents/corpus.agent.md) |
 | `functional-analyst` | specs, impact analyses, acceptance criteria | [.github/agents/functional-analyst.agent.md](.github/agents/functional-analyst.agent.md) |
+| `planner` | approved technical plans, DAGs and bounded work packages | [.github/agents/planner.agent.md](.github/agents/planner.agent.md) |
 | `developer` | implementation from validated specs | [.github/agents/developer.agent.md](.github/agents/developer.agent.md) |
 | `reliability-analyst` | incident analysis, production knowledge | [.github/agents/reliability-analyst.agent.md](.github/agents/reliability-analyst.agent.md) |
+| `acceptance` | end-to-end validation on a frozen SHA, validation report | [.github/agents/acceptance.agent.md](.github/agents/acceptance.agent.md) |
+| `factory-controller` | event-derived state, scheduling, reservations and role handoffs | [.github/agents/factory-controller.agent.md](.github/agents/factory-controller.agent.md) |
+| `code-reviewer` | fresh-context structured lot and consolidated reviews | [.github/agents/code-reviewer.agent.md](.github/agents/code-reviewer.agent.md) |
+| `delivery` | create/update a draft PR after release readiness | [.github/agents/delivery.agent.md](.github/agents/delivery.agent.md) |
 
 Internal subagents (`corpus-brick-*`) parallelize broad read-only brick
-coverage on behalf of `corpus`. They never own state transitions.
+coverage on behalf of `corpus`. They never own state transitions. Factory
+workers are likewise bounded by a work package and capability contract; only
+`factory-controller` may append factory events and derive factory state.
 
 Roles are selected explicitly on every current surface — the VS Code picker,
 the agents tab on github.com, `/agent` in the GitHub Copilot app, the Copilot
@@ -97,13 +104,15 @@ read relevant corpus → create/validate spec → implement → test → update/
 Mandatory for `developer`:
 
 1. Start from the relevant corpus slice, not from the ticket alone.
-2. Use or create a `doc/spec/<version>/<jira>/` package before code changes.
-3. Implement from repository evidence and existing conventions.
-4. Update the spec and affected corpus files at closeout.
-5. Reconcile contradictions; do not leave an append-only trail.
-
-If direct corpus editing is blocked, write precise updates to
-`doc/_meta/update-candidates.md` and auto-invoke `Corpus` to consume them.
+2. Return repository evidence to `functional-analyst` and wait for an approved
+   `doc/spec/<version>/<jira>/` package plus an approved Planner work package.
+3. Implement only the reserved paths, from repository evidence and observed
+   existing conventions; a demonstrated refactor blocker returns to the
+   operator instead of widening the lot.
+4. Return structured `spec_delta` and `corpus_delta` evidence at closeout;
+   never write either owned surface directly.
+5. The Controller routes those deltas to Functional Analyst and `Corpus` and
+   keeps the candidate gate blocked until both owners reconcile contradictions.
 
 ## First run
 
@@ -115,7 +124,8 @@ bounded action. The full kickstart procedure is owned by
 `modes/kickstart` (or the persona's "Operating modes § Kickstart"
 section if the modes/ skills are not yet extracted).
 
-For pack installation, expected outputs, dashboard, MCP readiness,
+For pack installation, expected outputs, dashboard, declared source contracts,
+runtime source probes,
 adoption-rollout playbook → [doc/_agents/operator-onboarding.md](doc/_agents/operator-onboarding.md).
 
 ## Technology neutrality
@@ -141,8 +151,14 @@ important before broad team use; P2 is hygiene work.
 
 Operator-triggered only: preview and apply the safe `sync` command, then ask
 the `corpus` agent to migrate. Sync refreshes pack-owned files, confirms before
-replacing divergent local agents, and never overwrites an existing `doc/`
-file; missing scaffolds may be added. The agent runs `governance/pack-upgrade`,
+replacing divergent local agents, and preserves application corpus content.
+The reusable `doc/spec/template/**` scaffold and pack regression ledger
+`doc/_meta/factory-learning.yaml` are the only versioned `doc/` exceptions;
+their divergent previous bytes are backed up under `.corpus-pack-backups/`
+before replacement. Missing scaffolds may be added. Sync also backs up, then
+retires the exact legacy-contract allowlist declared by the upgrade engine;
+all other removed local extensions are warning-only. The agent runs
+`governance/pack-upgrade`,
 reconstructs a legacy missing state from the shipped schema scaffold, stamps
 `pack_version`, fills schema gaps, and writes a validator-clean durable
 migration report. That report is also a resumable checkpoint: an interrupted
@@ -154,6 +170,7 @@ Full procedure: [doc/_agents/pack-upgrade.md](doc/_agents/pack-upgrade.md).
 How to keep the prompt cache warm across tours and minimize token spend:
 [doc/_meta/agent-cache-discipline.md](doc/_meta/agent-cache-discipline.md).
 
-Summary: pick a model and stay on it, pre-attach MCP servers before the
-first agent message, treat `AGENTS.md` and agent personas as immutable for
-the session, `/compact` at natural task boundaries.
+Summary: keep one model stable inside each bounded execution, route models per
+approved role/work package, attach runtime source adapters before that role's
+first message, treat `AGENTS.md` and agent personas as immutable within the
+execution, and `/compact` only at natural task boundaries.
