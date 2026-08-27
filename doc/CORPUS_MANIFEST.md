@@ -26,7 +26,9 @@ The AI champion owns day-to-day team adoption when the operator decides the corp
 
 ## Content principles
 
-1. **Code is the source of truth.** Confluence and other written documentation are reconciled against code. Full source priority ranking lives in `foundations/core-rules`.
+1. **Code is the structural spine.** Authority depends on whether a claim is
+   about implementation, runtime, intent or history, and on its revision,
+   environment and time. Full rules live in `foundations/core-rules`.
 2. Verified facts over plausible prose.
 3. Small atomic files over giant catalogues.
 4. Cross-links over duplication.
@@ -64,6 +66,10 @@ type: feature | architecture | workflow | business-rules | operations | agent-gu
 status: draft | active | validated | deprecated | superseded | candidate | documented | merged | rejected
 confidence: unknown | suspected | probable | confirmed
 source: code | prod | jira | confluence | human | mixed | pack | unknown | human-agent-session
+claim_scope: implementation | runtime | intent | history
+revision: <git-sha-or-ref-or-not-applicable>
+environment: <name-or-not-applicable>
+observed_at: <ISO-8601-or-not-applicable>
 last_validated:
 related_features: []
 related_components: []
@@ -72,7 +78,10 @@ related_bugs: []
 ---
 ```
 
-**Confidence rule:** `confidence: confirmed` requires evidence from a rank 1–3 source (code, runtime config, production observability) per the source priority ranking in `foundations/core-rules`. Confluence-only or Jira-only claims must use `confidence: probable` at most. An operator interview answer corroborated by code may use `confirmed`; an operator interview answer alone uses `probable`.
+**Confidence rule:** `confidence: confirmed` requires direct evidence
+appropriate to the declared claim scope. Runtime claims identify deployed
+revision, effective environment/configuration and observation time when
+available; implementation claims identify the analyzed revision.
 
 ## Feature folder standard
 

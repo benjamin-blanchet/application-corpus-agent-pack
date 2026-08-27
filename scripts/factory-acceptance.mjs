@@ -8,10 +8,10 @@ import { materializeEphemeralStorage } from './adapters/playwright/storage.mjs';
 import { SHA_PATTERN, asArray, parseArgs, printResult, resolveContainedRegularFile, sha256File } from './lib/factory-delivery/core.mjs';
 import { runMutationCleanups } from './lib/factory-delivery/cleanup.mjs';
 import { readData, writeData } from './lib/factory-delivery/files.mjs';
-import { unavailableExecutionBoundaryFinding } from './lib/factory-delivery/execution-boundary.mjs';
+import { runExternalExecutor, unavailableExecutionBoundaryFinding } from './lib/factory-delivery/execution-boundary.mjs';
 import { executeOperation, runPreflight } from './lib/factory-delivery/operations.mjs';
 import { currentHead, verifyFileAtRevision } from './lib/factory-delivery/provenance.mjs';
-import { validateAcceptancePlan, validateCrossContracts, validateEnvironment, validateEnvironmentObservation, validateFactoryCi } from './lib/factory-delivery/validation.mjs';
+import { validateAcceptancePlan, validateAcceptanceResults, validateCrossContracts, validateEnvironment, validateEnvironmentObservation, validateFactoryCi } from './lib/factory-delivery/validation.mjs';
 
 const args = parseArgs(process.argv.slice(2));
 const root = fs.realpathSync(path.resolve(args.root || process.cwd()));
@@ -163,6 +163,10 @@ try {
   const environment = readData(environmentFile);
   const ci = readData(ciFile);
   const profile = asArray(environment.profiles).find((item) => item.id === plan.environment_profile);
+  const requestedExecutorProvider = args['executor-provider'] || process.env.FACTORY_EXECUTOR_PROVIDER || null;
+  const executorProviderFile = requestedExecutorProvider
+    ? controllerFile(requestedExecutorProvider, 'external executor provider')
+    : null;
   const findings = [
     ...validateFactoryCi(ci, { file: args.ci, root, checkPipelineFile: true }),
     ...validateEnvironment(environment, ci, { file: args.environment }),
@@ -176,14 +180,73 @@ try {
     if (!frozen.ok) findings.push({ severity: 'P0', code: 'acceptance-input-not-frozen', message: `${frozen.relative} differs from the frozen candidate` });
   }
   if (plan?.campaign?.adapter === 'manual') findings.push({ severity: 'P0', code: 'acceptance-manual-not-dispatchable', message: 'manual campaigns cannot run in unattended workflow dispatch' });
-  findings.push(unavailableExecutionBoundaryFinding('acceptance lifecycle and adapter execution'));
   const secretRefs = asArray(profile?.auth?.secret_refs);
   const networkRequired = profile?.network?.policy === 'allowlist';
   const plannedMutations = asArray(plan?.mutations);
-  if (secretRefs.length > 0) findings.push({ severity: 'P0', code: 'acceptance-secret-broker-unavailable', message: 'this installable runner has no isolated secret broker; no declared secret is forwarded to candidate code' });
-  if (networkRequired || profile?.network?.policy === 'deny_by_default') findings.push({ severity: 'P0', code: 'acceptance-egress-enforcement-unavailable', message: 'this installable runner has no attestable host egress enforcement, including for deny-by-default profiles' });
-  if (plannedMutations.length > 0) findings.push({ severity: 'P0', code: 'acceptance-mutation-broker-unavailable', message: 'this installable runner has no isolated data-mutation broker and blocks mutation campaigns before lifecycle' });
+  if (!executorProviderFile) {
+    findings.push(unavailableExecutionBoundaryFinding('acceptance lifecycle and adapter execution'));
+    if (secretRefs.length > 0) findings.push({ severity: 'P0', code: 'acceptance-secret-broker-unavailable', message: 'this installable runner has no isolated secret broker; no declared secret is forwarded to candidate code' });
+    if (networkRequired || profile?.network?.policy === 'deny_by_default') findings.push({ severity: 'P0', code: 'acceptance-egress-enforcement-unavailable', message: 'this installable runner has no attestable host egress enforcement, including for deny-by-default profiles' });
+    if (plannedMutations.length > 0) findings.push({ severity: 'P0', code: 'acceptance-mutation-broker-unavailable', message: 'this installable runner has no isolated data-mutation broker and blocks mutation campaigns before lifecycle' });
+  }
   if (process.env.FACTORY_ACCEPTANCE_CAPABILITY_RECEIPT) findings.push({ severity: 'P0', code: 'acceptance-capability-receipt-unsupported', message: 'a declarative receipt cannot replace missing process isolation, secret brokering or host egress enforcement' });
+  let externalExecution = null;
+  if (executorProviderFile && findings.length === 0) {
+    try {
+      const planDigest = sha256File(planFile);
+      const environmentDigest = sha256File(environmentFile);
+      const ciDigest = sha256File(ciFile);
+      externalExecution = await runExternalExecutor({
+        providerFile: executorProviderFile,
+        request: {
+          schema_version: 1,
+          candidate_root: root,
+          controller_root: controllerRoot,
+          run_id: args['run-id'],
+          subject_sha: subjectSha,
+          inputs: {
+            plan: { path: planFile, sha256: planDigest },
+            environment: { path: environmentFile, sha256: environmentDigest },
+            ci: { path: ciFile, sha256: ciDigest },
+          },
+          outputs: {
+            observation: path.resolve(args['observation-out']),
+            lifecycle: args['lifecycle-out'] ? path.resolve(args['lifecycle-out']) : null,
+            evidence_root: path.resolve(args['evidence-root']),
+          },
+          profile: profile?.id || null,
+          adapter: plan?.campaign?.adapter || null,
+          requirements: {
+            network: networkRequired || profile?.network?.policy === 'deny_by_default',
+            secrets: secretRefs.length > 0,
+            mutations: plannedMutations.length > 0,
+            secret_refs: secretRefs,
+            egress_allowlist: asArray(profile?.network?.destinations),
+          },
+        },
+      });
+      if (externalExecution.observation.run_id !== args['run-id']
+        || externalExecution.observation.profile !== profile.id
+        || String(externalExecution.observation.subject_sha || '').toLowerCase() !== subjectSha
+        || externalExecution.observation.environment_contract_digest !== environmentDigest
+        || externalExecution.observation.ci_contract_digest !== ciDigest) {
+        throw new Error('external executor observation is not bound to the exact run, profile and frozen inputs');
+      }
+      findings.push(...validateEnvironmentObservation(externalExecution.observation, { environment, ci }));
+      findings.push(...validateAcceptanceResults(externalExecution.results, {
+        subjectSha,
+        observationRunId: args['run-id'],
+        planDigest,
+        environmentDigest,
+        plan,
+        environmentProfile: profile,
+        ci,
+      }));
+    } catch (error) {
+      findings.push({ severity: 'P0', code: 'acceptance-external-executor-invalid', message: String(error?.message || error) });
+      externalExecution = null;
+    }
+  }
   if (findings.length) {
     const evidenceRoot = path.resolve(args['evidence-root']);
     const observation = blockedObservation({
@@ -212,6 +275,34 @@ try {
     });
     printResult({ title: 'Factory acceptance lifecycle', summary: { findings: findings.length }, findings }, args.json === true);
     process.exit(2);
+  }
+
+  if (externalExecution) {
+    const executor = {
+      provider: externalExecution.provider,
+      boundary: externalExecution.boundary,
+      attestation: externalExecution.attestation,
+    };
+    writeData(path.resolve(args['observation-out']), externalExecution.observation);
+    writeData(path.join(path.resolve(args['evidence-root']), 'results.json'), externalExecution.results);
+    if (args['lifecycle-out']) writeData(path.resolve(args['lifecycle-out']), {
+      schema_version: 1,
+      run_id: args['run-id'],
+      subject_sha: subjectSha,
+      capability_receipt: externalExecution.results.capability_receipt || null,
+      lifecycle: externalExecution.lifecycle,
+      adapter: externalExecution.adapter,
+      boundary: { status: 'attested', ...executor },
+    });
+    printResult({
+      title: 'Factory acceptance lifecycle',
+      summary: { status: 'passed', findings: 0, executor: externalExecution.provider.id },
+      lifecycle: externalExecution.lifecycle,
+      adapter: externalExecution.adapter,
+      executor,
+      findings: [],
+    }, args.json === true);
+    process.exit(0);
   }
 
   const lifecycleEnv = runtimeEnvironment(profile);

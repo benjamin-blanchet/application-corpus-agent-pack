@@ -90,7 +90,10 @@ Run bounded read-only searches for these intents when supported by the Confluenc
 | Cross-app pages | integration names, upstream/downstream names from P5/Dynatrace | top 50 | adjacent apps mentioning this product |
 | Recently modified pages | app aliases with modified/recent filter when supported | top 50 | current attention and drift indicators |
 
-Search snippets are not durable evidence. Read relevant pages and record page ID, space, last modified date and trust score. Confluence is rank 7: it explains intent and history, not current truth until reconciled.
+Search snippets are not durable evidence. Read relevant pages and record page
+ID, space, last modified date and trust score. Confluence can evidence intent
+or history; it does not prove runtime without deployed-revision and environment
+evidence.
 
 ## Output files
 

@@ -10,7 +10,7 @@ description: "Universal behavioral discipline for every human-facing agent in th
 Universal behavioral discipline for every human-facing agent in the pack. Sister
 skill to `foundations/core-rules`:
 
-- `foundations/core-rules` governs **what is true** (source priority, evidence,
+- `foundations/core-rules` governs **what is true** (claim scope, source authority, evidence,
   confidence, stack neutrality).
 - `foundations/core-discipline` governs **how the agent acts** (assumptions,
   scope, verification, context handling).

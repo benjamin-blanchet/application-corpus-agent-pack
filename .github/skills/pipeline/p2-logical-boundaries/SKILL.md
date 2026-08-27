@@ -174,7 +174,9 @@ A single high-level diagram of the detected primary architectural style. Show th
 - Inline Mermaid only. No external image files.
 - Each diagram file starts with frontmatter `type: diagram, source: code, generated_from: <pipeline pass>`.
 - Each diagram has a one-paragraph legend below explaining how to read it and which `logical-boundaries.yaml` section it was generated from.
-- Diagrams are never sourced from Confluence pages. If a Confluence diagram exists for the same scope, reference it under "External references" but do not import its shapes — Confluence is rank 7, code is rank 1.
+- Implementation diagrams are generated from the analyzed code revision. If a
+  Confluence diagram exists, reference it as dated intent/history and reconcile
+  differences; do not import its shapes as implementation evidence.
 - A diagram out of sync with the YAML state is a P0 reconciliation issue caught by P9.
 
 ### `logical-boundaries.yaml` schema

@@ -129,8 +129,8 @@ observation and must not silently fall back to a weaker discovery path. The
 observation is not global corpus state; only evidence and historical coverage
 are capitalized in `doc/_meta/source-coverage.yaml`.
 
-For optimal token cost, **attach MCP servers in phases** — see
-`doc/_meta/agent-cache-discipline.md § MCP staging during kickstart`.
+Attach only the source adapters needed for the active phase — see
+`doc/_meta/agent-cache-discipline.md § Source adapters`.
 
 ## Kickstart visibility
 

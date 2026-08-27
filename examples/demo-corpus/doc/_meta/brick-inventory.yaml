@@ -1,5 +1,0 @@
-# DEMO DATA — fictional brick inventory for dashboard showcase only.
-brick_inventory:
-  summary:
-    total: 18
-    actionable: 12

@@ -33,7 +33,12 @@ Without this pass, the corpus may pass earlier gates while still containing sile
 1. Walk every output file from P1–P8 and **collect contradictions** into a single ledger.
 2. For each contradiction, attempt resolution in this order:
    a. Re-read the source files cited on each side. Often one side is stale.
-   b. Apply the **source priority ranking** from `foundations/core-rules`: code (rank 1) > migrations + runtime config (rank 2) > production observability (rank 3) > tests (rank 4) > operator interview (rank 5) > Jira/PRs/commits (rank 6) > **Confluence and other written documentation (rank 7)** > tribal knowledge (rank 8). When two sides come from different ranks, the higher-rank source wins by default; record the rank that won.
+   b. Apply the scoped authority model from `foundations/core-rules`. Classify
+      each side as `implementation`, `runtime`, `intent` or `history`; attach
+      revision, environment and observation time where applicable. Reconcile
+      only like-for-like claims. Preserve both when they describe different
+      valid revisions/scopes; otherwise record the evidence that resolved the
+      contradiction.
    c. If both sides come from the same rank (e.g. two code-level claims), open a blocking question via `governance/blocking-question-loop` or a structured round via `pipeline/per-brick-interview`.
    d. If the operator cannot decide, record `accepted_unresolved` with the reason and move it to `doc/_meta/open-questions.md` with high priority.
 3. Update every output file affected so they no longer contradict each other. When the loser is Confluence, preserve the Confluence claim under a "Confluence-stated, does not match code" sub-section with page ID, last-modified date and the date of reconciliation — do not delete it; it is historical evidence and may indicate a documentation defect the team should fix.
@@ -101,7 +106,7 @@ contradictions:
     resolution:
       method: "source_priority_rank"
       winner_rank: 1
-      result: "Code wins. Kafka is canonical. JMS path documented as legacy in feature folder."
+      result: "Implementation at revision abc uses Kafka; JMS is retained as history for the previous deployment."
       files_updated:
         - "doc/project/features/archive/README.md"
         - "doc/project/features/archive/ARCHITECTURE.md"

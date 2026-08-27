@@ -21,7 +21,7 @@ reverse:
 | `doc/architecture/BOUNDARY.md` + mermaid | **Derived view**, regenerated — never hand-edited. |
 | `doc/project/architecture/INTEGRATION_MAP.md`, `.../diagrams/integration-*`, `.../services/MESSAGING.md` | Human prose/diagrams — must agree with the contract. |
 | `doc/_indexes/by-api.md` | A **view** over inbound sync edges. |
-| `doc/prod/SERVICE_FLOWS.md` | Runtime-observed flows (rank 3) — **reconciled** against the contract; code wins. |
+| `doc/prod/SERVICE_FLOWS.md` | Runtime-observed flows scoped to an environment, deployed revision and time; reconcile drift against the implementation contract. |
 | `doc/_meta/app-profile.yaml` `external_systems` / `data_stores` | Counterparties referenced by edges. |
 
 **Why it exists:** if every app in the ecosystem declares its boundary in the
@@ -178,7 +178,8 @@ as tasks to dispatch.
 - Non-normalized channels (raw concrete path with ids, broker-specific casing)
   that won't join across apps.
 - `confidence: confirmed` from Confluence/Jira alone.
-- Letting `SERVICE_FLOWS.md` (runtime) override the contract — code wins;
-  preserve the runtime observation as reconciliation, not ground truth.
+- Silently replacing the implementation contract with `SERVICE_FLOWS.md`.
+  Preserve runtime observations with environment/revision/time and reconcile
+  deployment or configuration drift explicitly.
 - Duplicating boundary facts in prose without updating the contract (append-only
   drift).

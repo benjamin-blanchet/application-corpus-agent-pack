@@ -37,7 +37,7 @@ In **Step 4** of the developer lifecycle, after the change surface has been mapp
 | **God file / class** | Oversized file flagged in P7 | Touch only the targeted symbol; do not refactor opportunistically |
 | **Parallel implementation** | P7 finding | Reconcile or stop. **Do not extend the duplicate path.** |
 | **Dead code in proximity** | P7 finding | Do not bring dead code back to life by accident |
-| **Style/naming deviation** | P6 sheet says X, code says Y | Code wins for now; flag as a P9 reconciliation candidate |
+| **Style/naming deviation** | P6 sheet says X, code says Y | Code at the reviewed revision anchors implementation; flag stale guidance for P9 reconciliation |
 | **Missing or stale tests near the change** | Empty/sparse test sibling | Add minimal coverage **before** modifying the symbol |
 
 ## 4.3 Performance risk

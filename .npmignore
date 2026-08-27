@@ -1,9 +1,6 @@
 # Repo-only assets — not part of the installable pack, and never copied into a
 # consumer repo (also enforced by the denylist in scripts/lib/upgrade-core.mjs).
-# Keeping them out of the published/npx package avoids shipping the demo corpus
-# and README screenshots to every install.
 docs/
-examples/
 .github/workflows/
 
 # Repository development specs are not consumer scaffolds. Keep only the

@@ -31,6 +31,18 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { createInterface } from 'node:readline/promises';
+import {
+  detectLegacyProfiles,
+  loadInstallState,
+  loadProfileConfig,
+  PROFILE_ORDER,
+  profileForPath,
+  resolveProfiles,
+  sourceTreeDigest,
+  targetFileDigest,
+  writeInstallState,
+  writeOfflineBundles,
+} from './profile-bundles.mjs';
 
 // ----------------------------------------------------------------------------
 // Bucket definitions (pure — no filesystem state).
@@ -56,6 +68,7 @@ const BUCKET_A_PREFIXES = [
   '.github/prompts/',     // shipped prompt assets are pack-owned and refreshed with their skills
   '.github/templates/software-factory/', // executable workflows/contracts must stay version-aligned with scripts and schemas
   'doc/spec/template/', // reusable executable V3 package; instantiated doc/spec/<version> packages remain corpus-owned
+  'pack/',             // executable profile definitions used by sync and the offline CLI
   'scripts/',          // all pack scripts (incl. scripts/lib/**) are pack-owned — replaced wholesale
   'schemas/',          // machine-readable contracts the validator enforces — pack-owned, not team data; refreshed so they never drift behind an updated validator
 ];
@@ -89,7 +102,19 @@ const SOURCE_IGNORE_ROOT_FILES = new Set([
   'README.md', 'LICENSE.md', 'package.json', 'package-lock.json',
   '.gitignore', '.npmignore', '.DS_Store',
 ]);
-const SOURCE_IGNORE_ROOT_DIRS = ['docs/', 'examples/', '.github/workflows/', '.corpus-pack-backups/'];
+const SOURCE_IGNORE_ROOT_DIRS = [
+  'docs/',
+  'examples/',
+  '.github/workflows/',
+  '.corpus-pack-backups/',
+  '.corpus-pack/',
+  // Lazy corpus sections are materialized from the always-local templates
+  // only after the application actually exposes the corresponding concept.
+  'doc/project/apis/',
+  'doc/project/batchs/',
+  'doc/project/features/',
+  'doc/prod/',
+];
 
 function isIgnoredSource(rel) {
   const segments = rel.split(/[\\/]/);
@@ -287,9 +312,10 @@ async function confirmPrompt(question) {
  * @param {string} o.target      absolute path to the consumer repo root
  * @param {boolean} [o.apply]    write changes (default: dry-run)
  * @param {boolean} [o.force]    overwrite locally-modified agents without asking
+ * @param {string[]} [o.profiles] profiles to activate; defaults to core on a fresh install
  * @returns {Promise<object>}    summary { changed, kept, plan }
  */
-export async function runUpgrade({ sourceRoot, target, apply = false, force = false }) {
+export async function runUpgrade({ sourceRoot, target, apply = false, force = false, profiles = null }) {
   sourceRoot = realDirectoryRoot(sourceRoot, 'source pack');
   target = realDirectoryRoot(target, 'target repository');
 
@@ -301,19 +327,35 @@ export async function runUpgrade({ sourceRoot, target, apply = false, force = fa
   };
 
   const sourceVersion = firstLine(readSource('PACK_VERSION')) || '<unknown>';
-  const localVersion = firstLine(readLocal('PACK_VERSION')) || '<missing>';
+  const previousInstallState = loadInstallState(target);
+  const localVersion = firstLine(readLocal('PACK_VERSION')) || previousInstallState?.packVersion || '<missing>';
   // Very old corpora may predate PACK_VERSION. A canonical corpus marker still
   // makes this an upgrade: treating it as a fresh install could copy the new
   // state template and erase the fact that the previous version is unknown.
   const hasExistingCorpus = readLocal('doc/CORPUS_MANIFEST.md') !== null
     || readLocal('doc/_meta/corpus-state.yaml') !== null;
-  const isInstall = localVersion === '<missing>' && !hasExistingCorpus;
+  const isInstall = localVersion === '<missing>' && !hasExistingCorpus && !previousInstallState;
+
+  const sourceFiles = walk(sourceRoot)
+    .map((p) => toPosix(path.relative(sourceRoot, p)))
+    .filter((rel) => !isIgnoredSource(rel));
+  const sourceSet = new Set(sourceFiles);
+  const profileConfig = loadProfileConfig(sourceRoot);
+  const activeProfiles = profiles?.length
+    ? resolveProfiles(profiles, profileConfig)
+    : previousInstallState?.activeProfiles?.length
+      ? resolveProfiles(previousInstallState.activeProfiles, profileConfig)
+      : isInstall
+        ? ['core']
+        : detectLegacyProfiles(target, sourceFiles, profileConfig);
+  const activeProfileSet = new Set(activeProfiles);
 
   const plan = {
     replace: [],     // {rel, why}  — pack-owned, content differs
     copyNew: [],     // {rel, why}  — file missing locally
     defer: [],       // {rel, why}  — migration-owned file missing on upgrade
     confirm: [],     // {rel, why}  — local agent differs → needs confirmation
+    conflict: [],    // {rel, incomingRel} — fresh-install collision, preserved locally
     preserve: [],    // {rel, hint} — template diverged from local, NOT touched
     backup: [],      // {rel, backupRel} — compatibility copy before replacing or retiring a formerly customizable pack surface
     retire: [],      // {rel, why}  — exact obsolete pack-owned surface
@@ -359,12 +401,35 @@ export async function runUpgrade({ sourceRoot, target, apply = false, force = fa
     }
   }
 
-  // Walk the source pack and classify every file (skipping repo-only paths).
-  const sourceFiles = walk(sourceRoot)
-    .map((p) => toPosix(path.relative(sourceRoot, p)))
-    .filter((rel) => !isIgnoredSource(rel));
-  const sourceSet = new Set(sourceFiles);
+  // Classify only active profile files. Inactive profiles are retained in
+  // verified local bundles and can be enabled later without network access.
   for (const rel of sourceFiles) {
+    if (!activeProfileSet.has(profileForPath(rel, profileConfig))) continue;
+    const installedRecord = previousInstallState?.managedFiles?.[rel];
+    const localDigest = existsLocal(rel) ? targetFileDigest(target, rel) : null;
+    const protectedInstalledCollision = !isInstall
+      && !force
+      && previousInstallState
+      && existsLocal(rel)
+      && differs(rel)
+      && (!installedRecord || installedRecord.sha256 !== localDigest);
+    if ((isInstall || protectedInstalledCollision) && existsLocal(rel) && differs(rel)) {
+      const versionSlug = String(sourceVersion).replace(/[^A-Za-z0-9._-]/g, '-');
+      plan.conflict.push({
+        rel,
+        incomingRel: `.corpus-pack/incoming/${versionSlug}/${rel}`,
+        why: isInstall
+          ? 'pre-existing project file preserved; incoming pack version staged for review'
+          : 'unowned or locally modified file preserved; incoming pack version staged for review',
+      });
+      const incoming = inspectContained(target, plan.conflict.at(-1).incomingRel, { allowMissing: true, label: `incoming ${rel}` });
+      if (incoming.exists) {
+        const proposed = readContainedFile(sourceRoot, rel, { label: `incoming source ${rel}` });
+        const staged = readContainedFile(target, plan.conflict.at(-1).incomingRel, { label: `incoming ${rel}` });
+        if (!proposed.equals(staged)) throw new Error(`Refusing to overwrite a different staged incoming file: ${plan.conflict.at(-1).incomingRel}`);
+      }
+      continue;
+    }
     if (isAgent(rel)) classifyAgentFile(rel);
     else if (isBucketA(rel)) classifyAFile(rel);
     else classifyBFile(rel);
@@ -383,14 +448,16 @@ export async function runUpgrade({ sourceRoot, target, apply = false, force = fa
   for (const rel of localUnderManaged) {
     if (sourceSet.has(rel)) continue;
     if (RETIRED_PACK_FILES.has(rel)) {
-      if (!isInstall) {
+      if (isInstall) {
+        plan.warnRemoved.push({ rel, why: 'pre-existing path resembles a retired pack file; preserved on first install' });
+      } else {
         plan.backup.push({
           rel,
           backupRel: backupRelativePath(localVersion, sourceVersion, rel),
           why: 'preserve exact pre-upgrade bytes before reviewed retirement',
         });
+        plan.retire.push({ rel, why: RETIRED_PACK_FILES.get(rel) });
       }
-      plan.retire.push({ rel, why: RETIRED_PACK_FILES.get(rel) });
     }
     else plan.warnRemoved.push({ rel });
   }
@@ -412,11 +479,13 @@ export async function runUpgrade({ sourceRoot, target, apply = false, force = fa
   log(`  Version: ${localVersion} → ${sourceVersion}`);
   log(`  Source:  ${sourceRoot}  (version ${sourceVersion})`);
   log(`  Target:  ${target}  (version ${localVersion})`);
+  log(`  Profiles: ${activeProfiles.join(', ')} (${isInstall ? 'core is the fresh-install default' : 'preserved/detected from the existing installation'})`);
 
   header(`Replace (bucket A — pack-owned): ${plan.replace.length}`); row(plan.replace);
   header(`New files (missing locally): ${plan.copyNew.length}`); row(plan.copyNew);
   header(`Deferred to Corpus migration: ${plan.defer.length}`); row(plan.defer);
   header(`Agents modified locally (confirm before overwrite${force ? ' — forced' : ''}): ${plan.confirm.length}`); row(plan.confirm);
+  header(`Protected conflicts preserved: ${plan.conflict.length}`); row(plan.conflict.map((item) => ({ rel: `${item.rel} -> ${item.incomingRel}`, why: item.why })));
   header(`Preserve (bucket B — local content differs, NOT touched): ${plan.preserve.length}`); row(plan.preserve);
   header(`Compatibility backups before replacement or retirement: ${plan.backup.length}`); row(plan.backup.map((item) => ({ rel: `${item.rel} -> ${item.backupRel}`, why: item.why })));
   header(`Retire (exact obsolete pack surfaces): ${plan.retire.length}`); row(plan.retire);
@@ -429,6 +498,24 @@ export async function runUpgrade({ sourceRoot, target, apply = false, force = fa
   const changed = [];
   const keptAgents = [];
   if (apply) {
+    if (isInstall) {
+      for (const rel of [
+        '.corpus-pack/install-state.json',
+        '.corpus-pack/manifest.json',
+        '.corpus-pack/bundles/sources.bundle.json.gz',
+        '.corpus-pack/bundles/factory.bundle.json.gz',
+      ]) {
+        if (inspectContained(target, rel, { allowMissing: true, label: `pack metadata ${rel}` }).exists) {
+          throw new Error(`Refusing first install because reserved pack metadata already exists: ${rel}`);
+        }
+      }
+    }
+    for (const it of plan.conflict) {
+      const source = inspectContained(sourceRoot, it.rel, { label: `incoming source ${it.rel}` });
+      const bytes = readContainedFile(sourceRoot, it.rel, { label: `incoming source ${it.rel}` });
+      writeContainedFile(target, it.incomingRel, bytes, source.stat.mode, { refuseDifferentExisting: true });
+      changed.push(it.incomingRel);
+    }
     for (const it of plan.backup) {
       const source = inspectContained(target, it.rel, { label: `backup source ${it.rel}` });
       if (!source.stat.isFile()) throw new Error(`backup source ${it.rel} must be a regular file`);
@@ -455,6 +542,52 @@ export async function runUpgrade({ sourceRoot, target, apply = false, force = fa
       unlinkContainedFile(target, it.rel);
       changed.push(it.rel);
     }
+
+    writeOfflineBundles({ sourceRoot, target, sourceFiles, config: profileConfig, version: sourceVersion });
+    changed.push('.corpus-pack/manifest.json', '.corpus-pack/bundles/sources.bundle.json.gz', '.corpus-pack/bundles/factory.bundle.json.gz');
+
+    const managedFiles = {};
+    for (const rel of sourceFiles) {
+      const profile = profileForPath(rel, profileConfig);
+      if (!activeProfileSet.has(profile)) continue;
+      const sourceDigest = targetFileDigest(sourceRoot, rel);
+      if (sourceDigest && targetFileDigest(target, rel) === sourceDigest) managedFiles[rel] = { profile, sha256: sourceDigest };
+    }
+    const packageJson = readSource('package.json');
+    let repository = null;
+    try {
+      const parsed = packageJson ? JSON.parse(packageJson) : null;
+      repository = typeof parsed?.repository === 'string' ? parsed.repository : parsed?.repository?.url || null;
+    } catch {
+      repository = null;
+    }
+    const unresolvedConflicts = [...new Set([
+      ...(previousInstallState?.conflicts || []),
+      ...plan.conflict.map((item) => item.rel),
+      ...keptAgents,
+    ])].filter((rel) => !managedFiles[rel]).sort();
+    const conflictedProfiles = new Set(plan.conflict.map((item) => profileForPath(item.rel, profileConfig)));
+    for (const rel of keptAgents) conflictedProfiles.add(profileForPath(rel, profileConfig));
+    const pendingProfiles = new Set(previousInstallState?.pendingProfiles || []);
+    for (const profile of activeProfiles) {
+      if (conflictedProfiles.has(profile)) pendingProfiles.add(profile);
+      else pendingProfiles.delete(profile);
+    }
+    const installedActiveProfiles = activeProfiles.filter((profile) => profile === 'core' || !conflictedProfiles.has(profile));
+    writeInstallState(target, {
+      schemaVersion: 1,
+      packVersion: sourceVersion,
+      source: {
+        version: sourceVersion,
+        repository,
+        treeSha256: sourceTreeDigest(sourceRoot, sourceFiles),
+      },
+      activeProfiles: installedActiveProfiles,
+      pendingProfiles: PROFILE_ORDER.filter((profile) => pendingProfiles.has(profile)),
+      managedFiles,
+      conflicts: unresolvedConflicts,
+    });
+    changed.push('.corpus-pack/install-state.json');
   }
 
   // --------------------------------------------------------------------------
@@ -475,5 +608,5 @@ export async function runUpgrade({ sourceRoot, target, apply = false, force = fa
     log('Re-run with --apply to perform the copy.');
   }
 
-  return { changed, kept: keptAgents, plan, sourceVersion, localVersion, isInstall };
+  return { changed, kept: keptAgents, plan, sourceVersion, localVersion, isInstall, activeProfiles };
 }

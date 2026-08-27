@@ -37,4 +37,12 @@ pipeline/per-brick-interview          # used during P4 (mandatory), P5/P7/P9 (on
 2. Choose a descriptive slug. No leading numbers outside `pipeline/`.
 3. Cross-reference using the full path: `governance/corpus-validation`, `exploration/jira-exploration`, etc.
 4. Update agent definitions if the skill should be discoverable by an agent.
-5. Run `node scripts/validate-corpus.mjs` to verify the pack still validates.
+5. Declare every local procedure/reference in the skill's `references` list.
+6. Run `node scripts/validate-skills.mjs` and
+   `node scripts/validate-corpus.mjs`.
+
+Skill `name` values are global identifiers: they must be unique across all
+categories and must match the directory containing `SKILL.md`. Keep the main
+file as a dispatch surface; move scenario-specific detail into local procedure
+or reference files. The validator reports main files over 300 lines as a
+progressive-disclosure warning.

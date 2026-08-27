@@ -1,9 +1,0 @@
-graph:
-  version: 1
-  evidence:
-    - id: evidence:pack-roadmap-skeleton
-      source_type: pack
-      source_ref: doc/_roadmap/CORPUS_ROADMAP.md
-      summary: Initial roadmap skeleton shipped with the corpus pack.
-      confidence: confirmed
-      collected_at: null

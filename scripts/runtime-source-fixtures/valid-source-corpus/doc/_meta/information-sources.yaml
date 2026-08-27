@@ -1,0 +1,27 @@
+schema_version: 2
+sources:
+  - id: repository
+    name: Local repository files
+    category: code
+    lifecycle: declared
+    requirement: required
+    mapping_state: known
+    mapping_refs: [local-workspace]
+    transport_semantics: alternative
+    transports:
+      - id: local-filesystem
+        method: local-filesystem
+        access_mode: read-only
+        required_tools: []
+        safe_probe: list-repository-root
+        safe_limit: 20
+        priority: 1
+        fallback: false
+        consent: not_required
+    allowed_uses: [code-navigation]
+    restrictions: [read-only]
+    evidence_rules: [record-paths]
+    freshness_max_days: 0
+    operational_doc: doc/evidence/repository.md
+    owner: fixture
+    notes: Small self-contained source-contract fixture.

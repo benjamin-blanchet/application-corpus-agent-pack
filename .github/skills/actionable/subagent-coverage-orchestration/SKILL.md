@@ -126,7 +126,7 @@ If subagent tooling is unavailable:
 
 If subagent reports disagree:
 
-- use source priority ranking from `foundations/core-rules`;
+- use scoped source authority from `foundations/core-rules`;
 - record contradictions in `doc/_meta/reconciliation-ledger.yaml` or `doc/_meta/actionable-readiness.md`;
 - ask a blocking question when evidence cannot resolve the conflict.
 

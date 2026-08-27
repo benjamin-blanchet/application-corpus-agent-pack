@@ -55,7 +55,7 @@ read surface:
 | Resolve default branch / repo metadata | `get_repository` | Use before assuming `main`. Also the head SHA used as the freshness baseline. |
 | Branches / tags | `list_branches`, `list_tags` | To pin a peer `ref`. |
 | Changed files between two SHAs | `list_commits` / compare | The MCP freshness diff: fetch only files changed since `last_synced_sha`, not the whole tree. |
-| PR / issue context (optional enrichment) | `list_pull_requests`, `list_issues` | Read-only; rank-low evidence per source priority. |
+| PR / issue context (optional enrichment) | `list_pull_requests`, `list_issues` | Read-only; useful for intent/history, not proof of runtime. |
 
 **Forbidden** (write tools, never call from any corpus mode): create/update/
 delete file, create/merge PR, create/update issue, add comment, create branch,
@@ -87,9 +87,9 @@ Summary:
   diff, not a re-clone. Compare the peer's current head SHA to the stored
   `last_synced_sha`; if unchanged it's a near-free no-op, otherwise fetch only
   the changed files (git `diff`/`fetch`, or the MCP compare endpoint).
-- A peer corpus is a **secondary, code-derived source** (when the peer has the
-  pack): it enriches and contextualizes, it never overrides this app's own code
-  under `foundations/core-rules § Source priority`.
+- A peer corpus is secondary evidence for this application. Reconcile its
+  claims by scope, revision and environment under
+  `foundations/core-rules § Source authority depends on the claim`.
 
 Coordinates for MCP calls come from the peer's `source` block: `owner`/`repo`
 (parsed from `source.url` if not explicit), `ref` (default `main`, but resolve
