@@ -209,9 +209,66 @@ function checkRequiredStructure() {
   }
 }
 
+// A missing link target is not always a defect: a fresh installation legally
+// links into lazy corpus sections that have not been materialized yet, and
+// core documentation legally links into files that only the optional
+// `sources` / `factory` profiles install. Both cases are deliberate deferred
+// state, so they are reported at P2 (informational, with the command that
+// resolves them) instead of P1. Everything else stays a P1 broken link.
+function buildDeferredTargetClassifier() {
+  // Lazy sections count as pending only while they are absent from the
+  // materialized-sections registry. A registered section with missing files
+  // is real breakage (declared-section-file-missing) and keeps P1 links.
+  let registeredSections = new Set();
+  try {
+    const registry = JSON.parse(read(SECTION_REGISTRY_PATH));
+    registeredSections = new Set(Object.keys(registry.sections || {}));
+  } catch {
+    // No registry yet: every lazy section is pending.
+  }
+  const pendingSectionRoots = [];
+  for (const [name, section] of Object.entries(CORPUS_SECTIONS)) {
+    if (registeredSections.has(name)) continue;
+    const roots = new Set(section.files.map(([, destination]) => path.posix.dirname(destination)));
+    for (const sectionRoot of roots) pendingSectionRoots.push({ section: name, root: `${sectionRoot}/` });
+  }
+
+  // Inactive profiles are known only in an installed pack: the profile
+  // catalogue ships as pack/profiles.json and the activation state lives in
+  // .corpus-pack/install-state.json. Without both (for example in the pack
+  // source repository, where every file exists anyway), no downgrade applies.
+  const inactiveProfiles = [];
+  try {
+    const catalogue = JSON.parse(read('pack/profiles.json')).profiles || {};
+    const state = JSON.parse(read('.corpus-pack/install-state.json'));
+    const active = new Set(state.activeProfiles || []);
+    for (const [name, profile] of Object.entries(catalogue)) {
+      if (active.has(name)) continue;
+      inactiveProfiles.push({ profile: name, prefixes: profile.prefixes || [], files: new Set(profile.files || []) });
+    }
+  } catch {
+    // Not an installed pack: profile ownership cannot be established.
+  }
+
+  return (targetRel) => {
+    const asDir = `${targetRel}/`;
+    for (const { section, root: sectionRoot } of pendingSectionRoots) {
+      if (asDir.startsWith(sectionRoot) || sectionRoot.startsWith(asDir)) return { kind: 'section', name: section };
+    }
+    for (const { profile, prefixes, files } of inactiveProfiles) {
+      if (files.has(targetRel)) return { kind: 'profile', name: profile };
+      for (const prefix of prefixes) {
+        if (asDir.startsWith(prefix) || prefix.startsWith(asDir)) return { kind: 'profile', name: profile };
+      }
+    }
+    return null;
+  };
+}
+
 function checkMarkdownLinks() {
   const markdownFiles = walk(docRoot).filter((file) => file.endsWith('.md'));
   const linkPattern = /\[[^\]]+\]\(([^)]+)\)/g;
+  const classifyDeferredTarget = buildDeferredTargetClassifier();
   for (const abs of markdownFiles) {
     const fileRel = rel(abs);
     const content = normalizeText(fs.readFileSync(abs, 'utf8'));
@@ -224,7 +281,15 @@ function checkMarkdownLinks() {
       if (!target) continue;
       const resolved = path.normalize(path.join(path.dirname(abs), target));
       if (!fs.existsSync(resolved)) {
-        add('P1', 'broken-markdown-link', `Broken Markdown link to ${match[1]}`, fileRel, rel(resolved));
+        const targetRel = rel(resolved);
+        const deferred = classifyDeferredTarget(targetRel);
+        if (deferred?.kind === 'section') {
+          add('P2', 'link-into-unmaterialized-section', `Link target ${match[1]} belongs to lazy corpus section '${deferred.name}'; run \`node scripts/materialize-corpus-section.mjs ${deferred.name}\` when that section is needed`, fileRel, targetRel);
+        } else if (deferred?.kind === 'profile') {
+          add('P2', 'link-into-inactive-profile', `Link target ${match[1]} is installed by the inactive '${deferred.name}' profile; run \`node scripts/cli.mjs profile enable ${deferred.name} --apply\` to activate it`, fileRel, targetRel);
+        } else {
+          add('P1', 'broken-markdown-link', `Broken Markdown link to ${match[1]}`, fileRel, targetRel);
+        }
       }
     }
   }

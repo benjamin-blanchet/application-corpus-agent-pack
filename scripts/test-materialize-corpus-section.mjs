@@ -120,5 +120,51 @@ test('declared-files-are-required-and-project-content-is-never-overwritten', () 
   }
 });
 
+test('links-into-pending-lazy-sections-are-deferred-not-broken', () => {
+  const root = makeConsumer();
+  try {
+    fs.appendFileSync(path.join(root, 'doc/README.md'), '\nSee [Production knowledge](./prod/README.md).\n');
+    const before = validate(root);
+    assert(!before.report.findings.some((finding) => finding.code === 'broken-markdown-link'), 'pending lazy-section link was reported as a P1 broken link');
+    const deferred = before.report.findings.find((finding) => finding.code === 'link-into-unmaterialized-section');
+    assert(deferred && deferred.severity === 'P2', 'pending lazy-section link was not reported as P2 deferred');
+    assert(deferred.message.includes('production'), 'deferred finding does not name the lazy section');
+
+    const materialize = run(materializer, ['production', '--root', root, '--json'], repoRoot);
+    assert(materialize.status === 0, materialize.stderr || materialize.stdout);
+    const after = validate(root);
+    assert(!after.report.findings.some((finding) => finding.code === 'link-into-unmaterialized-section'), 'materialized section still reported as deferred');
+    assert(!after.report.findings.some((finding) => finding.code === 'broken-markdown-link'), 'materialized section link reported as broken');
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('links-into-inactive-profiles-are-deferred-and-real-breakage-stays-p1', () => {
+  const root = makeConsumer();
+  try {
+    write(root, 'pack/profiles.json', JSON.stringify({
+      schemaVersion: 1,
+      profiles: {
+        core: { dependsOn: [] },
+        sources: { dependsOn: ['core'], prefixes: ['.github/skills/sources/'], files: [] },
+      },
+    }));
+    write(root, '.corpus-pack/install-state.json', JSON.stringify({ schemaVersion: 1, activeProfiles: ['core'] }));
+    fs.appendFileSync(
+      path.join(root, 'doc/README.md'),
+      '\nSee [Peer corpus access](../.github/skills/sources/peer-corpus-access/SKILL.md) and [nowhere](./does-not-exist.md).\n'
+    );
+    const { report } = validate(root);
+    const deferred = report.findings.find((finding) => finding.code === 'link-into-inactive-profile');
+    assert(deferred && deferred.severity === 'P2', 'inactive-profile link was not reported as P2 deferred');
+    assert(deferred.message.includes('sources'), 'deferred finding does not name the profile');
+    const broken = report.findings.filter((finding) => finding.code === 'broken-markdown-link');
+    assert(broken.length === 1 && broken[0].detail === 'doc/does-not-exist.md', 'genuinely broken link was not kept at P1');
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 console.log(`\n${ran - failed}/${ran} passing`);
 process.exitCode = failed > 0 ? 1 : 0;
