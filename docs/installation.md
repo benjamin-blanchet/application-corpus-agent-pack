@@ -67,6 +67,13 @@ digest mismatches. After installation, enabling a profile does not contact the
 pack repository. Application-specific connected sources may of course require
 their own network access.
 
+On a core-only installation, `node scripts/validate-corpus.mjs` reports links
+into not-yet-materialized lazy sections and into inactive `sources`/`factory`
+files as P2 informational findings (`link-into-unmaterialized-section`,
+`link-into-inactive-profile`), each with the command that resolves it. They
+become P1 broken links only when the section is materialized or the profile is
+active and the target is still missing.
+
 If activation finds a conflict, the profile remains `pending review`; it is
 not partially active. Review or merge the proposed files below
 `.corpus-pack/incoming/<version>/`, then rerun the same enable command. The

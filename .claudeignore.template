@@ -8,8 +8,7 @@
 # risk that a 30k-line lockfile gets dragged into context by mistake.
 #
 # Measured impact on a typical Java + Node repo: -15 to -30% tokens on
-# exploration sessions. Re-measure with `scripts/estimate-token-cost.mjs`
-# before and after customizing.
+# exploration sessions.
 
 # -----------------------------------------------------------------------------
 # Build artifacts (multi-stack)
